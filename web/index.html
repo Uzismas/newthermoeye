@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Thermoeye Clinical Screening Console</title>
+    <meta
+      name="description"
+      content="Thermoeye web prototype for secure OCTA/OCT Alzheimer risk screening workflow."
+    >
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="side-nav" aria-label="Primary navigation">
+        <a class="brand" href="#dashboard" aria-label="Thermoeye dashboard">
+          <span class="brand-mark" aria-hidden="true">
+            <span></span>
+          </span>
+          <span>
+            <strong>Thermoeye</strong>
+            <small>Clinical Screening</small>
+          </span>
+        </a>
+
+        <nav class="nav-list" aria-label="Workspace views">
+          <button class="nav-item active" type="button" data-target="dashboard" aria-selected="true">
+            <span class="nav-icon pulse-icon" aria-hidden="true"></span>
+            Dashboard
+          </button>
+          <button class="nav-item" type="button" data-target="cases" aria-selected="false">
+            <span class="nav-icon case-icon" aria-hidden="true"></span>
+            Cases
+          </button>
+          <button class="nav-item" type="button" data-target="analysis" aria-selected="false">
+            <span class="nav-icon scan-icon" aria-hidden="true"></span>
+            Analysis
+          </button>
+          <button class="nav-item" type="button" data-target="insights" aria-selected="false">
+            <span class="nav-icon chart-icon" aria-hidden="true"></span>
+            Insights
+          </button>
+          <button class="nav-item" type="button" data-target="performance" aria-selected="false">
+            <span class="nav-icon model-icon" aria-hidden="true"></span>
+            Performance
+          </button>
+          <button class="nav-item" type="button" data-target="governance" aria-selected="false">
+            <span class="nav-icon shield-icon" aria-hidden="true"></span>
+            Governance
+          </button>
+        </nav>
+
+        <div class="pilot-status" aria-label="Pilot environment status">
+          <span class="status-dot"></span>
+          <div>
+            <strong>Clinical pilot</strong>
+            <small>Mock AI v0.8.4 active</small>
+          </div>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Secure OCTA/OCT workflow</p>
+            <h1>Alzheimer's screening console</h1>
+          </div>
+          <div class="topbar-actions">
+            <label class="hospital-picker">
+              <span>Hospital</span>
+              <select aria-label="Select hospital tenant">
+                <option>Sirindhorn Memory Clinic</option>
+                <option>Pathum Specialty Center</option>
+                <option>Private Hospital Pilot</option>
+              </select>
+            </label>
+            <button class="ghost-button" type="button" id="export-audit">Export audit</button>
+            <button class="primary-button" type="button" data-target="cases" id="new-upload">New scan</button>
+          </div>
+        </header>
+
+        <section class="view active" id="dashboard" aria-labelledby="dashboard-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Today</p>
+              <h2 id="dashboard-title">Clinical operations</h2>
+            </div>
+            <p class="section-note">
+              Screening support only. Doctor approval is required before report release.
+            </p>
+          </div>
+
+          <div class="metrics-grid">
+            <article class="metric">
+              <span>Total scans</span>
+              <strong>1,284</strong>
+              <small class="trend-up">+18 this week</small>
+            </article>
+            <article class="metric high-risk">
+              <span>High risk awaiting review</span>
+              <strong>18</strong>
+              <small>6 due before 17:00</small>
+            </article>
+            <article class="metric">
+              <span>Quality pass rate</span>
+              <strong>94.2%</strong>
+              <small>After de-identification</small>
+            </article>
+            <article class="metric">
+              <span>Median analysis time</span>
+              <strong>2m 18s</strong>
+              <small>Queue load stable</small>
+            </article>
+          </div>
+
+          <div class="dashboard-grid">
+            <section class="panel queue-panel" aria-labelledby="queue-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Work queue</p>
+                  <h3 id="queue-title">Cases needing attention</h3>
+                </div>
+                <span class="badge warning">Doctor review</span>
+              </div>
+
+              <div class="case-table" role="table" aria-label="Recent Thermoeye cases">
+                <div class="case-row table-head" role="row">
+                  <span>Case</span>
+                  <span>Risk</span>
+                  <span>Quality</span>
+                  <span>Status</span>
+                </div>
+                <button class="case-row active" type="button" data-case="TE-2405-0187" role="row">
+                  <span>
+                    <strong>TE-2405-0187</strong>
+                    <small>67F · OCTA · OD</small>
+                  </span>
+                  <span class="risk-chip high">High 82</span>
+                  <span>Pass 96</span>
+                  <span>Review pending</span>
+                </button>
+                <button class="case-row" type="button" data-case="TE-2405-0182" role="row">
+                  <span>
+                    <strong>TE-2405-0182</strong>
+                    <small>73M · OCT · OS</small>
+                  </span>
+                  <span class="risk-chip moderate">Moderate 58</span>
+                  <span>Pass 91</span>
+                  <span>AI completed</span>
+                </button>
+                <button class="case-row" type="button" data-case="TE-2405-0179" role="row">
+                  <span>
+                    <strong>TE-2405-0179</strong>
+                    <small>61F · OCTA · OU</small>
+                  </span>
+                  <span class="risk-chip low">Low 24</span>
+                  <span>Pass 98</span>
+                  <span>Report ready</span>
+                </button>
+                <button class="case-row" type="button" data-case="TE-2405-0176" role="row">
+                  <span>
+                    <strong>TE-2405-0176</strong>
+                    <small>70F · OCTA · OS</small>
+                  </span>
+                  <span class="risk-chip blocked">Blocked</span>
+                  <span>Fail 42</span>
+                  <span>Rescan needed</span>
+                </button>
+              </div>
+            </section>
+
+            <section class="panel active-case" aria-labelledby="active-case-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Selected case</p>
+                  <h3 id="active-case-title">Clinical decision support</h3>
+                </div>
+                <span class="badge secure">De-identified</span>
+              </div>
+
+              <div class="case-focus">
+                <div class="risk-meter" id="risk-meter" style="--risk-fill: 82%">
+                  <span id="risk-score">82</span>
+                  <small id="risk-label">High risk</small>
+                </div>
+                <div class="case-summary">
+                  <dl>
+                    <div>
+                      <dt>Case code</dt>
+                      <dd id="case-code">TE-2405-0187</dd>
+                    </div>
+                    <div>
+                      <dt>Patient context</dt>
+                      <dd id="case-context">67F · working senior · OCTA OD</dd>
+                    </div>
+                    <div>
+                      <dt>Model</dt>
+                      <dd id="model-version">thermoeye-baseline-0.8.4 · threshold 2026.05</dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+
+              <div class="decision-strip">
+                <span id="confidence-pill">Confidence 88%</span>
+                <span id="density-pill">Vessel density -14.2%</span>
+                <span id="review-pill">Review pending</span>
+              </div>
+
+              <div class="actions-row">
+                <button class="primary-button" type="button" id="approve-case">Approve report</button>
+                <button class="ghost-button" type="button" id="request-rescan">Request rescan</button>
+                <button class="text-button" type="button" data-target="analysis">Open analysis</button>
+              </div>
+            </section>
+          </div>
+
+          <section class="panel pipeline-panel" aria-labelledby="pipeline-title">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Traceability</p>
+                <h3 id="pipeline-title">Upload to report workflow</h3>
+              </div>
+              <span class="badge">Append-only audit</span>
+            </div>
+            <ol class="pipeline">
+              <li class="done"><span>Upload</span><small>OCTA + metadata</small></li>
+              <li class="done"><span>Quarantine</span><small>Raw encrypted</small></li>
+              <li class="done"><span>Consent</span><small>Screening allowed</small></li>
+              <li class="done"><span>De-ID</span><small>PHI removed</small></li>
+              <li class="done"><span>Quality</span><small>Pass 96</small></li>
+              <li class="active"><span>AI analysis</span><small>Mock result ready</small></li>
+              <li><span>Doctor review</span><small>Pending</small></li>
+              <li><span>Report</span><small>Locked</small></li>
+            </ol>
+          </section>
+        </section>
+
+        <section class="view" id="cases" aria-labelledby="cases-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Ingestion</p>
+              <h2 id="cases-title">Case intake and upload</h2>
+            </div>
+            <p class="section-note">
+              Raw files remain quarantined until consent, de-identification, and quality checks complete.
+            </p>
+          </div>
+
+          <div class="two-column">
+            <section class="panel upload-panel" aria-labelledby="upload-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">New scan</p>
+                  <h3 id="upload-title">Secure upload</h3>
+                </div>
+                <span class="badge secure">Encrypted intake</span>
+              </div>
+
+              <label class="dropzone" for="scan-file">
+                <input id="scan-file" type="file" accept="image/*,.dcm,.dicom">
+                <span class="drop-mark" aria-hidden="true"></span>
+                <strong id="upload-label">Drop OCTA/OCT file or choose file</strong>
+                <small>DICOM, OCTA image, or exported scan package. Demo stores no real patient data.</small>
+              </label>
+
+              <div class="form-grid">
+                <label>
+                  <span>Case code</span>
+                  <input type="text" value="TE-2405-0192" aria-label="Case code">
+                </label>
+                <label>
+                  <span>Age</span>
+                  <input type="number" value="68" aria-label="Patient age">
+                </label>
+                <label>
+                  <span>Sex</span>
+                  <select aria-label="Patient sex">
+                    <option>Female</option>
+                    <option>Male</option>
+                    <option>Not specified</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Scan type</span>
+                  <select aria-label="Scan type">
+                    <option>OCTA macula</option>
+                    <option>OCT retinal layer</option>
+                    <option>OCTA widefield</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="consent-box">
+                <label><input type="checkbox" checked> Screening allowed</label>
+                <label><input type="checkbox"> Research allowed</label>
+                <label><input type="checkbox"> Model training allowed</label>
+              </div>
+
+              <button class="primary-button wide" type="button" id="queue-upload">Queue secure screening</button>
+            </section>
+
+            <section class="panel" aria-labelledby="checks-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Pre-analysis gates</p>
+                  <h3 id="checks-title">Required checks</h3>
+                </div>
+                <span class="badge">MVP rules</span>
+              </div>
+              <div class="checklist">
+                <div class="check-item pass">
+                  <strong>Metadata scan</strong>
+                  <span>No direct identifier in visible fields</span>
+                </div>
+                <div class="check-item pass">
+                  <strong>Consent purpose</strong>
+                  <span>Screening allowed before processing</span>
+                </div>
+                <div class="check-item pass">
+                  <strong>Image quality</strong>
+                  <span>Blur, artifact, resolution, and macula region</span>
+                </div>
+                <div class="check-item hold">
+                  <strong>Model release gate</strong>
+                  <span>Using mock/baseline model until validation package exists</span>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="analysis" aria-labelledby="analysis-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Explainable output</p>
+              <h2 id="analysis-title">OCTA interpretation</h2>
+            </div>
+            <p class="section-note">
+              The images below are synthetic placeholders for workflow design. Do not use them as medical evidence.
+            </p>
+          </div>
+
+          <div class="analysis-grid">
+            <section class="scan-panel" aria-labelledby="original-title">
+              <div class="scan-title">
+                <h3 id="original-title">Original scan</h3>
+                <span>Quality 96</span>
+              </div>
+              <div class="retina-scan original-scan" role="img" aria-label="Synthetic OCTA original scan placeholder">
+                <svg viewBox="0 0 320 320" aria-hidden="true">
+                  <defs>
+                    <radialGradient id="optic" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#eefbf4"></stop>
+                      <stop offset="48%" stop-color="#89c7b1"></stop>
+                      <stop offset="100%" stop-color="#0d2e31"></stop>
+                    </radialGradient>
+                  </defs>
+                  <rect width="320" height="320" rx="18" fill="#10292e"></rect>
+                  <circle cx="160" cy="160" r="132" fill="url(#optic)" opacity=".9"></circle>
+                  <path d="M35 161 C85 148 122 176 160 159 C198 142 236 165 286 151" fill="none" stroke="#f7fff9" stroke-width="3" opacity=".75"></path>
+                  <path d="M68 95 C126 130 104 213 170 227 C218 237 241 201 286 215" fill="none" stroke="#d4f6e3" stroke-width="2" opacity=".72"></path>
+                  <path d="M51 230 C106 202 120 105 183 91 C223 82 251 103 292 75" fill="none" stroke="#c7ead9" stroke-width="2" opacity=".64"></path>
+                  <circle cx="160" cy="160" r="18" fill="#173d3d" opacity=".62"></circle>
+                  <g stroke="#eefbf4" stroke-width="1.2" opacity=".5" fill="none">
+                    <path d="M160 160 L95 80"></path>
+                    <path d="M160 160 L232 92"></path>
+                    <path d="M160 160 L251 196"></path>
+                    <path d="M160 160 L82 224"></path>
+                    <path d="M160 160 L158 34"></path>
+                  </g>
+                </svg>
+              </div>
+            </section>
+
+            <section class="scan-panel" aria-labelledby="seg-title">
+              <div class="scan-title">
+                <h3 id="seg-title">Segmentation</h3>
+                <span>Vessel map</span>
+              </div>
+              <div class="retina-scan segmentation-scan" role="img" aria-label="Synthetic vessel segmentation placeholder">
+                <svg viewBox="0 0 320 320" aria-hidden="true">
+                  <rect width="320" height="320" rx="18" fill="#f4faf8"></rect>
+                  <circle cx="160" cy="160" r="132" fill="#e4f3ec"></circle>
+                  <g fill="none" stroke-linecap="round">
+                    <path d="M39 158 C84 139 126 173 162 154 C204 132 236 167 283 145" stroke="#047857" stroke-width="6"></path>
+                    <path d="M64 100 C121 129 112 209 171 224 C217 236 239 202 284 215" stroke="#10b981" stroke-width="4"></path>
+                    <path d="M50 231 C106 201 121 104 183 91 C226 81 251 103 292 74" stroke="#0f766e" stroke-width="4"></path>
+                    <path d="M160 158 L96 79 M160 158 L231 92 M160 158 L251 197 M160 158 L84 224 M160 158 L160 35" stroke="#14b8a6" stroke-width="2"></path>
+                  </g>
+                  <circle cx="160" cy="160" r="19" fill="#0f766e"></circle>
+                </svg>
+              </div>
+            </section>
+
+            <section class="scan-panel" aria-labelledby="heatmap-title">
+              <div class="scan-title">
+                <h3 id="heatmap-title">Risk heatmap</h3>
+                <span id="heatmap-state">High attention</span>
+              </div>
+              <div class="retina-scan heatmap-scan" role="img" aria-label="Synthetic risk heatmap placeholder">
+                <svg viewBox="0 0 320 320" aria-hidden="true">
+                  <defs>
+                    <radialGradient id="riskA" cx="43%" cy="45%" r="48%">
+                      <stop offset="0%" stop-color="#f97316"></stop>
+                      <stop offset="42%" stop-color="#facc15"></stop>
+                      <stop offset="100%" stop-color="#0f766e"></stop>
+                    </radialGradient>
+                  </defs>
+                  <rect width="320" height="320" rx="18" fill="#10292e"></rect>
+                  <circle cx="160" cy="160" r="132" fill="url(#riskA)"></circle>
+                  <circle cx="125" cy="138" r="62" fill="#dc2626" opacity=".62"></circle>
+                  <circle cx="205" cy="207" r="44" fill="#f97316" opacity=".55"></circle>
+                  <path d="M42 158 C84 140 126 172 162 155 C204 133 236 167 283 145" fill="none" stroke="#fff7ed" stroke-width="5" opacity=".78"></path>
+                  <circle cx="160" cy="160" r="18" fill="#111827" opacity=".5"></circle>
+                </svg>
+              </div>
+            </section>
+          </div>
+
+          <div class="analysis-detail">
+            <section class="panel" aria-labelledby="metrics-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">AI metrics</p>
+                  <h3 id="metrics-title">Risk drivers</h3>
+                </div>
+                <span class="badge warning">Human review required</span>
+              </div>
+              <div class="driver-list">
+                <div>
+                  <span>Capillary density deviation</span>
+                  <strong id="density-value">-14.2%</strong>
+                  <meter min="-20" max="5" low="-12" high="-4" optimum="0" value="-14.2"></meter>
+                </div>
+                <div>
+                  <span>Perfusion uniformity</span>
+                  <strong>71%</strong>
+                  <meter min="0" max="100" low="55" high="78" optimum="88" value="71"></meter>
+                </div>
+                <div>
+                  <span>Macula region confidence</span>
+                  <strong>93%</strong>
+                  <meter min="0" max="100" low="65" high="85" optimum="95" value="93"></meter>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel" aria-labelledby="recommendation-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Decision support</p>
+                  <h3 id="recommendation-title">Recommended action</h3>
+                </div>
+                <span class="badge">Report locked</span>
+              </div>
+              <p class="clinical-note" id="clinical-note">
+                Elevated retinal vascular pattern deviation. Recommend clinician review, cognitive screening correlation,
+                and follow-up plan if symptoms or risk factors are present.
+              </p>
+              <div class="model-footnote">
+                <span>Input checksum verified</span>
+                <span>Model: thermoeye-baseline-0.8.4</span>
+                <span>Threshold: 2026.05</span>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="insights" aria-labelledby="insights-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Population view</p>
+              <h2 id="insights-title">Screening insights</h2>
+            </div>
+            <p class="section-note">Aggregates are de-identified and scoped to the selected hospital tenant.</p>
+          </div>
+
+          <div class="insight-grid">
+            <section class="panel" aria-labelledby="risk-dist-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Risk mix</p>
+                  <h3 id="risk-dist-title">Distribution this month</h3>
+                </div>
+                <span class="badge">312 scans</span>
+              </div>
+              <div class="bar-chart" aria-label="Risk distribution chart">
+                <div style="--bar: 54%"><span>Low</span><strong>54%</strong></div>
+                <div style="--bar: 31%"><span>Moderate</span><strong>31%</strong></div>
+                <div style="--bar: 15%"><span>High</span><strong>15%</strong></div>
+              </div>
+            </section>
+
+            <section class="panel" aria-labelledby="age-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Cohorts</p>
+                  <h3 id="age-title">Age group signal</h3>
+                </div>
+                <span class="badge">De-identified</span>
+              </div>
+              <div class="cohort-grid">
+                <span>60-64<strong>9%</strong></span>
+                <span>65-69<strong>14%</strong></span>
+                <span>70-74<strong>22%</strong></span>
+                <span>75-79<strong>29%</strong></span>
+                <span>80+<strong>33%</strong></span>
+              </div>
+            </section>
+
+            <section class="panel wide-panel" aria-labelledby="trend-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Trend</p>
+                  <h3 id="trend-title">Early screening volume</h3>
+                </div>
+                <span class="badge secure">Pilot target +50%</span>
+              </div>
+              <div class="trend-chart" aria-label="Screening volume trend">
+                <span style="--h: 32%"></span>
+                <span style="--h: 46%"></span>
+                <span style="--h: 42%"></span>
+                <span style="--h: 58%"></span>
+                <span style="--h: 72%"></span>
+                <span style="--h: 84%"></span>
+                <span style="--h: 91%"></span>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="performance" aria-labelledby="performance-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Model oversight</p>
+              <h2 id="performance-title">Performance monitoring</h2>
+            </div>
+            <p class="section-note">Validation metrics are placeholders until a real labeled OCTA dataset is available.</p>
+          </div>
+
+          <div class="metrics-grid model-metrics">
+            <article class="metric">
+              <span>AUC</span>
+              <strong>0.91</strong>
+              <small>Baseline holdout</small>
+            </article>
+            <article class="metric">
+              <span>Sensitivity</span>
+              <strong>88%</strong>
+              <small>High-risk recall</small>
+            </article>
+            <article class="metric">
+              <span>Specificity</span>
+              <strong>84%</strong>
+              <small>False alarm control</small>
+            </article>
+            <article class="metric">
+              <span>F1 score</span>
+              <strong>0.86</strong>
+              <small>Mock validation</small>
+            </article>
+          </div>
+
+          <div class="performance-grid">
+            <section class="panel" aria-labelledby="roc-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Classifier quality</p>
+                  <h3 id="roc-title">ROC curve</h3>
+                </div>
+                <span class="badge">AUC 0.91</span>
+              </div>
+              <svg class="roc-chart" viewBox="0 0 420 260" role="img" aria-label="ROC curve placeholder">
+                <line x1="46" y1="218" x2="382" y2="218"></line>
+                <line x1="46" y1="218" x2="46" y2="30"></line>
+                <path d="M48 218 C86 158 112 101 168 72 C231 40 297 34 382 32"></path>
+                <path class="baseline" d="M48 218 L382 32"></path>
+              </svg>
+            </section>
+
+            <section class="panel" aria-labelledby="matrix-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Calibration</p>
+                  <h3 id="matrix-title">Confusion matrix</h3>
+                </div>
+                <span class="badge warning">Review monthly</span>
+              </div>
+              <div class="matrix" aria-label="Confusion matrix placeholder">
+                <span></span><strong>Pred low</strong><strong>Pred high</strong>
+                <strong>Actual low</strong><span>142</span><span>21</span>
+                <strong>Actual high</strong><span>18</span><span>119</span>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="governance" aria-labelledby="governance-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Security and data use</p>
+              <h2 id="governance-title">Governance console</h2>
+            </div>
+            <p class="section-note">The platform is the processor. The hospital remains the data owner.</p>
+          </div>
+
+          <div class="governance-grid">
+            <section class="panel" aria-labelledby="purpose-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Consent</p>
+                  <h3 id="purpose-title">Purpose limits</h3>
+                </div>
+                <span class="badge secure">Policy enforced</span>
+              </div>
+              <div class="purpose-list">
+                <span>Screening<strong>Allowed</strong></span>
+                <span>Research<strong>Case-by-case</strong></span>
+                <span>Model training<strong>Not automatic</strong></span>
+                <span>Retention<strong>24 months</strong></span>
+              </div>
+            </section>
+
+            <section class="panel" aria-labelledby="storage-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Storage</p>
+                  <h3 id="storage-title">Data separation</h3>
+                </div>
+                <span class="badge">Encrypted</span>
+              </div>
+              <div class="storage-map">
+                <span>Raw quarantine</span>
+                <span>Processed images</span>
+                <span>Reports</span>
+                <span>Curated training set</span>
+              </div>
+            </section>
+
+            <section class="panel wide-panel" aria-labelledby="audit-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Audit trail</p>
+                  <h3 id="audit-title">Recent security events</h3>
+                </div>
+                <span class="badge">Append-only</span>
+              </div>
+              <ul class="audit-log" id="audit-log">
+                <li><strong>19:14</strong><span>Dr. K approved report for TE-2405-0179</span></li>
+                <li><strong>19:09</strong><span>Quality worker passed TE-2405-0187 with score 96</span></li>
+                <li><strong>18:57</strong><span>De-identification service removed direct identifiers from upload batch</span></li>
+                <li><strong>18:43</strong><span>Hospital staff downloaded released PDF report TE-2405-0171</span></li>
+              </ul>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thermoeye System Summary</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 16mm 15mm 18mm;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Noto Sans Thai", "Noto Sans", Arial, sans-serif;
+      color: #17202a;
+      background: #ffffff;
+      font-size: 11.2pt;
+      line-height: 1.62;
+    }
+
+    .page {
+      page-break-after: always;
+    }
+
+    .page:last-child {
+      page-break-after: auto;
+    }
+
+    .cover {
+      min-height: 255mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 6mm 0 0;
+      border-top: 8px solid #126c72;
+    }
+
+    .cover-title {
+      margin-top: 34mm;
+    }
+
+    .eyebrow {
+      color: #126c72;
+      font-size: 10pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    h1 {
+      margin: 6mm 0 3mm;
+      font-size: 36pt;
+      line-height: 1.08;
+      color: #0c3f45;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      max-width: 150mm;
+      color: #46515c;
+      font-size: 15pt;
+      line-height: 1.5;
+    }
+
+    .cover-meta {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5mm;
+      padding-top: 8mm;
+      border-top: 1px solid #d8e0e3;
+    }
+
+    .meta-block {
+      min-height: 26mm;
+      padding: 4mm;
+      background: #f4f8f8;
+      border-left: 4px solid #126c72;
+    }
+
+    .meta-label {
+      margin-bottom: 1.5mm;
+      color: #66737d;
+      font-size: 9.4pt;
+      font-weight: 700;
+    }
+
+    .meta-value {
+      color: #16232d;
+      font-size: 10.8pt;
+      font-weight: 700;
+    }
+
+    header.section-header {
+      margin-bottom: 6mm;
+      padding-bottom: 3.5mm;
+      border-bottom: 2px solid #126c72;
+    }
+
+    h2 {
+      margin: 0;
+      color: #0c3f45;
+      font-size: 21pt;
+      line-height: 1.24;
+      font-weight: 800;
+    }
+
+    h3 {
+      margin: 7mm 0 2mm;
+      color: #123b42;
+      font-size: 14pt;
+      line-height: 1.35;
+      font-weight: 800;
+    }
+
+    p {
+      margin: 0 0 3.2mm;
+    }
+
+    ul, ol {
+      margin: 2mm 0 4mm 6mm;
+      padding-left: 5mm;
+    }
+
+    li {
+      margin-bottom: 1.7mm;
+    }
+
+    .lead {
+      color: #33424d;
+      font-size: 12.2pt;
+      line-height: 1.58;
+    }
+
+    .callout {
+      margin: 4mm 0 6mm;
+      padding: 4mm 5mm;
+      background: #eef6f6;
+      border-left: 4px solid #126c72;
+      color: #1c3740;
+    }
+
+    .warning {
+      background: #fff6e7;
+      border-left-color: #c77b11;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5mm;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4mm;
+    }
+
+    .box {
+      padding: 4mm;
+      border: 1px solid #d9e2e5;
+      background: #fbfdfd;
+      min-height: 30mm;
+    }
+
+    .box h3 {
+      margin-top: 0;
+      font-size: 12.5pt;
+    }
+
+    table {
+      width: 100%;
+      margin: 3mm 0 6mm;
+      border-collapse: collapse;
+      font-size: 9.8pt;
+      line-height: 1.45;
+    }
+
+    th {
+      background: #0f5960;
+      color: #ffffff;
+      text-align: left;
+      font-weight: 800;
+    }
+
+    th, td {
+      padding: 2.5mm 3mm;
+      border: 1px solid #cdd8dc;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td {
+      background: #f7fafb;
+    }
+
+    .pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2mm;
+      margin: 3mm 0 5mm;
+    }
+
+    .pill {
+      padding: 1.3mm 2.5mm;
+      border: 1px solid #bdd4d8;
+      border-radius: 999px;
+      background: #f2f8f8;
+      color: #19484f;
+      font-size: 9.2pt;
+      font-weight: 700;
+    }
+
+    .workflow {
+      counter-reset: step;
+      display: grid;
+      gap: 2.8mm;
+      margin: 4mm 0 5mm;
+    }
+
+    .step {
+      position: relative;
+      padding: 3mm 4mm 3mm 13mm;
+      border: 1px solid #d8e2e5;
+      background: #fbfdfd;
+    }
+
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: 3.2mm;
+      top: 3.2mm;
+      width: 6.5mm;
+      height: 6.5mm;
+      border-radius: 50%;
+      background: #126c72;
+      color: #fff;
+      text-align: center;
+      font-size: 8.5pt;
+      line-height: 6.5mm;
+      font-weight: 800;
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 0.6mm;
+      color: #102f35;
+    }
+
+    .small {
+      color: #5b6872;
+      font-size: 9.2pt;
+      line-height: 1.5;
+    }
+
+    .footer-note {
+      margin-top: 7mm;
+      padding-top: 3mm;
+      border-top: 1px solid #dbe4e7;
+      color: #68747d;
+      font-size: 9pt;
+    }
+  </style>
+</head>
+<body>
+  <section class="page cover">
+    <div>
+      <div class="eyebrow">Thermoeye Planning Document</div>
+      <div class="cover-title">
+        <h1>สรุประบบ Thermoeye<br>และแผนระบบหลังบ้าน</h1>
+        <p class="subtitle">
+          เอกสารสรุปสิ่งที่จะสร้าง: ระบบรับข้อมูล OCTA/OCT จากโรงพยาบาลอย่างปลอดภัย
+          ตรวจคุณภาพภาพ วิเคราะห์ด้วย AI แบบตรวจสอบย้อนกลับได้ และสร้างผลคัดกรองที่แพทย์อ่านง่าย
+        </p>
+      </div>
+    </div>
+
+    <div class="cover-meta">
+      <div class="meta-block">
+        <div class="meta-label">Product Direction</div>
+        <div class="meta-value">Secure clinical screening workflow</div>
+      </div>
+      <div class="meta-block">
+        <div class="meta-label">MVP Strategy</div>
+        <div class="meta-value">ระบบจริง + AI mock/baseline ก่อนเสียบโมเดลจริง</div>
+      </div>
+      <div class="meta-block">
+        <div class="meta-label">Prepared Date</div>
+        <div class="meta-value">24 May 2026</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page">
+    <header class="section-header">
+      <div class="eyebrow">01 / Executive Summary</div>
+      <h2>แนวคิดหลักของระบบ</h2>
+    </header>
+
+    <p class="lead">
+      Thermoeye ไม่ควรถูกวางเป็นแค่ “AI ทำนายโรค” แต่ควรเป็น data-to-screening workflow
+      ที่รับข้อมูลจากโรงพยาบาลอย่างปลอดภัย แปลงข้อมูลเป็นผลคัดกรองที่อ่านง่าย
+      และมีหลักฐานย้อนกลับได้ทุกขั้นตอน
+    </p>
+
+    <div class="callout warning">
+      <strong>ข้อกำหนดสำคัญ:</strong>
+      ระบบเวอร์ชันแรกควรวางตัวเป็น clinical decision support สำหรับการคัดกรองความเสี่ยง
+      ไม่ใช่เครื่องมือวินิจฉัยโรคแทนแพทย์ ผลลัพธ์ต้องผ่านการ review/approve โดยแพทย์ก่อนใช้งานจริง
+    </div>
+
+    <h3>เป้าหมายระบบ</h3>
+    <ul>
+      <li>รับภาพ OCTA/OCT และข้อมูลผู้ป่วยที่จำเป็นจากโรงพยาบาลหรือคลินิกพาร์ทเนอร์</li>
+      <li>ปกป้องข้อมูลผู้ป่วยด้วย de-identification, consent tracking, access control และ audit log</li>
+      <li>ตรวจคุณภาพภาพก่อนส่งเข้า AI เพื่อลดความเสี่ยงจากผลวิเคราะห์ที่ผิดพลาด</li>
+      <li>วิเคราะห์ vessel/capillary density และแปลงเป็น risk score: Low, Moderate, High</li>
+      <li>แสดงผลแบบ explainable ด้วย heatmap, segmentation และคำอธิบายที่แพทย์อ่านง่าย</li>
+      <li>สร้าง PDF report และ dashboard สำหรับโรงพยาบาล</li>
+      <li>เก็บ feedback จากแพทย์เพื่อพัฒนาโมเดลใน training sandbox ที่ควบคุมได้</li>
+    </ul>
+
+    <h3>ขอบเขตที่ควรทำก่อน</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>ขอบเขต</th>
+          <th>สิ่งที่จะทำใน MVP</th>
+          <th>สิ่งที่ต้องใช้ข้อมูลจริงภายหลัง</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>ระบบเว็บและ workflow</td>
+          <td>ทำได้ครบ: login, upload, case, dashboard, report, audit</td>
+          <td>ปรับตาม workflow จริงของโรงพยาบาล</td>
+        </tr>
+        <tr>
+          <td>AI วิเคราะห์ภาพ</td>
+          <td>ใช้ mock/baseline engine และโครง service ที่ต่อโมเดลจริงได้</td>
+          <td>ต้องมี OCTA dataset, label, ground truth และ clinical validation</td>
+        </tr>
+        <tr>
+          <td>Regulatory</td>
+          <td>วางเอกสาร intended use, risk log, model version, audit trail</td>
+          <td>ต้องทำ validation, quality management และขออนุมัติกับหน่วยงานที่เกี่ยวข้อง</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="page">
+    <header class="section-header">
+      <div class="eyebrow">02 / Product Scope</div>
+      <h2>ฟีเจอร์หลักที่จะสร้าง</h2>
+    </header>
+
+    <div class="grid-2">
+      <div class="box">
+        <h3>Hospital Data Ingestion</h3>
+        <p>รับข้อมูลจากโรงพยาบาลผ่าน portal, API หรือไฟล์มาตรฐาน เช่น OCTA/OCT image, scan metadata, case ID, age, sex และวันที่ตรวจ</p>
+      </div>
+      <div class="box">
+        <h3>Privacy Protection</h3>
+        <p>ลบข้อมูลระบุตัวตนโดยตรง ใช้ case code แทนตัวจริง แยก mapping table และเก็บ raw data ในพื้นที่จำกัดสิทธิ์</p>
+      </div>
+      <div class="box">
+        <h3>Image Quality Check</h3>
+        <p>ตรวจ blur, missing frame, artifact, format, resolution และ macula region ก่อนส่งเข้า AI หากภาพใช้ไม่ได้ต้องแจ้งให้ scan ใหม่</p>
+      </div>
+      <div class="box">
+        <h3>AI Analysis Engine</h3>
+        <p>เตรียม pipeline สำหรับ preprocessing, segmentation, vessel density calculation, risk score และ confidence score</p>
+      </div>
+      <div class="box">
+        <h3>Explainable Output</h3>
+        <p>แสดง original image, segmentation, heatmap, vessel density และเหตุผลสั้น ๆ ที่ทำให้แพทย์ตรวจสอบผลได้</p>
+      </div>
+      <div class="box">
+        <h3>Report Generator</h3>
+        <p>สร้างรายงาน PDF สรุป risk level, key metrics, recommendation, model version และสถานะการ review โดยแพทย์</p>
+      </div>
+      <div class="box">
+        <h3>Partner Dashboard</h3>
+        <p>แสดงจำนวนเคสที่ส่งมา เคสเสี่ยงสูง trend รายเดือน ประสิทธิภาพระบบ และประวัติการตรวจย้อนหลัง</p>
+      </div>
+      <div class="box">
+        <h3>Feedback Loop</h3>
+        <p>เก็บผลยืนยันจากแพทย์ ผลติดตามซ้ำ และ label correction เพื่อส่งเข้า curated dataset ก่อนใช้ train โมเดลใหม่</p>
+      </div>
+    </div>
+
+    <h3>ฟีเจอร์กำกับความปลอดภัย</h3>
+    <div class="pill-list">
+      <span class="pill">Role-Based Access Control</span>
+      <span class="pill">Audit Log</span>
+      <span class="pill">Consent Tracking</span>
+      <span class="pill">Data Agreement Layer</span>
+      <span class="pill">Secure Storage</span>
+      <span class="pill">Model Registry</span>
+      <span class="pill">Training Sandbox</span>
+      <span class="pill">Retention Policy</span>
+    </div>
+
+    <div class="callout">
+      จุดขายของระบบไม่ใช่แค่โมเดล AI แต่คือ workflow ที่ทำให้โรงพยาบาลรับข้อมูล วิเคราะห์
+      ตรวจสอบผล ออกรายงาน และย้อนกลับไปพัฒนาโมเดลได้อย่างเป็นระบบ
+    </div>
+  </section>
+
+  <section class="page">
+    <header class="section-header">
+      <div class="eyebrow">03 / Workflow</div>
+      <h2>ลำดับการทำงานที่เหมาะสม</h2>
+    </header>
+
+    <div class="workflow">
+      <div class="step">
+        <strong>Hospital Upload / API Ingestion</strong>
+        โรงพยาบาลส่งภาพ OCTA/OCT พร้อมข้อมูลที่จำเป็นเท่านั้น เช่น case ID, อายุ, เพศ, scan type และวันที่ตรวจ
+      </div>
+      <div class="step">
+        <strong>Raw Quarantine Storage</strong>
+        เก็บไฟล์ต้นฉบับในพื้นที่เข้ารหัสและจำกัดสิทธิ์ เพราะ raw file อาจมีข้อมูลระบุตัวตนใน metadata หรือบนภาพ
+      </div>
+      <div class="step">
+        <strong>Consent & Data Agreement Check</strong>
+        ตรวจว่าข้อมูลนี้ใช้ได้เพื่ออะไร: screening, research, model development หรือ follow-up
+      </div>
+      <div class="step">
+        <strong>De-identification</strong>
+        ลบชื่อ เลขบัตร ประวัติระบุตัวตน และแปลงเป็น case code โดยแยก mapping table ไว้ในสิทธิ์ที่เข้มงวด
+      </div>
+      <div class="step">
+        <strong>Image Quality Check</strong>
+        ตรวจคุณภาพภาพก่อนเข้า AI หากภาพไม่ผ่านให้แจ้งเหตุผลและแนะนำให้ scan ใหม่
+      </div>
+      <div class="step">
+        <strong>AI Analysis</strong>
+        ประมวลผลภาพ คำนวณ vessel/capillary density และสรุปเป็น risk score พร้อม confidence
+      </div>
+      <div class="step">
+        <strong>Explainable Result</strong>
+        แสดง heatmap, segmentation, key metrics และคำอธิบายที่แพทย์ตรวจสอบได้
+      </div>
+      <div class="step">
+        <strong>Doctor Review & Report Release</strong>
+        แพทย์ review/approve ผลก่อนปล่อยรายงานให้โรงพยาบาลหรือคนไข้
+      </div>
+      <div class="step">
+        <strong>Feedback to Model Improvement</strong>
+        เก็บผลยืนยันจริงและ follow-up เข้า curated dataset ก่อนนำไป train/validate โมเดลเวอร์ชันใหม่
+      </div>
+    </div>
+
+    <div class="callout warning">
+      ลำดับสำคัญ: de-identification ควรเกิดก่อน pipeline ปกติ และ feedback loop ไม่ควร auto-train จาก production โดยตรง
+      ทุกโมเดลใหม่ต้องผ่าน validation, bias check และ release approval ก่อนใช้งาน
+    </div>
+  </section>
+
+  <section class="page">
+    <header class="section-header">
+      <div class="eyebrow">04 / Backend Architecture</div>
+      <h2>ระบบหลังบ้านที่ต้องมี</h2>
+    </header>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Module / Service</th>
+          <th>หน้าที่</th>
+          <th>ข้อมูลสำคัญ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Auth & RBAC</td>
+          <td>จัดการ login, session, role, permission และ multi-tenant hospital access</td>
+          <td>user, role, hospital, permission</td>
+        </tr>
+        <tr>
+          <td>Case Management</td>
+          <td>จัดการผู้ป่วยแบบจำกัดข้อมูล เคสตรวจ สถานะ workflow และ doctor review</td>
+          <td>case, scan, review, status</td>
+        </tr>
+        <tr>
+          <td>Ingestion API</td>
+          <td>รับไฟล์จาก portal, API หรือ DICOM/FHIR gateway ใน phase ถัดไป</td>
+          <td>upload record, metadata, source</td>
+        </tr>
+        <tr>
+          <td>De-identification Service</td>
+          <td>ลบ PHI/PII จาก metadata และจัดการ pseudonymous case code</td>
+          <td>de-id log, mapping reference</td>
+        </tr>
+        <tr>
+          <td>Storage Service</td>
+          <td>แยก raw, processed, report และ training dataset พร้อม encryption policy</td>
+          <td>object key, checksum, retention</td>
+        </tr>
+        <tr>
+          <td>Quality Check Worker</td>
+          <td>ตรวจ blur, artifact, format, resolution และ scan validity ก่อนเข้า AI</td>
+          <td>quality status, reason, score</td>
+        </tr>
+        <tr>
+          <td>AI Analysis Worker</td>
+          <td>วิเคราะห์ภาพแบบ async ผ่าน queue เพื่อไม่ให้เว็บค้าง</td>
+          <td>risk score, confidence, metrics</td>
+        </tr>
+        <tr>
+          <td>Explainability Service</td>
+          <td>สร้าง heatmap, segmentation overlay และ feature summary</td>
+          <td>overlay image, vessel density</td>
+        </tr>
+        <tr>
+          <td>Report Service</td>
+          <td>สร้าง PDF report พร้อม model version และ review signature</td>
+          <td>report file, release status</td>
+        </tr>
+        <tr>
+          <td>Audit Log Service</td>
+          <td>บันทึกว่าใครดู แก้ อัปโหลด ดาวน์โหลด หรือ approve อะไร</td>
+          <td>actor, action, target, timestamp</td>
+        </tr>
+        <tr>
+          <td>Model Registry</td>
+          <td>ควบคุม model version, threshold version, training dataset version และ release gate</td>
+          <td>model, metric, deployment</td>
+        </tr>
+        <tr>
+          <td>Analytics Dashboard</td>
+          <td>สรุปจำนวนเคส trend ความเสี่ยง ประสิทธิภาพระบบ และข้อมูลเชิงบริหาร</td>
+          <td>aggregate metrics</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>สถานะเคสที่ควรใช้</h3>
+    <div class="pill-list">
+      <span class="pill">received</span>
+      <span class="pill">de_identified</span>
+      <span class="pill">quality_checked</span>
+      <span class="pill">analysis_running</span>
+      <span class="pill">ai_completed</span>
+      <span class="pill">doctor_reviewed</span>
+      <span class="pill">report_released</span>
+      <span class="pill">feedback_received</span>
+    </div>
+  </section>
+
+  <section class="page">
+    <header class="section-header">
+      <div class="eyebrow">05 / Technology Stack</div>
+      <h2>เทคโนโลยีที่แนะนำให้ใช้</h2>
+    </header>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>แนะนำ</th>
+          <th>เหตุผล</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Frontend</td>
+          <td>Next.js + React + TypeScript</td>
+          <td>เหมาะกับ dashboard, portal, role-based UI, PDF preview และ deploy ง่าย</td>
+        </tr>
+        <tr>
+          <td>Backend API</td>
+          <td>FastAPI + Python</td>
+          <td>ต่อกับ AI/image processing ได้ง่าย ทำ REST API เร็ว และรองรับ async workflow</td>
+        </tr>
+        <tr>
+          <td>Database</td>
+          <td>PostgreSQL</td>
+          <td>เหมาะกับข้อมูลเชิงธุรกรรม เคส ผู้ใช้ consent audit และ reporting</td>
+        </tr>
+        <tr>
+          <td>Object Storage</td>
+          <td>S3-compatible storage / MinIO สำหรับ local dev</td>
+          <td>เหมาะกับไฟล์ภาพ medical image, processed image, heatmap และ PDF report</td>
+        </tr>
+        <tr>
+          <td>Queue & Worker</td>
+          <td>Redis + Celery หรือ RQ</td>
+          <td>ใช้รัน quality check, AI analysis และ report generation แบบ background job</td>
+        </tr>
+        <tr>
+          <td>Image Processing</td>
+          <td>OpenCV, Pillow, scikit-image</td>
+          <td>เริ่มจาก rule-based quality check และ image preprocessing ได้ทันที</td>
+        </tr>
+        <tr>
+          <td>AI / ML</td>
+          <td>PyTorch หรือ TensorFlow</td>
+          <td>รองรับ segmentation model, classification model และ experiment ต่อในอนาคต</td>
+        </tr>
+        <tr>
+          <td>Report</td>
+          <td>HTML-to-PDF หรือ server-side PDF generation</td>
+          <td>ควบคุม layout รายงานแพทย์ได้ดี และแนบผลภาพ/metrics ได้</td>
+        </tr>
+        <tr>
+          <td>Observability</td>
+          <td>Structured logs, metrics, error tracking</td>
+          <td>ใช้ตรวจสอบงาน background, security event, pipeline failure และ model drift</td>
+        </tr>
+        <tr>
+          <td>Deployment</td>
+          <td>Docker Compose สำหรับ dev, cloud/container สำหรับ production</td>
+          <td>แยก service ชัดเจนและ deploy ซ้ำได้ง่าย</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>มาตรฐานที่ควรรองรับใน phase ถัดไป</h3>
+    <ul>
+      <li><strong>DICOM / DICOMweb:</strong> สำหรับเชื่อมต่อข้อมูลภาพทางการแพทย์จากระบบ imaging หรือ PACS</li>
+      <li><strong>HL7 FHIR:</strong> สำหรับข้อมูลผู้ป่วย เคสตรวจ และข้อมูลสุขภาพที่ต้องแลกเปลี่ยนกับโรงพยาบาล</li>
+      <li><strong>SaMD documentation:</strong> intended use, risk management, validation, change control และ model release record</li>
+      <li><strong>PDPA-ready data governance:</strong> consent, purpose limitation, data minimization, retention และ deletion request</li>
+    </ul>
+  </section>
+
+  <section class="page">
+    <header class="section-header">
+      <div class="eyebrow">06 / Data Model</div>
+      <h2>ฐานข้อมูลหลักที่ควรมี</h2>
+    </header>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Entity</th>
+          <th>ตัวอย่างข้อมูล</th>
+          <th>หมายเหตุด้านความปลอดภัย</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Hospital</td>
+          <td>name, code, contact, subscription plan</td>
+          <td>ใช้แยก tenant และสิทธิ์การเข้าถึง</td>
+        </tr>
+        <tr>
+          <td>User</td>
+          <td>name, email, role, hospital_id, status</td>
+          <td>ต้องมี MFA ใน production และ session policy ชัดเจน</td>
+        </tr>
+        <tr>
+          <td>Case</td>
+          <td>case_code, age, sex, scan date, status</td>
+          <td>ไม่ควรเก็บข้อมูลระบุตัวตนเกินจำเป็น</td>
+        </tr>
+        <tr>
+          <td>Consent</td>
+          <td>screening allowed, research allowed, model training allowed, expiry</td>
+          <td>ต้องตรวจทุกครั้งก่อนใช้ข้อมูลนอกวัตถุประสงค์เดิม</td>
+        </tr>
+        <tr>
+          <td>Scan</td>
+          <td>scan type, eye side, device, image object key, checksum</td>
+          <td>ไฟล์ภาพต้องเก็บใน object storage แบบเข้ารหัส</td>
+        </tr>
+        <tr>
+          <td>Quality Check</td>
+          <td>pass/fail, blur score, artifact score, failure reason</td>
+          <td>ถ้า fail ต้องหยุดก่อนเข้า AI analysis</td>
+        </tr>
+        <tr>
+          <td>Analysis Result</td>
+          <td>risk score, risk level, confidence, vessel density, model version</td>
+          <td>ต้องผูกกับ model และ threshold version เสมอ</td>
+        </tr>
+        <tr>
+          <td>Review</td>
+          <td>doctor decision, note, approved_at, reviewer_id</td>
+          <td>ผลใช้งานจริงควรมี human approval</td>
+        </tr>
+        <tr>
+          <td>Report</td>
+          <td>report number, PDF object key, release status</td>
+          <td>download ต้องถูก log ทุกครั้ง</td>
+        </tr>
+        <tr>
+          <td>Feedback</td>
+          <td>confirmed diagnosis, follow-up result, correction, label status</td>
+          <td>ต้องเข้า curated dataset ก่อนใช้ train model</td>
+        </tr>
+        <tr>
+          <td>Audit Log</td>
+          <td>actor, action, target, IP, timestamp</td>
+          <td>ควร append-only และค้นย้อนหลังได้</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      หลักการฐานข้อมูล: แยกข้อมูลระบุตัวตน ข้อมูลเคส ข้อมูลภาพ และข้อมูลสำหรับ training ออกจากกัน
+      ลดการเข้าถึงข้ามส่วน และทำให้ลบ/จำกัดการใช้งานข้อมูลได้ตาม consent
+    </div>
+  </section>
+
+  <section class="page">
+    <header class="section-header">
+      <div class="eyebrow">07 / Security & Governance</div>
+      <h2>ข้อกำหนดด้านความปลอดภัยและข้อมูลผู้ป่วย</h2>
+    </header>
+
+    <div class="grid-2">
+      <div class="box">
+        <h3>Access Control</h3>
+        <ul>
+          <li>แยก role: admin, hospital staff, doctor, researcher</li>
+          <li>จำกัดข้อมูลตาม hospital/tenant</li>
+          <li>ใช้ least privilege เป็นค่าเริ่มต้น</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Audit Trail</h3>
+        <ul>
+          <li>log การดูข้อมูล อัปโหลด ดาวน์โหลด แก้ไข และ approve</li>
+          <li>เก็บ actor, target, action, timestamp และ IP</li>
+          <li>ใช้ตรวจสอบเหตุการณ์ย้อนหลังได้</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Data Protection</h3>
+        <ul>
+          <li>encrypt at rest และ encrypt in transit</li>
+          <li>แยก raw, processed, report, training dataset</li>
+          <li>กำหนด retention และ deletion policy</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Consent & Agreement</h3>
+        <ul>
+          <li>เก็บ purpose ของข้อมูลแต่ละเคส</li>
+          <li>แยกสิทธิ์ screening, research, model development</li>
+          <li>ระบุว่า hospital เป็นเจ้าของข้อมูล และ platform เป็นผู้ประมวลผล</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>ความเสี่ยงที่ต้องควบคุม</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Risk</th>
+          <th>แนวทางควบคุม</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>ข้อมูลผู้ป่วยรั่วไหล</td>
+          <td>de-identification, encryption, RBAC, audit log, secret management และ incident response plan</td>
+        </tr>
+        <tr>
+          <td>AI วิเคราะห์ผิดจากภาพคุณภาพต่ำ</td>
+          <td>quality gate ก่อนเข้า AI และแสดงเหตุผลเมื่อภาพไม่ผ่าน</td>
+        </tr>
+        <tr>
+          <td>โมเดล bias กับบางกลุ่มหรือบางเครื่อง scan</td>
+          <td>monitor ตาม hospital, scanner, age group, sex และ image quality</td>
+        </tr>
+        <tr>
+          <td>ใช้ข้อมูลเกิน consent</td>
+          <td>purpose check ก่อน export/research/training และบันทึก audit ทุกครั้ง</td>
+        </tr>
+        <tr>
+          <td>เปลี่ยนโมเดลแล้วผลย้อนหลังอธิบายไม่ได้</td>
+          <td>model registry, threshold version, release note และ immutable analysis record</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="page">
+    <header class="section-header">
+      <div class="eyebrow">08 / Delivery Plan</div>
+      <h2>แผนการพัฒนาเป็น Phase</h2>
+    </header>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Phase</th>
+          <th>เป้าหมาย</th>
+          <th>Deliverables</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Phase 1: MVP Workflow</td>
+          <td>ทำระบบที่ใช้งาน end-to-end ได้ด้วย mock/baseline AI</td>
+          <td>login, hospital dashboard, case, upload, de-id, quality check, mock analysis, report, audit</td>
+        </tr>
+        <tr>
+          <td>Phase 2: Clinical Pilot Readiness</td>
+          <td>เตรียมระบบสำหรับทดลองกับโรงพยาบาลพาร์ทเนอร์</td>
+          <td>consent, data agreement, API ingestion, stronger security, doctor review, feedback module</td>
+        </tr>
+        <tr>
+          <td>Phase 3: Real AI Integration</td>
+          <td>เริ่มใช้โมเดล segmentation/risk model จากข้อมูลจริง</td>
+          <td>model registry, validation dashboard, bias/drift monitoring, training sandbox</td>
+        </tr>
+        <tr>
+          <td>Phase 4: Hospital Integration</td>
+          <td>เชื่อมระบบโรงพยาบาลจริง</td>
+          <td>DICOMweb/PACS integration, FHIR/API mapping, production deployment, operational monitoring</td>
+        </tr>
+        <tr>
+          <td>Phase 5: Regulatory & Scale</td>
+          <td>เตรียมขยายเชิงพาณิชย์และ regulatory</td>
+          <td>clinical validation package, quality process, SaMD documentation, certification preparation</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>คำแนะนำแบบ senior</h3>
+    <ul>
+      <li>อย่าเริ่มจาก AI ก่อน ให้เริ่มจาก secure workflow และ data governance ก่อน เพราะเป็นสิ่งที่โรงพยาบาลต้องเชื่อถือ</li>
+      <li>ทำ mock AI ให้หน้าระบบและ pipeline เหมือนของจริง เพื่อให้เปลี่ยนเป็นโมเดลจริงภายหลังได้โดยไม่รื้อระบบ</li>
+      <li>ทุกผลวิเคราะห์ต้องบอกได้ว่าใช้ข้อมูลอะไร โมเดลเวอร์ชันไหน threshold ไหน และใครเป็นคน approve</li>
+      <li>การใช้ข้อมูลโรงพยาบาลเพื่อ train model ต้องผ่าน consent, curation, validation และ release gate ไม่ใช่เอา production data ไป train อัตโนมัติ</li>
+    </ul>
+
+    <div class="footer-note">
+      เอกสารนี้เป็น technical/product planning summary สำหรับเริ่มพัฒนา prototype และ MVP
+      ไม่ใช่เอกสารรับรองผลทางการแพทย์หรือเอกสาร regulatory ฉบับสมบูรณ์
+    </div>
+  </section>
+</body>
+</html>

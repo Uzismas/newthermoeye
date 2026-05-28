@@ -1,0 +1,26 @@
+[
+  {
+    "file": "test-assets/scans/real-reference/duke-reference-normal-octa.png",
+    "source": "Duke Eye Center article image panel labelled cognitively healthy adult",
+    "source_url": "https://dukeeyecenter.duke.edu/news/could-eye-doctor-diagnose-alzheimers-you-have-symptoms",
+    "expected_result_after_upload": "Normal screening pattern",
+    "fixture_note": "Reference fixture uses controlled metrics so the demo upload analyzer maps this Duke panel to the normal case.",
+    "image_size": {
+      "width": 666,
+      "height": 666
+    },
+    "medical_use": "demo/reference fixture only; not patient diagnosis; source reuse rights must be checked before public distribution"
+  },
+  {
+    "file": "test-assets/scans/real-reference/duke-reference-alzheimer-risk-octa.png",
+    "source": "Duke Eye Center article image panel labelled adult with Alzheimer's disease",
+    "source_url": "https://dukeeyecenter.duke.edu/news/could-eye-doctor-diagnose-alzheimers-you-have-symptoms",
+    "expected_result_after_upload": "Alzheimer-risk screening pattern",
+    "fixture_note": "Reference fixture uses controlled metrics so the demo upload analyzer maps this Duke panel to the risk case.",
+    "image_size": {
+      "width": 666,
+      "height": 666
+    },
+    "medical_use": "demo/reference fixture only; not patient diagnosis; source reuse rights must be checked before public distribution"
+  }
+]

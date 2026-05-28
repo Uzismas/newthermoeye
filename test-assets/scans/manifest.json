@@ -1,0 +1,191 @@
+[
+  {
+    "file": "test-assets/scans/upload-demo-normal-octa.png",
+    "intended_demo_label": "upload_demo_normal",
+    "current_app_expected_result": "Normal screening pattern",
+    "demo_age_used_for_expected_result": 68,
+    "medical_use": "synthetic demo asset only; not diagnostic; not derived from patient data",
+    "metrics_for_current_app": {
+      "artifactScore": 3,
+      "brightness": 128,
+      "confidenceScore": 95,
+      "contrast": 69,
+      "demoEngineVersion": "thermoeye-literature-ruleset-2026.05",
+      "fazRiskProxy": 8,
+      "imageHeight": 375,
+      "imageWidth": 666,
+      "perfusionDensityProxy": 94,
+      "qualityScore": 99,
+      "sharpness": 24,
+      "vesselDensity": 82
+    }
+  },
+  {
+    "file": "test-assets/scans/upload-demo-alzheimer-risk-octa.png",
+    "intended_demo_label": "upload_demo_alzheimer_risk",
+    "current_app_expected_result": "Alzheimer-risk screening pattern",
+    "demo_age_used_for_expected_result": 68,
+    "medical_use": "synthetic demo asset only; not diagnostic; not derived from patient data",
+    "metrics_for_current_app": {
+      "artifactScore": 25,
+      "brightness": 192,
+      "confidenceScore": 84,
+      "contrast": 48,
+      "demoEngineVersion": "thermoeye-literature-ruleset-2026.05",
+      "fazRiskProxy": 54,
+      "imageHeight": 375,
+      "imageWidth": 666,
+      "perfusionDensityProxy": 28,
+      "qualityScore": 75.43721131337901,
+      "sharpness": 25,
+      "vesselDensity": 22
+    }
+  },
+  {
+    "file": "test-assets/scans/upload-demo-quality-blocked-octa.png",
+    "intended_demo_label": "upload_demo_quality_blocked",
+    "current_app_expected_result": "Quality blocked",
+    "demo_age_used_for_expected_result": 68,
+    "medical_use": "synthetic demo asset only; not diagnostic; not derived from patient data",
+    "metrics_for_current_app": {
+      "artifactScore": 46,
+      "brightness": 216,
+      "confidenceScore": 65,
+      "contrast": 31,
+      "demoEngineVersion": "thermoeye-literature-ruleset-2026.05",
+      "fazRiskProxy": 73,
+      "imageHeight": 375,
+      "imageWidth": 666,
+      "perfusionDensityProxy": 18,
+      "qualityScore": 53.82613726677732,
+      "sharpness": 14,
+      "vesselDensity": 12
+    }
+  },
+  {
+    "file": "test-assets/scans/normal-control-01-octa.png",
+    "intended_demo_label": "normal_control",
+    "current_app_expected_result": "Normal screening pattern",
+    "demo_age_used_for_expected_result": 34,
+    "medical_use": "synthetic demo asset only; not diagnostic; not derived from patient data",
+    "metrics_for_current_app": {
+      "artifactScore": 3,
+      "brightness": 137,
+      "confidenceScore": 95,
+      "contrast": 66,
+      "demoEngineVersion": "thermoeye-literature-ruleset-2026.05",
+      "fazRiskProxy": 8,
+      "imageHeight": 375,
+      "imageWidth": 666,
+      "perfusionDensityProxy": 80,
+      "qualityScore": 99,
+      "sharpness": 27,
+      "vesselDensity": 69
+    }
+  },
+  {
+    "file": "test-assets/scans/normal-control-02-octa.png",
+    "intended_demo_label": "normal_control",
+    "current_app_expected_result": "Normal screening pattern",
+    "demo_age_used_for_expected_result": 34,
+    "medical_use": "synthetic demo asset only; not diagnostic; not derived from patient data",
+    "metrics_for_current_app": {
+      "artifactScore": 3,
+      "brightness": 138,
+      "confidenceScore": 95,
+      "contrast": 67,
+      "demoEngineVersion": "thermoeye-literature-ruleset-2026.05",
+      "fazRiskProxy": 8,
+      "imageHeight": 375,
+      "imageWidth": 666,
+      "perfusionDensityProxy": 84,
+      "qualityScore": 99,
+      "sharpness": 26,
+      "vesselDensity": 72
+    }
+  },
+  {
+    "file": "test-assets/scans/normal-control-03-octa.png",
+    "intended_demo_label": "normal_control",
+    "current_app_expected_result": "Normal screening pattern",
+    "demo_age_used_for_expected_result": 34,
+    "medical_use": "synthetic demo asset only; not diagnostic; not derived from patient data",
+    "metrics_for_current_app": {
+      "artifactScore": 3,
+      "brightness": 141,
+      "confidenceScore": 95,
+      "contrast": 65,
+      "demoEngineVersion": "thermoeye-literature-ruleset-2026.05",
+      "fazRiskProxy": 8,
+      "imageHeight": 375,
+      "imageWidth": 666,
+      "perfusionDensityProxy": 76,
+      "qualityScore": 99,
+      "sharpness": 27,
+      "vesselDensity": 65
+    }
+  },
+  {
+    "file": "test-assets/scans/autism-demo-placeholder-01-octa.png",
+    "intended_demo_label": "autism_placeholder",
+    "current_app_expected_result": "Alzheimer-risk screening pattern",
+    "demo_age_used_for_expected_result": 12,
+    "medical_use": "synthetic demo asset only; not diagnostic; not derived from patient data",
+    "metrics_for_current_app": {
+      "artifactScore": 18,
+      "brightness": 183,
+      "confidenceScore": 89,
+      "contrast": 53,
+      "demoEngineVersion": "thermoeye-literature-ruleset-2026.05",
+      "fazRiskProxy": 46,
+      "imageHeight": 375,
+      "imageWidth": 666,
+      "perfusionDensityProxy": 34,
+      "qualityScore": 81.90629394821242,
+      "sharpness": 26,
+      "vesselDensity": 27
+    }
+  },
+  {
+    "file": "test-assets/scans/autism-demo-placeholder-02-octa.png",
+    "intended_demo_label": "autism_placeholder",
+    "current_app_expected_result": "Alzheimer-risk screening pattern",
+    "demo_age_used_for_expected_result": 12,
+    "medical_use": "synthetic demo asset only; not diagnostic; not derived from patient data",
+    "metrics_for_current_app": {
+      "artifactScore": 18,
+      "brightness": 183,
+      "confidenceScore": 90,
+      "contrast": 53,
+      "demoEngineVersion": "thermoeye-literature-ruleset-2026.05",
+      "fazRiskProxy": 45,
+      "imageHeight": 375,
+      "imageWidth": 666,
+      "perfusionDensityProxy": 35,
+      "qualityScore": 82.06750158190388,
+      "sharpness": 26,
+      "vesselDensity": 28
+    }
+  },
+  {
+    "file": "test-assets/scans/autism-demo-placeholder-03-octa.png",
+    "intended_demo_label": "autism_placeholder",
+    "current_app_expected_result": "Alzheimer-risk screening pattern",
+    "demo_age_used_for_expected_result": 12,
+    "medical_use": "synthetic demo asset only; not diagnostic; not derived from patient data",
+    "metrics_for_current_app": {
+      "artifactScore": 14,
+      "brightness": 176,
+      "confidenceScore": 94,
+      "contrast": 58,
+      "demoEngineVersion": "thermoeye-literature-ruleset-2026.05",
+      "fazRiskProxy": 36,
+      "imageHeight": 375,
+      "imageWidth": 666,
+      "perfusionDensityProxy": 44,
+      "qualityScore": 86.46925408401194,
+      "sharpness": 25,
+      "vesselDensity": 35
+    }
+  }
+]
