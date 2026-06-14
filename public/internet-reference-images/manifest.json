@@ -1,0 +1,83 @@
+[
+  {
+    "file": "01_alzheimer-risk_duke-octa-retinal-vessel-density.jpeg",
+    "expected_case": "Alzheimer Risk",
+    "what_it_is": "Duke Eye Center OCTA comparison panel: cognitively healthy adult versus adult with Alzheimer's disease, showing relative retinal vessel-density difference.",
+    "source": "Duke Eye Center",
+    "source_url": "https://dukeeyecenter.duke.edu/news/could-eye-doctor-diagnose-alzheimers-you-have-symptoms",
+    "download_url": "https://dukeeyecenter.duke.edu/sites/default/files/styles/freeform_scaled/public/field/image/eye_scan_and_alzheimers_3.11.19.jpeg?itok=uL62Iwup",
+    "use_note": "Reference image only; not patient data; check reuse rights before public distribution."
+  },
+  {
+    "file": "02_diabetic-retinopathy_springer-fa-octa-comparison.png",
+    "expected_case": "Diabetic Retinopathy",
+    "what_it_is": "Eye and Vision/Springer figure comparing angiography/OCTA views in diabetic retinopathy management.",
+    "source": "Eye and Vision / Springer Nature",
+    "source_url": "https://eandv.biomedcentral.com/articles/10.1186/s40662-019-0160-3",
+    "download_url": "https://media.springernature.com/lw685/springer-static/image/art%3A10.1186%2Fs40662-019-0160-3/MediaObjects/40662_2019_160_Fig1_HTML.png",
+    "use_note": "Reference image only; not patient data; check article license/reuse terms before public distribution."
+  },
+  {
+    "file": "03_diabetic-retinopathy_springer-montaged-octa.png",
+    "expected_case": "Diabetic Retinopathy",
+    "what_it_is": "Eye and Vision/Springer montaged OCTA diabetic retinopathy figure showing wider-field vascular/non-perfusion information.",
+    "source": "Eye and Vision / Springer Nature",
+    "source_url": "https://eandv.biomedcentral.com/articles/10.1186/s40662-019-0160-3",
+    "download_url": "https://media.springernature.com/lw685/springer-static/image/art%3A10.1186%2Fs40662-019-0160-3/MediaObjects/40662_2019_160_Fig2_HTML.png",
+    "use_note": "Reference image only; not patient data; check article license/reuse terms before public distribution."
+  },
+  {
+    "file": "04_normal_eyewiki-healthy-octa-disc.png",
+    "expected_case": "Normal",
+    "what_it_is": "EyeWiki OCTA healthy optic nerve/disc example used as a normal comparison image.",
+    "source": "EyeWiki / American Academy of Ophthalmology",
+    "source_url": "https://eyewiki.org/OCT-Angiography_and_Glaucoma",
+    "download_url": "https://eyewiki-images.s3.us-east-va.perf.cloud.ovh.us/thumb/8/85/Fig_3_anamiguel_octa_healthy.png/557px-Fig_3_anamiguel_octa_healthy.png",
+    "use_note": "Reference image only; check EyeWiki image reuse terms before public distribution."
+  },
+  {
+    "file": "05_glaucoma_eyewiki-glaucomatous-octa-disc.png",
+    "expected_case": "Glaucoma",
+    "what_it_is": "EyeWiki glaucomatous OCTA optic nerve/disc example with density map and OCT B-scan panels.",
+    "source": "EyeWiki / American Academy of Ophthalmology",
+    "source_url": "https://eyewiki.org/OCT-Angiography_and_Glaucoma",
+    "download_url": "https://eyewiki-images.s3.us-east-va.perf.cloud.ovh.us/thumb/6/66/Fig_4_anamiguel_octa_glaucoma.png/552px-Fig_4_anamiguel_octa_glaucoma.png",
+    "use_note": "Reference image only; check EyeWiki image reuse terms before public distribution."
+  },
+  {
+    "file": "06_amd_amdbook-type1-cnv-octa.png",
+    "expected_case": "AMD",
+    "what_it_is": "AMD Book multimodal imaging/OCTA example consistent with choroidal neovascularization in AMD.",
+    "source": "AMD Book",
+    "source_url": "https://amdbook.org/content/optical-coherence-tomography-age-related-macular-degeneration",
+    "download_url": "https://amdbook.org/sites/default/files/config_EJCNh7MSAK1MrZOMYRbPxU6eArWRZoTxEj0OgQ86V9biA3qgSvHVaPG3Ylfkau8nHtARcgguKg/optical-coherence-tomography-age-related-macular-degeneration-image43.png",
+    "use_note": "Reference image only; check AMD Book reuse terms before public distribution."
+  },
+  {
+    "file": "07_amd_amdbook-type2-cnv-octa.png",
+    "expected_case": "AMD",
+    "what_it_is": "AMD Book multimodal imaging/OCTA example showing another CNV/AMD pattern.",
+    "source": "AMD Book",
+    "source_url": "https://amdbook.org/content/optical-coherence-tomography-age-related-macular-degeneration",
+    "download_url": "https://amdbook.org/sites/default/files/config_EJCNh7MSAK1MrZOMYRbPxU6eArWRZoTxEj0OgQ86V9biA3qgSvHVaPG3Ylfkau8nHtARcgguKg/optical-coherence-tomography-age-related-macular-degeneration-image44.png",
+    "use_note": "Reference image only; check AMD Book reuse terms before public distribution."
+  },
+  {
+    "file": "08_pathologic-myopia_eyerounds-oct-cnvm-lacquer-crack.jpg",
+    "expected_case": "Pathologic Myopia",
+    "what_it_is": "EyeRounds OCT figure from a pathologic myopia case with CNVM/lacquer crack context.",
+    "source": "EyeRounds / University of Iowa",
+    "source_url": "https://eyerounds.org/cases/310-pathologic-myopia.htm",
+    "download_url": "https://eyerounds.org/cases-i/case310/Fig3-OCT-LRG.jpg",
+    "use_note": "Reference image only; check EyeRounds reuse terms before public distribution."
+  },
+  {
+    "file": "09_pathologic-myopia_eyerounds-fundus-lacquer-crack.jpg",
+    "expected_case": "Pathologic Myopia",
+    "what_it_is": "EyeRounds fundus image from pathologic myopia case showing lacquer crack/myopic degeneration context.",
+    "source": "EyeRounds / University of Iowa",
+    "source_url": "https://eyerounds.org/cases/310-pathologic-myopia.htm",
+    "download_url": "https://eyerounds.org/cases-i/case310/fig1-clarus-color-fundus-OD-LRG.jpg",
+    "use_note": "Reference image only; check EyeRounds reuse terms before public distribution."
+  }
+]

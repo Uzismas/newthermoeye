@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Thermoeye — Project Summary</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; font-size: 13px; color: #0d1b2e; background: #f0f5fa; line-height: 1.5; }
+  @media print {
+    body { background: #fff; font-size: 11px; }
+    .no-print { display: none; }
+    .page { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; }
+    section { break-inside: avoid; }
+  }
+  .cover { background: linear-gradient(135deg, #081628, #0d2040); color: #fff; padding: 56px 48px; }
+  .cover h1 { font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em; }
+  .cover p { color: rgba(255,255,255,0.65); margin-top: 8px; font-size: 0.95rem; }
+  .badge { display: inline-flex; gap: 6px; align-items: center; margin-top: 20px; padding: 5px 12px; border-radius: 999px; background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3); color: #7dd3fc; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+  .page { max-width: 860px; margin: 0 auto; background: #fff; box-shadow: 0 4px 32px rgba(0,0,0,0.08); }
+  .body { padding: 40px 48px; }
+  h2 { font-size: 1.1rem; font-weight: 800; color: #0369a1; margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #e0f0fb; }
+  h3 { font-size: 0.88rem; font-weight: 700; color: #0d1b2e; margin: 16px 0 6px; }
+  p { color: #344057; font-size: 0.84rem; margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.8rem; }
+  th { background: #f0f7ff; color: #0369a1; font-weight: 700; text-align: left; padding: 7px 10px; border: 1px solid #dde6f0; }
+  td { padding: 6px 10px; border: 1px solid #dde6f0; color: #344057; vertical-align: top; }
+  tr:hover td { background: #f8fafd; }
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.68rem; font-weight: 700; }
+  .done  { background: #ecfdf3; color: #067647; }
+  .warn  { background: #fffaeb; color: #b54708; }
+  .todo  { background: #f0f5fa; color: #5a6a82; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 12px 0; }
+  .card { padding: 14px; border: 1px solid #dde6f0; border-radius: 8px; background: #f8fafd; }
+  .card strong { display: block; font-size: 0.82rem; color: #0369a1; margin-bottom: 4px; }
+  .card span { font-size: 0.78rem; color: #5a6a82; }
+  ul { padding-left: 18px; color: #344057; font-size: 0.82rem; }
+  li { margin-bottom: 4px; }
+  code { font-family: monospace; background: #f0f5fa; padding: 1px 5px; border-radius: 3px; font-size: 0.78rem; color: #0369a1; }
+  .footer { padding: 20px 48px; border-top: 1px solid #dde6f0; color: #8a9ab0; font-size: 0.72rem; display: flex; justify-content: space-between; }
+  .print-btn { position: fixed; top: 16px; right: 16px; padding: 9px 18px; border-radius: 8px; background: #0369a1; color: #fff; border: none; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+<button class="no-print print-btn" onclick="window.print()">🖨 Print / Save PDF</button>
+<div class="page">
+
+  <div class="cover">
+    <div class="badge">🔬 Thermoeye Project Report</div>
+    <h1>Thermoeye<br>Clinical Screening Console</h1>
+    <p>Multi-disease retinal screening platform · Project progress summary</p>
+    <p style="margin-top:12px; font-size:0.78rem; color:rgba(255,255,255,0.45)">Generated: June 2026 · Prepared by Kiro AI</p>
+  </div>
+
+  <div class="body">
+
+    <h2>1. ภาพรวมโปรเจค</h2>
+    <p>Thermoeye คือ web-based clinical decision support system สำหรับคัดกรองโรคจากภาพ OCTA/OCT (Optical Coherence Tomography Angiography) ของจอตา โดยใช้ AI วิเคราะห์ retinal biomarkers เพื่อช่วยแพทย์ตรวจจับโรค 6 ชนิด</p>
+    <div class="grid2">
+      <div class="card"><strong>Tech Stack</strong><span>Next.js 16 · React 19 · TypeScript · FastAPI (stub) · Claude Vision API</span></div>
+      <div class="card"><strong>Target User</strong><span>แพทย์ผู้เชี่ยวชาญ / รพ. ที่ต้องการ screening เบื้องต้นก่อน refer</span></div>
+      <div class="card"><strong>Status</strong><span>MVP frontend เสร็จ · Backend stub · Claude Vision integrated</span></div>
+      <div class="card"><strong>Diseases Screened</strong><span>6 โรค: AD · DR · Glaucoma · AMD · HTN · Pathologic Myopia</span></div>
+    </div>
+
+    <h2>2. สิ่งที่ทำเสร็จแล้ว</h2>
+
+    <h3>🎨 UI/UX (Medical Design)</h3>
+    <table>
+      <tr><th>รายการ</th><th>รายละเอียด</th><th>สถานะ</th></tr>
+      <tr><td>Medical blue color palette</td><td>เปลี่ยนจาก purple → medical blue #0369a1, Inter font</td><td><span class="chip done">✅ Done</span></td></tr>
+      <tr><td>Subnav animations</td><td>Click subnav → fade+slide 300ms cubic-bezier</td><td><span class="chip done">✅ Done</span></td></tr>
+      <tr><td>Responsive design</td><td>Mobile, tablet, desktop breakpoints</td><td><span class="chip done">✅ Done</span></td></tr>
+      <tr><td>Accessibility</td><td>axe-core passed, ARIA labels, semantic HTML, WCAG contrast</td><td><span class="chip done">✅ Done</span></td></tr>
+      <tr><td>Skills (impeccable)</td><td>Downloaded animate.md, polish.md, product.md</td><td><span class="chip done">✅ Done</span></td></tr>
+    </table>
+
+    <h3>🧠 Multi-Disease AI Classifier</h3>
+    <table>
+      <tr><th>โรค</th><th>Biomarker ที่ใช้ detect</th><th>AUC Literature</th></tr>
+      <tr><td>Alzheimer's Risk</td><td>Vessel density ↓ + FAZ ↑ + Perfusion ↓ (age-weighted)</td><td>0.85–0.92</td></tr>
+      <tr><td>Diabetic Retinopathy</td><td>FAZ enlargement + capillary dropout + brightness (exudates)</td><td>0.94–0.97</td></tr>
+      <tr><td>Glaucoma</td><td>Peripapillary perfusion ↓ + RNFL dropout pattern</td><td>0.90–0.96</td></tr>
+      <tr><td>AMD</td><td>Brightness ↑ (drusen/CNV) + RPE artifact signal</td><td>0.88–0.93</td></tr>
+      <tr><td>Hypertensive Retinopathy</td><td>AV nicking pattern + vascular irregularity</td><td>0.82–0.89</td></tr>
+      <tr><td>Pathologic Myopia</td><td>Contrast ↓ + brightness ↓ (chorioretinal atrophy)</td><td>0.87–0.91</td></tr>
+    </table>
+
+    <h3>🔬 Claude Vision API Integration</h3>
+    <table>
+      <tr><th>รายการ</th><th>รายละเอียด</th><th>สถานะ</th></tr>
+      <tr><td>/api/analyze route</td><td>รับ image → ส่ง Claude Vision → JSON multi-disease result</td><td><span class="chip done">✅ Done</span></td></tr>
+      <tr><td>Canvas fallback</td><td>ถ้าไม่มี API key → ใช้ canvas pixel analysis</td><td><span class="chip done">✅ Done</span></td></tr>
+      <tr><td>Error handling</td><td>503 retry, JSON parse, quality_blocked fallback</td><td><span class="chip done">✅ Done</span></td></tr>
+      <tr><td>VisionResult type</td><td>TypeScript types ครบ + integrated กับ classifier</td><td><span class="chip done">✅ Done</span></td></tr>
+      <tr><td>Real OCT images</td><td>Downloaded 10 real OCT images (lidaboo/Retinal-OCT-Images)</td><td><span class="chip done">✅ Done</span></td></tr>
+    </table>
+
+    <h3>📊 Clinical Console (8 Views)</h3>
+    <table>
+      <tr><th>View</th><th>Features</th><th>Status</th></tr>
+      <tr><td>Dashboard</td><td>6-disease metrics, recent scans, AI insight, review workflow</td><td><span class="chip done">✅</span></td></tr>
+      <tr><td>Upload New Scan</td><td>File upload → Claude Vision analysis → auto-navigate to Analysis</td><td><span class="chip done">✅</span></td></tr>
+      <tr><td>Analysis Results</td><td>Primary disease + differentials panel + OCTA visualizations</td><td><span class="chip done">✅</span></td></tr>
+      <tr><td>Reports</td><td>Preview + download (gated by doctor approval)</td><td><span class="chip done">✅</span></td></tr>
+      <tr><td>Data Insights</td><td>Evidence board 17 refs (6 diseases), disease filter tabs</td><td><span class="chip done">✅</span></td></tr>
+      <tr><td>Model Performance</td><td>6 functional subtabs: Overview, Metrics, Calibration, Errors, Drift, Versions</td><td><span class="chip done">✅</span></td></tr>
+      <tr><td>Data Management</td><td>5 functional subtabs: Overview, Sources, De-ID, Consent, Usage Log</td><td><span class="chip done">✅</span></td></tr>
+      <tr><td>Patients / Settings</td><td>Patient grid, hospital config</td><td><span class="chip done">✅</span></td></tr>
+    </table>
+
+    <h3>🔧 Backend</h3>
+    <table>
+      <tr><th>รายการ</th><th>รายละเอียด</th><th>สถานะ</th></tr>
+      <tr><td>Next.js Mock API</td><td>session, cases, review, report, audit, analyze (7 routes)</td><td><span class="chip done">✅ Done</span></td></tr>
+      <tr><td>FastAPI stub</td><td>main.py + models.py ครบ workflow + Docker Compose</td><td><span class="chip done">✅ Done</span></td></tr>
+      <tr><td>PostgreSQL schema</td><td>ออกแบบไว้ใน MVP_BACKEND_PLAN.md</td><td><span class="chip warn">📋 Planned</span></td></tr>
+      <tr><td>Real database</td><td>ยังไม่ได้ implement</td><td><span class="chip todo">⏳ Todo</span></td></tr>
+    </table>
+
+    <h3>🤖 ML Training</h3>
+    <table>
+      <tr><th>รายการ</th><th>รายละเอียด</th><th>สถานะ</th></tr>
+      <tr><td>DR training script</td><td>EfficientNet-B4 + APTOS 2019 dataset → ONNX export</td><td><span class="chip done">✅ Done</span></td></tr>
+      <tr><td>Requirements file</td><td>torch, torchvision, onnx, kaggle</td><td><span class="chip done">✅ Done</span></td></tr>
+      <tr><td>Dataset download</td><td>ต้องใช้ Kaggle credentials</td><td><span class="chip warn">⚠️ Need Kaggle key</span></td></tr>
+      <tr><td>Real training</td><td>ยังไม่ได้รัน</td><td><span class="chip todo">⏳ Todo</span></td></tr>
+    </table>
+
+    <h2>3. Research References (17 แหล่ง)</h2>
+    <div class="grid2">
+      <div class="card"><strong>Alzheimer's (5 refs)</strong>
+        <ul style="margin-top:6px">
+          <li>ResearchGate OCTA brain-disorder figure</li>
+          <li>ResearchGate AD retinovascular figure</li>
+          <li>Dementia Australia research brief</li>
+          <li>Duke Eye Center OCTA article</li>
+          <li>PMC retinal biomarker review</li>
+        </ul>
+      </div>
+      <div class="card"><strong>Other Diseases (12 refs)</strong>
+        <ul style="margin-top:6px">
+          <li>DR: Retina Specialist, MDPI J. Clin. Med, ResearchGate</li>
+          <li>Glaucoma: EyeWiki/AAO, Glaucoma Today, MDPI Sensors</li>
+          <li>AMD: AMD Book, ResearchGate late-stage</li>
+          <li>HTN: Waterloo Eye, Cureus OCTA</li>
+          <li>Myopia: MDPI Diagnostics, Review of Ophthalmology</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>4. สิ่งที่ยังต้องทำ</h2>
+    <table>
+      <tr><th>งาน</th><th>Priority</th><th>เวลาประมาณ</th></tr>
+      <tr><td>ต่อ API key จริง (Anthropic) เพื่อทดสอบ Vision</td><td><span class="chip warn">สูง</span></td><td>ทันที</td></tr>
+      <tr><td>Train DR model จาก APTOS 2019</td><td><span class="chip warn">สูง</span></td><td>1-2 สัปดาห์</td></tr>
+      <tr><td>เชื่อม FastAPI backend จริง (PostgreSQL)</td><td><span class="chip warn">กลาง</span></td><td>2-4 สัปดาห์</td></tr>
+      <tr><td>PDF report generation จริง</td><td><span class="chip warn">กลาง</span></td><td>1 สัปดาห์</td></tr>
+      <tr><td>Clinical validation + PDPA compliance</td><td><span class="chip todo">ต้องทำก่อน deploy จริง</span></td><td>3-6 เดือน</td></tr>
+    </table>
+
+    <h2>5. คำเตือนสำคัญ</h2>
+    <p>⚠️ <strong>ระบบนี้เป็น Clinical Decision Support เท่านั้น</strong> — ไม่ใช่การวินิจฉัยโรคโดยตรง ผลทุกอย่างต้องผ่าน doctor review ก่อน release report</p>
+    <p>⚠️ <strong>Canvas analysis ≠ AI จริง</strong> — classifier rule-based ปัจจุบันใช้ pixel metrics ไม่ใช่ trained ML model ผล accuracy ต่ำบน real images</p>
+    <p>⚠️ <strong>ต้องการ Kaggle credentials</strong> เพื่อ download training datasets (APTOS, Kermany, RIM-ONE, PALM)</p>
+
+  </div>
+
+  <div class="footer">
+    <span>Thermoeye Clinical Screening Console — Project Summary</span>
+    <span>Generated June 2026 · Confidential</span>
+  </div>
+</div>
+</body>
+</html>

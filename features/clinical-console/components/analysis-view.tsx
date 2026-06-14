@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import { clinicalEvidenceSources, clinicalModelVersion, getCaseClassification, getClinicalResultLabel } from "../clinical-analysis";
 import { researchEvidence } from "../mock-data";
-import type { CaseRecord } from "../types";
+import type { CaseRecord, DifferentialSignal, DiseaseKind } from "../types";
 import { PanelHeader, SectionHeading } from "./shared";
 
 const referencePipelineImages = {
@@ -16,6 +16,7 @@ export function AnalysisView({ selectedCase }: { selectedCase: CaseRecord }) {
   const riskDecimal = selectedCase.riskLevel === "blocked" ? "N/A" : (selectedCase.riskScore / 100).toFixed(2);
   const metrics = selectedCase.analysisMetrics;
   const classification = getCaseClassification(selectedCase);
+  const diseaseSignals = buildDiseaseSignals(classification.kind, classification.riskScore, classification.differentials);
 
   return (
     <section className="view active" aria-labelledby="analysis-title">
@@ -74,24 +75,38 @@ export function AnalysisView({ selectedCase }: { selectedCase: CaseRecord }) {
       </div>
 
       <section className="panel clinical-classification-panel" aria-labelledby="clinical-classification-title">
-        <PanelHeader eyebrow="Locked clinical ruleset" title="Two-outcome screening result" badge={clinicalModelVersion} badgeTone="secure" />
+        <PanelHeader eyebrow="Multi-disease screening ruleset" title="AI disease screening result" badge={clinicalModelVersion} badgeTone="secure" />
         <div className="classification-grid">
           <div className={`classification-card ${classification.kind === "normal" ? "active" : ""}`}>
             <strong>Normal</strong>
             <span>Preserved vessel-density proxy and no elevated FAZ/perfusion-risk proxy.</span>
           </div>
-          <div className={`classification-card ${classification.kind === "alzheimer_risk" ? "active risk" : ""}`}>
-            <strong>Alzheimer risk</strong>
-            <span>Reduced vessel-density proxy with FAZ/perfusion-risk deviation. Needs clinician correlation.</span>
+          <div className={`classification-card ${classification.kind !== "normal" && classification.kind !== "quality_blocked" ? "active risk" : ""}`}>
+            <strong>{getClinicalResultLabel(classification.kind)}</strong>
+            <span>{classification.finding.slice(0, 120)}…</span>
           </div>
+        </div>
+        <div className="disease-signal-list" aria-label="Disease signal percentages">
+          {diseaseSignals.map((signal) => (
+            <div className={signal.isPrimary ? "disease-signal-row primary" : "disease-signal-row"} key={signal.kind}>
+              <span>{signal.label}</span>
+              <div className="disease-signal-meter" aria-hidden="true">
+                <i style={{ width: `${signal.score}%` }} />
+              </div>
+              <strong>{signal.score}%</strong>
+            </div>
+          ))}
         </div>
         <div className="classification-evidence">
           {classification.evidence.map((item) => (
             <span key={item}>{item}</span>
           ))}
         </div>
+        {classification.differentials && classification.differentials.length > 0 && (
+          <DifferentialPanel differentials={classification.differentials} />
+        )}
         <p>
-          This rule locks the report language to screening support. It does not diagnose Alzheimer&apos;s disease and should be interpreted with clinical history, cognitive screening, and physician review.
+          This rule supports clinical screening across 6 retinal conditions. It does not replace clinical diagnosis and must be interpreted with patient history, specialist review, and appropriate follow-up testing.
         </p>
       </section>
 
@@ -300,6 +315,50 @@ function ScanPanel({ title, label, children }: { title: string; label: string; c
       </div>
     </section>
   );
+}
+
+function DifferentialPanel({ differentials }: { differentials: DifferentialSignal[] }) {
+  return (
+    <div className="differential-panel" aria-label="Differential conditions">
+      <p className="differential-heading">Differential conditions (other signals detected)</p>
+      <div className="differential-grid">
+        {differentials.map((d) => (
+          <div key={d.kind} className="differential-card">
+            <strong>{d.label}</strong>
+            <span className="differential-score">{d.score}% signal</span>
+            {d.evidence.slice(0, 2).map((e) => <small key={e}>{e}</small>)}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const diseaseSignalLabels: Record<Exclude<DiseaseKind, "quality_blocked">, string> = {
+  normal: "Normal",
+  alzheimer_risk: "Alzheimer Risk",
+  diabetic_retinopathy: "Diabetic Retinopathy",
+  glaucoma: "Glaucoma",
+  amd: "AMD",
+  hypertensive_retinopathy: "Hypertensive Retinopathy",
+  pathologic_myopia: "Pathologic Myopia",
+};
+
+function buildDiseaseSignals(primaryKind: DiseaseKind, primaryScore: number, differentials?: DifferentialSignal[]) {
+  if (primaryKind === "quality_blocked") {
+    return [{ kind: "quality_blocked", label: "Quality Blocked", score: 0, isPrimary: true }];
+  }
+
+  return (Object.entries(diseaseSignalLabels) as [Exclude<DiseaseKind, "quality_blocked">, string][])
+    .map(([kind, label]) => {
+      const differential = differentials?.find((item) => item.kind === kind);
+      const isPrimary = kind === primaryKind;
+      const score = isPrimary ? primaryScore : differential?.score ?? 0;
+
+      return { kind, label, score, isPrimary };
+    })
+    .filter((row) => row.isPrimary || row.score > 0)
+    .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || b.score - a.score);
 }
 
 function MetricLine({ label, value, tone }: { label: string; value: string; tone: "low" | "high" }) {

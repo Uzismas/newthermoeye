@@ -35,7 +35,7 @@ export function ReportView({
               <h2 id="report-document-title">{selectedCase.id}</h2>
             </div>
             <span className={`risk-chip ${riskTone[selectedCase.riskLevel]}`}>
-              {classification.kind === "quality_blocked" ? "Blocked" : `${getClinicalResultLabel(classification.kind)} ${selectedCase.riskScore}`}
+              {classification.kind === "quality_blocked" ? "Blocked" : `${getClinicalResultLabel(classification.kind)} ${selectedCase.riskScore}%`}
             </span>
           </div>
 
@@ -53,7 +53,7 @@ export function ReportView({
               </div>
               <div>
                 <dt>Screening result</dt>
-                <dd>{getClinicalResultLabel(classification.kind)}</dd>
+                <dd>{getClinicalResultLabel(classification.kind)} {classification.kind === "quality_blocked" ? "" : `${selectedCase.riskScore}%`}</dd>
               </div>
               <div>
                 <dt>AI confidence</dt>
@@ -126,7 +126,7 @@ export function ReportView({
               <li>Threshold: 2026.05</li>
               <li>Purpose: screening support only</li>
               <li>Raw identifiers: de-identified before analysis</li>
-              <li>Report wording: locked to normal, Alzheimer-risk, or quality-blocked screening outcomes</li>
+              <li>Report wording: locked to multi-disease screening support language</li>
             </ul>
           </section>
 
@@ -155,7 +155,7 @@ export function ReportView({
             </div>
             <div className="check-item pass">
               <strong>Screening language locked</strong>
-              <span>{classification.kind === "quality_blocked" ? "Quality block only" : "Normal or Alzheimer-risk only"}</span>
+              <span>{classification.kind === "quality_blocked" ? "Quality block only" : "Multi-disease screening support only"}</span>
             </div>
             <div className="check-item pass">
               <strong>Patient identifiers removed</strong>

@@ -61,6 +61,8 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
   const [isRestoringSession, setIsRestoringSession] = useState(true);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [isQueueing, setIsQueueing] = useState(false);
+  const [performanceSubview, setPerformanceSubview] = useState("overview");
+  const [governanceSubview, setGovernanceSubview] = useState("data-overview");
   const activeView = getViewFromPathname(pathname) ?? initialView;
 
   const selectedCase = useMemo(
@@ -274,7 +276,14 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
 
   return (
     <div className="app-shell">
-      <Sidebar activeView={activeView} />
+      <Sidebar
+        activeView={activeView}
+        activeSubview={activeView === "performance" ? performanceSubview : activeView === "governance" ? governanceSubview : undefined}
+        onSubviewClick={(sub) => {
+          if (activeView === "performance") setPerformanceSubview(sub);
+          if (activeView === "governance") setGovernanceSubview(sub);
+        }}
+      />
 
       <main className="workspace">
         <Topbar
@@ -325,8 +334,8 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
           />
         ) : null}
         {activeView === "insights" ? <InsightsView /> : null}
-        {activeView === "performance" ? <PerformanceView /> : null}
-        {activeView === "governance" ? <GovernanceView auditEvents={auditEvents} /> : null}
+        {activeView === "performance" ? <PerformanceView subview={performanceSubview} onSubviewChange={setPerformanceSubview} /> : null}
+        {activeView === "governance" ? <GovernanceView auditEvents={auditEvents} subview={governanceSubview} onSubviewChange={setGovernanceSubview} /> : null}
         {activeView === "settings" ? <SettingsView /> : null}
         {activeView === "report" ? (
           <ReportView

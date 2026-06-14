@@ -11,14 +11,32 @@ export type ViewId =
 
 export type RiskLevel = "low" | "moderate" | "high" | "blocked";
 
+export type DiseaseKind =
+  | "normal"
+  | "alzheimer_risk"
+  | "diabetic_retinopathy"
+  | "glaucoma"
+  | "amd"
+  | "hypertensive_retinopathy"
+  | "pathologic_myopia"
+  | "quality_blocked";
+
+export type DifferentialSignal = {
+  kind: DiseaseKind;
+  label: string;
+  score: number;
+  evidence: string[];
+};
+
 export type ClinicalClassification = {
-  kind: "normal" | "alzheimer_risk" | "quality_blocked";
+  kind: DiseaseKind;
   riskLevel: RiskLevel;
   riskScore: number;
   label: string;
   finding: string;
   recommendation: string;
   evidence: string[];
+  differentials?: DifferentialSignal[];
 };
 
 export type CaseRecord = {
@@ -42,6 +60,22 @@ export type CaseRecord = {
   clinicalClassification?: ClinicalClassification;
 };
 
+export type VisionResult = {
+  primaryDisease: DiseaseKind;
+  riskLevel: RiskLevel;
+  riskScore: number;
+  confidence: number;
+  label: string;
+  finding: string;
+  recommendation: string;
+  evidence: string[];
+  vesselDensity: number;
+  fazRisk: number;
+  perfusion: number;
+  qualityScore: number;
+  differentials: { kind: DiseaseKind; label: string; score: number; evidence: string[] }[];
+};
+
 export type BaselineAnalysisMetrics = {
   brightness: number;
   contrast: number;
@@ -55,6 +89,7 @@ export type BaselineAnalysisMetrics = {
   imageHeight: number;
   perfusionDensityProxy: number;
   demoEngineVersion: string;
+  visionResult?: VisionResult;
 };
 
 export type AuditEvent = {

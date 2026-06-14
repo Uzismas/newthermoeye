@@ -6,12 +6,29 @@ import type { SessionUser, ViewId } from "../types";
 
 export function Sidebar({
   activeView,
+  activeSubview,
+  onSubviewClick,
 }: {
   activeView: ViewId;
+  activeSubview?: string;
+  onSubviewClick?: (subview: string) => void;
 }) {
-  const subnav: Partial<Record<ViewId, string[]>> = {
-    governance: ["Data Overview", "Data Sources", "De-identification", "Data Usage Log", "Consent Management"],
-    performance: ["Overview", "Performance Metrics", "Calibration", "Error Analysis", "Model Drift", "Version History"],
+  const subnav: Partial<Record<ViewId, { label: string; id: string }[]>> = {
+    governance: [
+      { label: "Data Overview", id: "data-overview" },
+      { label: "Data Sources", id: "data-sources" },
+      { label: "De-identification", id: "deidentification" },
+      { label: "Consent Management", id: "consent" },
+      { label: "Data Usage Log", id: "usage-log" },
+    ],
+    performance: [
+      { label: "Overview", id: "overview" },
+      { label: "Performance Metrics", id: "metrics" },
+      { label: "Calibration", id: "calibration" },
+      { label: "Error Analysis", id: "error-analysis" },
+      { label: "Model Drift", id: "drift" },
+      { label: "Version History", id: "version-history" },
+    ],
   };
 
   return (
@@ -42,8 +59,16 @@ export function Sidebar({
               </Link>
               {isActive && subnav[item.id] ? (
                 <div className="subnav-list" aria-label={`${item.label} sections`}>
-                  {subnav[item.id]?.map((label, index) => (
-                    <span className={index === 0 ? "active" : ""} key={label}>{label}</span>
+                  {subnav[item.id]?.map((sub) => (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      className={activeSubview === sub.id ? "active" : ""}
+                      onClick={() => onSubviewClick?.(sub.id)}
+                      aria-current={activeSubview === sub.id ? "true" : undefined}
+                    >
+                      {sub.label}
+                    </button>
                   ))}
                 </div>
               ) : null}

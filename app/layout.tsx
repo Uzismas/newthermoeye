@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Thermoeye Clinical Screening Console",
@@ -7,13 +14,9 @@ export const metadata: Metadata = {
     "Secure OCTA/OCT workflow prototype for Alzheimer risk screening support.",
 };
 
-type RootLayoutProps = {
-  children: React.ReactNode;
-};
-
-export default function RootLayout({ children }: RootLayoutProps) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body>{children}</body>
     </html>
   );

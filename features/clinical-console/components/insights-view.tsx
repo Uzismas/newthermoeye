@@ -1,4 +1,6 @@
-import type { CSSProperties } from "react";
+"use client";
+
+import { useState, type CSSProperties } from "react";
 import { researchEvidence } from "../mock-data";
 import { PanelHeader, SectionHeading } from "./shared";
 
@@ -69,22 +71,7 @@ export function InsightsView() {
               retinal vascular biomarkers, and Alzheimer&apos;s screening, while the product still requires model validation before clinical use.
             </p>
           </div>
-          <div className="evidence-grid">
-            {researchEvidence.map((item) => (
-              <article className="evidence-card" key={item.url}>
-                <span>{item.type}</span>
-                <h3>{item.title}</h3>
-                <p>{item.summary}</p>
-                <a href={item.url} target="_blank" rel="noreferrer">
-                  Open source
-                </a>
-                <small>{item.source}</small>
-              </article>
-            ))}
-          </div>
-          <p className="evidence-rights-note">
-            ResearchGate figures are linked as external references because image reuse rights must be confirmed before copying them into product assets.
-          </p>
+          <EvidenceBoard />
         </section>
 
         <section className="panel wide-panel" aria-labelledby="risk-over-time-title">
@@ -194,8 +181,36 @@ export function InsightsView() {
   );
 }
 
-function InsightMetric({
-  label,
+function EvidenceBoard() {
+  const diseases = ["All", "Alzheimer's", "Diabetic Retinopathy", "Glaucoma", "AMD", "Hypertensive Retinopathy", "Pathologic Myopia"];
+  const [active, setActive] = useState("All");
+  const filtered = active === "All" ? researchEvidence : researchEvidence.filter((e) => e.type === active);
+  return (
+    <>
+      <div className="tab-strip" role="tablist" aria-label="Filter evidence by disease">
+        {diseases.map((d) => (
+          <button key={d} type="button" role="tab" aria-selected={active === d} className={active === d ? "active" : ""} onClick={() => setActive(d)}>{d}</button>
+        ))}
+      </div>
+      <div className="evidence-grid">
+        {filtered.map((item) => (
+          <article className="evidence-card" key={item.url}>
+            <span>{item.type}</span>
+            <h3>{item.title}</h3>
+            <p>{item.summary}</p>
+            <a href={item.url} target="_blank" rel="noreferrer">Open source ↗</a>
+            <small>{item.source}</small>
+          </article>
+        ))}
+      </div>
+      <p className="evidence-rights-note">
+        ResearchGate figures are linked as external references. Image reuse rights must be confirmed before embedding into product assets.
+      </p>
+    </>
+  );
+}
+
+function InsightMetric({  label,
   value,
   caption,
   tone,

@@ -23,7 +23,7 @@ const globalStore = globalThis as typeof globalThis & {
   thermoeyeConsoleState?: ConsoleState;
 };
 
-const schemaVersion = "clinical-ruleset-2026.05";
+const schemaVersion = "clinical-ruleset-2026.06-reference-cases";
 
 export function getConsoleState(): ConsoleState {
   globalStore.thermoeyeConsoleState ??= {

@@ -1,0 +1,86 @@
+[
+  {
+    "caseCode": "TE-REF-ALZ-01",
+    "imageUrl": "/clinical-cases/TE-REF-ALZ-01/scan.jpg",
+    "primarySignal": "Alzheimer Risk",
+    "sourceAsset": "test-assets/scans/synthetic-realistic/alzheimer-risk-01.jpg",
+    "medicalUse": "synthetic OCTA-style reference case only; screening workflow demo; not diagnostic"
+  },
+  {
+    "caseCode": "TE-REF-ALZ-02",
+    "imageUrl": "/clinical-cases/TE-REF-ALZ-02/scan.jpg",
+    "primarySignal": "Alzheimer Risk",
+    "sourceAsset": "test-assets/scans/synthetic-realistic/alzheimer-risk-02.jpg",
+    "medicalUse": "synthetic OCTA-style reference case only; screening workflow demo; not diagnostic"
+  },
+  {
+    "caseCode": "TE-REF-DR-01",
+    "imageUrl": "/clinical-cases/TE-REF-DR-01/scan.jpg",
+    "primarySignal": "Diabetic Retinopathy",
+    "sourceAsset": "test-assets/scans/synthetic-realistic/diabetic-ret-01.jpg",
+    "medicalUse": "synthetic OCTA-style reference case only; screening workflow demo; not diagnostic"
+  },
+  {
+    "caseCode": "TE-REF-DR-02",
+    "imageUrl": "/clinical-cases/TE-REF-DR-02/scan.jpg",
+    "primarySignal": "Diabetic Retinopathy",
+    "sourceAsset": "test-assets/scans/synthetic-realistic/diabetic-ret-02.jpg",
+    "medicalUse": "synthetic OCTA-style reference case only; screening workflow demo; not diagnostic"
+  },
+  {
+    "caseCode": "TE-REF-GLA-01",
+    "imageUrl": "/clinical-cases/TE-REF-GLA-01/scan.jpg",
+    "primarySignal": "Glaucoma",
+    "sourceAsset": "test-assets/scans/synthetic-realistic/glaucoma-01.jpg",
+    "medicalUse": "synthetic OCTA-style reference case only; screening workflow demo; not diagnostic"
+  },
+  {
+    "caseCode": "TE-REF-GLA-02",
+    "imageUrl": "/clinical-cases/TE-REF-GLA-02/scan.jpg",
+    "primarySignal": "Glaucoma",
+    "sourceAsset": "test-assets/scans/synthetic-realistic/glaucoma-02.jpg",
+    "medicalUse": "synthetic OCTA-style reference case only; screening workflow demo; not diagnostic"
+  },
+  {
+    "caseCode": "TE-REF-AMD-01",
+    "imageUrl": "/clinical-cases/TE-REF-AMD-01/scan.jpg",
+    "primarySignal": "AMD",
+    "sourceAsset": "test-assets/scans/synthetic-realistic/amd-01.jpg",
+    "medicalUse": "synthetic OCTA-style reference case only; screening workflow demo; not diagnostic"
+  },
+  {
+    "caseCode": "TE-REF-AMD-02",
+    "imageUrl": "/clinical-cases/TE-REF-AMD-02/scan.jpg",
+    "primarySignal": "AMD",
+    "sourceAsset": "test-assets/scans/synthetic-realistic/amd-02.jpg",
+    "medicalUse": "synthetic OCTA-style reference case only; screening workflow demo; not diagnostic"
+  },
+  {
+    "caseCode": "TE-REF-HTN-01",
+    "imageUrl": "/clinical-cases/TE-REF-HTN-01/scan.jpg",
+    "primarySignal": "Hypertensive Retinopathy",
+    "sourceAsset": "test-assets/scans/synthetic-realistic/hypertensive-01.jpg",
+    "medicalUse": "synthetic OCTA-style reference case only; screening workflow demo; not diagnostic"
+  },
+  {
+    "caseCode": "TE-REF-PM-01",
+    "imageUrl": "/clinical-cases/TE-REF-PM-01/scan.jpg",
+    "primarySignal": "Pathologic Myopia",
+    "sourceAsset": "test-assets/scans/synthetic-realistic/pathologic-myopia-01.jpg",
+    "medicalUse": "synthetic OCTA-style reference case only; screening workflow demo; not diagnostic"
+  },
+  {
+    "caseCode": "TE-REF-NORM-01",
+    "imageUrl": "/clinical-cases/TE-REF-NORM-01/scan.jpg",
+    "primarySignal": "Normal",
+    "sourceAsset": "test-assets/scans/synthetic-realistic/normal-octa-01.jpg",
+    "medicalUse": "synthetic OCTA-style reference case only; screening workflow demo; not diagnostic"
+  },
+  {
+    "caseCode": "TE-REF-NORM-02",
+    "imageUrl": "/clinical-cases/TE-REF-NORM-02/scan.jpg",
+    "primarySignal": "Normal",
+    "sourceAsset": "test-assets/scans/synthetic-realistic/normal-octa-02.jpg",
+    "medicalUse": "synthetic OCTA-style reference case only; screening workflow demo; not diagnostic"
+  }
+]
