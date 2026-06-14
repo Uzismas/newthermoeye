@@ -1,8 +1,4 @@
 {
-  "experimentalServices": {
-    "frontend": {
-      "routePrefix": "/",
-      "framework": "nextjs"
-    }
-  }
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next"
 }
