@@ -7,15 +7,17 @@ import { PanelHeader, SectionHeading } from "./shared";
 export function ReportView({
   selectedCase,
   selectedReview,
+  isDownloading,
   onBack,
   onDownload,
 }: {
   selectedCase: CaseRecord;
   selectedReview: ReviewRecord;
+  isDownloading: boolean;
   onBack: (viewId: ViewId) => void;
   onDownload: () => void;
 }) {
-  const canDownload = selectedReview.decision === "Approved for release";
+  const isApproved = selectedReview.decision === "Approved for release";
   const classification = getCaseClassification(selectedCase);
   const metrics = selectedCase.analysisMetrics;
 
@@ -24,7 +26,7 @@ export function ReportView({
       <SectionHeading
         eyebrow="Report release"
         title="Clinical report preview"
-        note="This preview is locked to screening support language and includes model, threshold, and review status."
+        note={isApproved ? "Doctor approval is complete. The PDF mock is ready for download." : "Draft PDF mock can be downloaded now. Doctor approval is still required for clinical release."}
       />
 
       <div className="report-grid">
@@ -37,6 +39,12 @@ export function ReportView({
             <span className={`risk-chip ${riskTone[selectedCase.riskLevel]}`}>
               {classification.kind === "quality_blocked" ? "Blocked" : `${getClinicalResultLabel(classification.kind)} ${selectedCase.riskScore}%`}
             </span>
+          </div>
+          <div className="report-top-actions">
+            <button className="primary-button" type="button" onClick={onDownload} disabled={isDownloading}>
+              {isDownloading ? "Preparing PDF..." : "Download PDF mock"}
+            </button>
+            {!isApproved ? <span>Draft only: approval is still required before clinical release.</span> : null}
           </div>
 
           <div className="report-summary">
@@ -161,15 +169,15 @@ export function ReportView({
               <strong>Patient identifiers removed</strong>
               <span>Case code only in report preview</span>
             </div>
-            <div className={canDownload ? "check-item pass" : "check-item hold"}>
+            <div className={isApproved ? "check-item pass" : "check-item hold"}>
               <strong>Doctor approval</strong>
-              <span>{canDownload ? "Ready for release" : "Report remains locked"}</span>
+              <span>{isApproved ? "Ready for release" : "Draft download only"}</span>
             </div>
           </div>
 
           <div className="actions-row vertical-actions">
-            <button className="primary-button wide" type="button" onClick={onDownload} disabled={!canDownload}>
-              Download PDF mock
+            <button className="primary-button wide" type="button" onClick={onDownload} disabled={isDownloading}>
+              {isDownloading ? "Preparing PDF..." : "Download PDF mock"}
             </button>
             <button className="ghost-button wide" type="button" onClick={() => onBack("dashboard")}>
               Back to case review

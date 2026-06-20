@@ -11,7 +11,10 @@ export type ConsoleState = {
   schemaVersion: string;
 };
 
-type ApiErrorCode = "BAD_REQUEST" | "FORBIDDEN" | "NOT_FOUND";
+type ApiErrorCode = "BAD_REQUEST" | "FORBIDDEN" | "NOT_FOUND" | "UNAUTHORIZED";
+
+export const sessionCookieName = "thermoeye_mock_session";
+export const sessionCookieValue = process.env.THERMOEYE_SESSION_TOKEN ?? "pilot-doctor";
 
 const sessionUser: SessionUser = {
   name: "Dr. Kritsadapa S.",
@@ -115,7 +118,31 @@ export function validateReviewInput(input: unknown): { ok: true; review: ReviewR
 }
 
 export function apiError(code: ApiErrorCode, message: string, status = 400) {
-  return NextResponse.json({ code, message }, { status });
+  return NextResponse.json({ code, message }, { status, headers: noStoreHeaders() });
+}
+
+export function noStoreHeaders(init?: HeadersInit) {
+  return {
+    "Cache-Control": "no-store, max-age=0",
+    "Pragma": "no-cache",
+    ...init,
+  };
+}
+
+export function requireConsoleSession(request: Request) {
+  const cookies = request.headers.get("cookie") ?? "";
+  const hasValidSession = cookies
+    .split(";")
+    .map((cookie) => cookie.trim())
+    .includes(`${sessionCookieName}=${sessionCookieValue}`);
+
+  return hasValidSession
+    ? null
+    : apiError("UNAUTHORIZED", "Clinical console session is not active.", 401);
+}
+
+export function isSafeCaseId(value: string) {
+  return /^[A-Z0-9-]{4,64}$/.test(value);
 }
 
 function isReviewDecision(value: unknown): value is ReviewDecision {

@@ -213,11 +213,14 @@ textarea:focus-visible {
 /* ── Logo ── */
 .lg-logo-wrap {
   display: flex;
+  width: min(220px, 62vw);
 }
 .lg-logo {
+  display: block;
+  width: 100%;
   height: auto;
-  filter: brightness(0) invert(1);
-  opacity: 0.9;
+  opacity: 1;
+  object-fit: contain;
 }
 
 /* ── Header ── */
@@ -468,11 +471,10 @@ textarea:focus-visible {
 .brand-logo {
   display: block;
   width: 100%;
-  max-width: 266px;
+  max-width: 100%;
   height: auto;
-  aspect-ratio: 266 / 150;
-  filter: brightness(0) invert(1);
-  opacity: 0.9;
+  aspect-ratio: 16 / 9;
+  opacity: 1;
   object-fit: contain;
 }
 
@@ -3321,6 +3323,24 @@ dd {
 .report-header h2,
 .report-header h3 {
   font-size: clamp(1.35rem, 3vw, 1.9rem);
+}
+
+.report-top-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0 0;
+}
+
+.report-top-actions .primary-button {
+  min-width: min(220px, 100%);
+}
+
+.report-top-actions span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .report-summary {

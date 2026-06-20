@@ -4,6 +4,9 @@ import {
   apiError,
   getConsoleState,
   getDefaultReview,
+  isSafeCaseId,
+  noStoreHeaders,
+  requireConsoleSession,
   validateReviewInput,
 } from "@/features/clinical-console/server/store";
 import { getCaseClassification } from "@/features/clinical-console/clinical-analysis";
@@ -16,8 +19,15 @@ type CaseRouteContext = {
   }>;
 };
 
-export async function GET(_request: Request, context: CaseRouteContext) {
+export async function GET(request: Request, context: CaseRouteContext) {
+  const sessionError = requireConsoleSession(request);
+  if (sessionError) return sessionError;
+
   const { caseId } = await context.params;
+  if (!isSafeCaseId(caseId)) {
+    return apiError("BAD_REQUEST", "Case id is invalid.", 400);
+  }
+
   const state = getConsoleState();
   const caseRecord = state.cases.find((item) => item.id === caseId);
 
@@ -27,11 +37,18 @@ export async function GET(_request: Request, context: CaseRouteContext) {
 
   return NextResponse.json({
     review: state.reviews[caseId] ?? getDefaultReview(caseId, state.sessionUser.name),
-  });
+  }, { headers: noStoreHeaders() });
 }
 
 export async function POST(request: Request, context: CaseRouteContext) {
+  const sessionError = requireConsoleSession(request);
+  if (sessionError) return sessionError;
+
   const { caseId } = await context.params;
+  if (!isSafeCaseId(caseId)) {
+    return apiError("BAD_REQUEST", "Case id is invalid.", 400);
+  }
+
   const state = getConsoleState();
   const caseRecord = state.cases.find((item) => item.id === caseId);
 
@@ -55,5 +72,5 @@ export async function POST(request: Request, context: CaseRouteContext) {
   return NextResponse.json({
     review: result.review,
     auditEvents: state.auditEvents,
-  });
+  }, { headers: noStoreHeaders() });
 }

@@ -34,8 +34,8 @@ export function LoginGate({
           <Image
             src="/thermoeye-logo.png"
             alt="Thermoeye"
-            width={148}
-            height={84}
+            width={666}
+            height={375}
             priority
             className="lg-logo"
           />
@@ -128,7 +128,7 @@ export function LoginGate({
             <rect x="2" y="5" width="8" height="6" rx="1" stroke="currentColor" strokeWidth="1.2"/>
             <path d="M4 5V3.5a2 2 0 014 0V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
           </svg>
-          Demo prototype — no real patient data stored or transmitted
+          Demo access: doctor@thermoeye.demo / pilot-access
         </p>
       </section>
     </main>

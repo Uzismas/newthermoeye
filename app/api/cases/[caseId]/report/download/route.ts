@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import { getCaseClassification } from "@/features/clinical-console/clinical-analysis";
-import { addAudit, apiError, getConsoleState, getDefaultReview } from "@/features/clinical-console/server/store";
+import { buildReportPdf } from "@/features/clinical-console/server/report-pdf";
+import {
+  addAudit,
+  apiError,
+  getConsoleState,
+  getDefaultReview,
+  isSafeCaseId,
+  noStoreHeaders,
+  requireConsoleSession,
+} from "@/features/clinical-console/server/store";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +19,15 @@ type CaseRouteContext = {
   }>;
 };
 
-export async function POST(_request: Request, context: CaseRouteContext) {
+export async function POST(request: Request, context: CaseRouteContext) {
+  const sessionError = requireConsoleSession(request);
+  if (sessionError) return sessionError;
+
   const { caseId } = await context.params;
+  if (!isSafeCaseId(caseId)) {
+    return apiError("BAD_REQUEST", "Case id is invalid.", 400);
+  }
+
   const state = getConsoleState();
   const caseRecord = state.cases.find((item) => item.id === caseId);
 
@@ -20,21 +36,21 @@ export async function POST(_request: Request, context: CaseRouteContext) {
   }
 
   const review = state.reviews[caseId] ?? getDefaultReview(caseId, state.sessionUser.name);
+  const classification = getCaseClassification(caseRecord);
 
-  if (review.decision !== "Approved for release") {
-    return apiError("FORBIDDEN", "Doctor approval is required before report download.", 403);
-  }
+  const report = buildReportPdf({ caseRecord, classification, review });
+  addAudit(
+    review.decision === "Approved for release"
+      ? `PDF mock downloaded for ${caseId}`
+      : `Draft PDF mock downloaded for ${caseId} before doctor release`,
+  );
 
-  if (getCaseClassification(caseRecord).kind === "quality_blocked") {
-    return apiError("FORBIDDEN", "Quality-blocked scans cannot generate a clinical report.", 403);
-  }
-
-  addAudit(`PDF mock downloaded for ${caseId}`);
-
-  return NextResponse.json({
-    reportNumber: `TE-RPT-${caseId.replace(/\D/g, "")}`,
-    screeningResult: getCaseClassification(caseRecord).kind,
-    status: "downloaded",
-    auditEvents: state.auditEvents,
+  return new NextResponse(report.bytes, {
+    status: 200,
+    headers: noStoreHeaders({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${report.fileName}"`,
+      "X-Report-Number": report.reportNumber,
+    }),
   });
 }

@@ -38,8 +38,8 @@ export function Sidebar({
           className="brand-logo"
           src="/thermoeye-logo.png"
           alt="Thermoeye"
-          width={266}
-          height={150}
+          width={666}
+          height={375}
           priority
         />
       </Link>

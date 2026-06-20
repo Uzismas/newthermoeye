@@ -1,16 +1,26 @@
 import { NextResponse } from "next/server";
 import { getCaseClassification } from "@/features/clinical-console/clinical-analysis";
-import { addAudit, getConsoleState, upsertCase } from "@/features/clinical-console/server/store";
+import {
+  addAudit,
+  apiError,
+  getConsoleState,
+  noStoreHeaders,
+  requireConsoleSession,
+  upsertCase,
+} from "@/features/clinical-console/server/store";
 import type { CaseRecord } from "@/features/clinical-console/types";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  const sessionError = requireConsoleSession(request);
+  if (sessionError) return sessionError;
+
   const body = (await request.json().catch(() => null)) as { caseRecord?: unknown; fileName?: unknown } | null;
   const fileName = typeof body?.fileName === "string" && body.fileName.trim() ? body.fileName.trim() : "scan package";
 
   if (fileName.length > 180 || /[<>]/.test(fileName)) {
-    return NextResponse.json({ code: "BAD_REQUEST", message: "Upload file name is invalid." }, { status: 400 });
+    return apiError("BAD_REQUEST", "Upload file name is invalid.", 400);
   }
 
   if (isCaseRecord(body?.caseRecord)) {
@@ -25,7 +35,7 @@ export async function POST(request: Request) {
     status: "queued",
     label: "Scan package queued for quarantine",
     auditEvents: getConsoleState().auditEvents,
-  });
+  }, { headers: noStoreHeaders() });
 }
 
 function isCaseRecord(value: unknown): value is CaseRecord {

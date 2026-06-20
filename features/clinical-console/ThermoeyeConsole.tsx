@@ -61,6 +61,7 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
   const [isRestoringSession, setIsRestoringSession] = useState(true);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [isQueueing, setIsQueueing] = useState(false);
+  const [isReportDownloading, setIsReportDownloading] = useState(false);
   const [performanceSubview, setPerformanceSubview] = useState("overview");
   const [governanceSubview, setGovernanceSubview] = useState("data-overview");
   const activeView = getViewFromPathname(pathname) ?? initialView;
@@ -131,7 +132,7 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
     return (
       <LoginGate
         errorMessage={loginError}
-        isLoading={isLoginLoading || isRestoringSession}
+        isLoading={isLoginLoading}
         onLogin={handleLogin}
       />
     );
@@ -191,15 +192,20 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
   }
 
   async function downloadReportMock() {
+    setIsReportDownloading(true);
     setActionError("");
 
     try {
-      const result = await fetchJson<{ auditEvents: AuditEvent[] }>(`/api/cases/${selectedCase.id}/report/download`, {
+      const report = await fetchDownload(`/api/cases/${selectedCase.id}/report/download`, {
         method: "POST",
       });
-      setAuditEvents(result.auditEvents);
+      saveBlob(report.blob, report.fileName);
+      const state = await fetchJson<ConsoleStatePayload>("/api/console-state");
+      setAuditEvents(state.auditEvents);
     } catch (error) {
       setActionError(getErrorMessage(error));
+    } finally {
+      setIsReportDownloading(false);
     }
   }
 
@@ -341,6 +347,7 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
           <ReportView
             selectedCase={selectedCase}
             selectedReview={selectedReview}
+            isDownloading={isReportDownloading}
             onBack={navigate}
             onDownload={downloadReportMock}
           />
@@ -433,6 +440,43 @@ async function fetchJson<T = unknown>(input: RequestInfo | URL, init?: RequestIn
   }
 
   return data as T;
+}
+
+async function fetchDownload(input: RequestInfo | URL, init?: RequestInit): Promise<{ blob: Blob; fileName: string }> {
+  const response = await fetch(input, init);
+
+  if (!response.ok) {
+    const data = (await response.json().catch(() => null)) as { message?: unknown } | null;
+    const message = data && typeof data.message === "string"
+      ? data.message
+      : "The report download request failed.";
+    throw new Error(message);
+  }
+
+  return {
+    blob: await response.blob(),
+    fileName: getDownloadFileName(response),
+  };
+}
+
+function saveBlob(blob: Blob, fileName: string) {
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+}
+
+function getDownloadFileName(response: Response) {
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const match = /filename="?([^";]+)"?/i.exec(disposition);
+  const fallback = "thermoeye-report.pdf";
+  const rawName = match?.[1] ? decodeURIComponent(match[1]) : fallback;
+  const safeName = rawName.replace(/[^A-Za-z0-9._-]/g, "-");
+  return safeName.endsWith(".pdf") ? safeName : `${safeName}.pdf`;
 }
 
 function getErrorMessage(error: unknown) {

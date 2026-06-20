@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   title: "Thermoeye Clinical Screening Console",
   description:
     "Secure OCTA/OCT workflow prototype for Alzheimer risk screening support.",
+  icons: {
+    icon: "/thermoeye-logo.png",
+    apple: "/thermoeye-logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { noStoreHeaders, requireConsoleSession } from "@/features/clinical-console/server/store";
 
 const ANALYSIS_PROMPT = `You are a retinal imaging analysis assistant for a clinical decision-support demo.
 
@@ -71,15 +72,31 @@ const BLOCKED: object = {
   vesselDensity: 0, fazRisk: 0, perfusion: 0, qualityScore: 0, differentials: [],
 };
 
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
 export async function POST(req: NextRequest) {
   try {
+    const sessionError = requireConsoleSession(req);
+    if (sessionError) return sessionError;
+
     const formData = await req.formData();
     const file = formData.get("image") as File | null;
-    if (!file) return NextResponse.json({ error: "No image" }, { status: 400 });
+    if (!file) {
+      return NextResponse.json({ error: "No image" }, { status: 400, headers: noStoreHeaders() });
+    }
+
+    const mimeType = file.type || "image/jpeg";
+    if (!ALLOWED_IMAGE_TYPES.has(mimeType)) {
+      return NextResponse.json({ error: "Only JPEG, PNG, or WebP retinal images are supported." }, { status: 415, headers: noStoreHeaders() });
+    }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      return NextResponse.json({ error: "Image is too large. Maximum size is 8 MB." }, { status: 413, headers: noStoreHeaders() });
+    }
 
     const buffer = await file.arrayBuffer();
     const base64 = Buffer.from(buffer).toString("base64");
-    const mimeType = file.type || "image/jpeg";
 
     let result = null;
 
@@ -91,8 +108,9 @@ export async function POST(req: NextRequest) {
       result = await analyzeWithGemini(base64, mimeType).catch(() => null);
     }
 
-    return NextResponse.json({ ok: true, analysis: result ?? BLOCKED });
+    return NextResponse.json({ ok: true, analysis: result ?? BLOCKED }, { headers: noStoreHeaders() });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error("Thermoeye analysis request failed", error);
+    return NextResponse.json({ error: "Image analysis failed." }, { status: 500, headers: noStoreHeaders() });
   }
 }
