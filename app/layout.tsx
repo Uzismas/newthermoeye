@@ -13,8 +13,8 @@ export const metadata: Metadata = {
   description:
     "Secure OCTA/OCT workflow prototype for Alzheimer risk screening support.",
   icons: {
-    icon: "/thermoeye-logo.png",
-    apple: "/thermoeye-logo.png",
+    icon: "/thermoeye-logo-logoremovebg.png",
+    apple: "/thermoeye-logo-logoremovebg.png",
   },
 };
 

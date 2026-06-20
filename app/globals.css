@@ -221,6 +221,7 @@ textarea:focus-visible {
   height: auto;
   opacity: 1;
   object-fit: contain;
+  filter: grayscale(1) contrast(1.18) brightness(1.08);
 }
 
 /* ── Header ── */
@@ -476,6 +477,7 @@ textarea:focus-visible {
   aspect-ratio: 16 / 9;
   opacity: 1;
   object-fit: contain;
+  filter: grayscale(1) contrast(1.18) brightness(1.08);
 }
 
 .login-brand .brand-logo {

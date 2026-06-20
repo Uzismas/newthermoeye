@@ -32,7 +32,7 @@ export function LoginGate({
         {/* Logo */}
         <div className="lg-logo-wrap">
           <Image
-            src="/thermoeye-logo.png"
+            src="/thermoeye-logo-logoremovebg.png"
             alt="Thermoeye"
             width={666}
             height={375}

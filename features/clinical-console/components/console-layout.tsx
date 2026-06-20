@@ -36,7 +36,7 @@ export function Sidebar({
       <Link className="brand" href="/console/dashboard" aria-label="Thermoeye dashboard">
         <Image
           className="brand-logo"
-          src="/thermoeye-logo.png"
+          src="/thermoeye-logo-logoremovebg.png"
           alt="Thermoeye"
           width={666}
           height={375}
