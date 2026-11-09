@@ -41,6 +41,8 @@ export function DashboardView({
     .filter((value): value is number => typeof value === "number");
   const meanDensity = densities.length ? densities.reduce((a, b) => a + b, 0) / densities.length : null;
   const evaluated = measuredCases.length + blocked;
+  // Real work first, so the dashboard stays short; the full list lives in Patients.
+  const recent = [...cases].sort((a, b) => Number(caseStage(a) === "not-evaluated") - Number(caseStage(b) === "not-evaluated")).slice(0, 6);
 
   const metrics = [
     { label: "Cases in workspace", value: String(total), caption: `${synthetic} synthetic reference cases`, tone: "blue", bars: null },
@@ -120,10 +122,11 @@ export function DashboardView({
 
       <div className="dashboard-main-grid">
         <section className="panel queue-panel" aria-labelledby="queue-title">
-          <PanelHeader eyebrow="Recent analysis" title="Recent Analyses" badge={`${total} cases`} />
-          <CaseTable cases={cases} selectedCaseId={selectedCase.id} onCaseSelect={onCaseSelect} />
+          <PanelHeader eyebrow="Recent analysis" title="Recent Analyses" badge={`${recent.length} of ${total}`} />
+          <CaseTable cases={recent} selectedCaseId={selectedCase.id} onCaseSelect={onCaseSelect} />
           <div className="panel-link-row">
             <button className="text-button" type="button" onClick={() => onNavigate("analysis")}>Go to Analysis Results</button>
+            <button className="text-button" type="button" onClick={() => onNavigate("patients")}>View all {total} cases</button>
           </div>
         </section>
 
