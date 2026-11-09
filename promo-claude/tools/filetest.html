@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>capability test</title>
+<style>html,body{margin:0;background:#081628;color:#e8f2fb;font:16px system-ui}canvas{display:block}</style>
+</head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script src="filetest-lib.js"></script>
+<script>
+// 1) Does a classic script from a sibling file load under file:// ?
+// 2) Can we actually ENCODE an mp4 (not just isTypeSupported) with MediaRecorder?
+// 3) Is the canvas tainted when drawing a data-URI image (needed for export)?
+window.__result = { classicLoaded: Boolean(window.__classicLoaded) };
+
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d", { alpha: false });
+
+async function run() {
+  // data-URI image -> taint check
+  const png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII=";
+  const img = new Image();
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = png; });
+  ctx.drawImage(img, 0, 0, 400, 400);
+  try { canvas.toDataURL("image/png"); window.__result.taint = "clean"; }
+  catch (e) { window.__result.taint = "TAINTED: " + e.name; }
+
+  // real encode attempt
+  try {
+    const stream = canvas.captureStream(0);
+    const track = stream.getVideoTracks()[0];
+    const mime = "video/mp4;codecs=avc1.640028";
+    const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8000000 });
+    const chunks = [];
+    rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    const done = new Promise((r) => { rec.onstop = r; });
+    rec.start();
+    // 30 frames at ~33ms
+    for (let i = 0; i < 30; i++) {
+      ctx.fillStyle = i % 2 ? "#0ea5e9" : "#081628";
+      ctx.fillRect(0, 400, 1920, 680);
+      ctx.fillStyle = "#fff";
+      ctx.font = "700 120px system-ui";
+      ctx.fillText("FRAME " + i, 120, 300);
+      track.requestFrame();
+      await new Promise((r) => setTimeout(r, 33));
+    }
+    rec.stop();
+    await done;
+    const blob = new Blob(chunks, { type: mime });
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    window.__result.encode = {
+      ok: true, bytes: blob.size, chunks: chunks.length, type: blob.type,
+      // 'ftyp' box at offset 4 proves a real MP4 container (not WebM)
+      magic: String.fromCharCode(buf[4], buf[5], buf[6], buf[7]),
+    };
+  } catch (e) {
+    window.__result.encode = { ok: false, error: e.name + ": " + e.message };
+  }
+  window.__result.done = true;
+}
+run();
+</script>
+</body>
+</html>

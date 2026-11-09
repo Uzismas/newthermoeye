@@ -1,5 +1,6 @@
 export type ViewId =
   | "dashboard"
+  | "tasks"
   | "cases"
   | "patients"
   | "analysis"
@@ -9,7 +10,7 @@ export type ViewId =
   | "governance"
   | "settings";
 
-export type RiskLevel = "low" | "moderate" | "high" | "blocked";
+export type RiskLevel = "low" | "moderate" | "high" | "blocked" | "indeterminate";
 
 export type DiseaseKind =
   | "normal"
@@ -19,6 +20,7 @@ export type DiseaseKind =
   | "amd"
   | "hypertensive_retinopathy"
   | "pathologic_myopia"
+  | "indeterminate"
   | "quality_blocked";
 
 export type DifferentialSignal = {
@@ -31,7 +33,7 @@ export type DifferentialSignal = {
 export type ClinicalClassification = {
   kind: DiseaseKind;
   riskLevel: RiskLevel;
-  riskScore: number;
+  riskScore: number | null;
   label: string;
   finding: string;
   recommendation: string;
@@ -46,11 +48,11 @@ export type CaseRecord = {
   scanType: string;
   eye: "OD" | "OS" | "OU";
   riskLevel: RiskLevel;
-  riskScore: number;
+  riskScore: number | null;
   qualityLabel: string;
   status: string;
   context: string;
-  confidence: string;
+  confidence: number | null;
   density: string;
   heatmap: string;
   note: string;
@@ -58,36 +60,67 @@ export type CaseRecord = {
   uploadedFileName?: string;
   analysisMetrics?: BaselineAnalysisMetrics;
   clinicalClassification?: ClinicalClassification;
+  analysisReceipt?: string;
 };
 
 export type VisionResult = {
   primaryDisease: DiseaseKind;
   riskLevel: RiskLevel;
-  riskScore: number;
-  confidence: number;
+  riskScore: number | null;
+  confidence: number | null;
   label: string;
   finding: string;
   recommendation: string;
   evidence: string[];
-  vesselDensity: number;
-  fazRisk: number;
-  perfusion: number;
-  qualityScore: number;
+  vesselDensity: number | null;
+  fazRisk: number | null;
+  perfusion: number | null;
+  qualityScore: number | null;
   differentials: { kind: DiseaseKind; label: string; score: number; evidence: string[] }[];
+  segmentationMaskDataUrl?: string;
+  segmentationEngine?: "onnx_vessel_unet" | "heuristic_research_baseline";
+  trainedModelConnected?: boolean;
+  engine?: "onnx_vessel_unet" | "heuristic_research_baseline" | "ruleset" | "none" | "external_provider";
+  schemaVersion?: "octa-analysis-v2";
+  analysisStatus?: "measured" | "quality_blocked" | "modality_blocked" | "unavailable";
+  modelVersion?: string | null;
+  modelTask?: string | null;
+  preprocessingVersion?: string | null;
+  threshold?: number | null;
+  failureReason?: string | null;
+  requestId?: string | null;
+  fileHash?: string | null;
+  timestamp?: string | null;
+  mimeType?: string | null;
+  decodedFormat?: string | null;
+  imageWidth?: number | null;
+  imageHeight?: number | null;
+  brightness?: number | null;
+  contrast?: number | null;
+  sharpness?: number | null;
+  artifactScore?: number | null;
+  sourceMetricUnit?: "percent_0_100" | "fraction_0_1" | null;
+  previewDataUrl?: string;
+  inputMode?: string;
+  colorConversion?: string;
+  modalityGateReason?: string;
+  modalityGateStatus?: string;
+  qualityStatus?: "passed" | "blocked" | "not_evaluated";
+  metricUnit?: "percent_0_100" | "fraction_0_1";
 };
 
 export type BaselineAnalysisMetrics = {
-  brightness: number;
-  contrast: number;
-  sharpness: number;
-  vesselDensity: number;
-  qualityScore: number;
-  confidenceScore: number;
-  fazRiskProxy: number;
-  artifactScore: number;
-  imageWidth: number;
-  imageHeight: number;
-  perfusionDensityProxy: number;
+  brightness: number | null;
+  contrast: number | null;
+  sharpness: number | null;
+  vesselDensity: number | null;
+  qualityScore: number | null;
+  confidenceScore: number | null;
+  fazRiskProxy: number | null;
+  artifactScore: number | null;
+  imageWidth: number | null;
+  imageHeight: number | null;
+  perfusionDensityProxy: number | null;
   demoEngineVersion: string;
   visionResult?: VisionResult;
 };
@@ -111,4 +144,12 @@ export type SessionUser = {
   name: string;
   role: "Doctor" | "Hospital staff" | "Admin";
   hospital: string;
+};
+
+export type CaseAction = "add_to_patient" | "second_review" | "export_dicom" | "delete_scan";
+
+export type CaseActionState = {
+  patientRecordAdded?: boolean;
+  secondReviewRequested?: boolean;
+  updatedAt?: string;
 };

@@ -1,22 +1,23 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import "@fontsource/ibm-plex-sans-thai/400.css";
+import "@fontsource/ibm-plex-sans-thai/500.css";
+import "@fontsource/ibm-plex-sans-thai/600.css";
+import "@fontsource/ibm-plex-sans-thai/700.css";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
 export const metadata: Metadata = {
-  title: "Thermoeye Clinical Screening Console",
+  title: "Eyezheimer Clinical Console",
   description:
-    "Secure OCTA/OCT workflow prototype for Alzheimer risk screening support.",
+    "Local OCTA vessel segmentation research workflow. Disease classification is unavailable.",
+  icons: {
+    icon: "/thermoeye-logo-logoremovebg.png",
+    apple: "/thermoeye-logo-logoremovebg.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en">
       <body>{children}</body>
     </html>
   );

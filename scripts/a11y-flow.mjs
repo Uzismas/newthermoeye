@@ -1,13 +1,19 @@
 import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import assert from "node:assert/strict";
 
 const require = createRequire(import.meta.url);
 
 const appPort = Number(process.env.APP_PORT ?? 3011);
 const appUrl = process.env.APP_URL ?? `http://127.0.0.1:${appPort}/console/dashboard`;
-const chromeBin = process.env.CHROME_BIN ?? "google-chrome";
-const userDataDir = `/tmp/thermoeye-a11y-${Date.now()}`;
+const nextCli = "node_modules/next/dist/bin/next";
+const chromeBin = process.env.CHROME_BIN ?? (process.platform === "win32"
+  ? "C:/Program Files/Google/Chrome/Application/chrome.exe"
+  : "google-chrome");
+const userDataDir = join(tmpdir(), `thermoeye-a11y-${Date.now()}`);
 let stderrBuffer = "";
 let serverOutput = "";
 let ws;
@@ -15,9 +21,9 @@ let ws;
 const axeSource = await readFile(require.resolve("axe-core/axe.min.js"), "utf8");
 
 const server = spawn(
-  "npm",
-  ["run", "start", "--", "--hostname", "127.0.0.1", "--port", String(appPort)],
-  { detached: true, stdio: ["ignore", "pipe", "pipe"] },
+  process.execPath,
+  [nextCli, "start", "--hostname", "127.0.0.1", "--port", String(appPort)],
+  { detached: process.platform !== "win32", stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, THERMOEYE_DEMO_EMAIL: "doctor@thermoeye.demo", THERMOEYE_DEMO_PASSWORD: "pilot-access", THERMOEYE_ALLOW_EXTERNAL_VISION: "false" } },
 );
 
 server.stdout.on("data", (chunk) => {
@@ -37,7 +43,7 @@ const chrome = spawn(
     `--user-data-dir=${userDataDir}`,
     "about:blank",
   ],
-  { detached: true, stdio: ["ignore", "pipe", "pipe"] },
+  { detached: process.platform !== "win32", stdio: ["ignore", "pipe", "pipe"] },
 );
 
 chrome.stderr.on("data", (chunk) => {
@@ -65,25 +71,25 @@ try {
     mobile: false,
   });
 
-  await waitFor(cdp, `document.body.innerText.includes("Sign in to review screening cases")`);
-  await waitFor(cdp, `document.querySelector("form.login-form")?.dataset.ready === "true"`);
-  await waitFor(cdp, `document.querySelector("form.login-form button[type='submit']")?.disabled === false`);
+  await waitFor(cdp, `Boolean(document.querySelector("form.lg-form, form.login-form"))`);
+  await waitFor(cdp, `document.querySelector("form.lg-form, form.login-form")?.dataset.ready === "true"`);
+  await waitFor(cdp, `document.querySelector("form.lg-form button[type='submit'], form.login-form button[type='submit']")?.disabled === false`);
   await runAxe(cdp, "login");
 
   await sleep(600);
   await submitLogin(cdp);
-  await waitFor(cdp, `document.body.innerText.includes("Welcome back, Dr. Nattapong")`);
+  await waitFor(cdp, `document.body.innerText.includes("Retinal vessel review run")`);
   await runAxe(cdp, "dashboard");
 
-  await clickButton(cdp, "New scan");
+  await clickButton(cdp, "Queue new scan");
   await waitFor(cdp, `document.body.innerText.includes("Case intake and upload")`);
   await runAxe(cdp, "case intake");
 
   await clickButton(cdp, "Dashboard");
-  await waitFor(cdp, `document.body.innerText.includes("Welcome back, Dr. Nattapong")`);
-  await approveCurrentCase(cdp);
+  await waitFor(cdp, `document.body.innerText.includes("Retinal vessel review run")`);
   await clickButton(cdp, "Preview report");
-  await waitFor(cdp, `document.body.innerText.includes("Clinical report preview")`);
+  await waitFor(cdp, `document.body.innerText.includes("Research report preview")`);
+  assert.equal(await cdp.eval(`[...document.querySelectorAll("button")].find((item) => item.textContent.includes("Download PDF"))?.disabled`), true, "Unavailable fixture report must remain locked");
   await runAxe(cdp, "report preview");
 
   await clickButton(cdp, "Data Management");
@@ -138,19 +144,6 @@ async function runAxe(cdp, label) {
       .join("\n");
     throw new Error(`Accessibility violations on ${label}:\n${details}`);
   }
-}
-
-async function approveCurrentCase(cdp) {
-  await cdp.eval(`
-    (() => {
-      const form = document.querySelector("form.review-form");
-      form.elements.decision.value = "Approved for release";
-      form.elements.followUpWindow.value = "30 days";
-      form.elements.note.value = "Approved for release after OCTA review.";
-      form.requestSubmit();
-    })()
-  `);
-  await waitFor(cdp, `document.body.innerText.includes("Approved for release")`);
 }
 
 async function waitForHttp(url) {
@@ -258,7 +251,7 @@ async function clickButton(cdp, text) {
 async function submitLogin(cdp) {
   await cdp.eval(`
     (() => {
-      const form = document.querySelector("form.login-form");
+      const form = document.querySelector("form.lg-form, form.login-form");
       if (!form) throw new Error("Login form not found");
       form.requestSubmit();
     })()

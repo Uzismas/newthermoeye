@@ -1,0 +1,32 @@
+{
+  "name": "Thermoeye OCTA vessel segmentation baseline",
+  "scope": "Vessel segmentation only; not AD/MCI classification or diagnosis",
+  "image_size": 256,
+  "runtime_artifact": "octa_vessel_unet.onnx",
+  "runtime_input_shape": [1, 1, 256, 256],
+  "runtime_input_dtype": "float32",
+  "runtime_normalization": "Pillow L, bilinear resize to 256x256, divide by 255; unsigned 16-bit inputs first use fixed /65535 scaling then quantize to 8-bit",
+  "preprocessing_version": "octa-luma-u16-v2",
+  "artifact_sha256": "195ff40370049e3be850b88ed8bed68f05abd006565afd1fbe01de6982777c87",
+  "model_task": "vessel_segmentation",
+  "clinically_validated": false,
+  "disease_classifier_available": false,
+  "runtime_artifact_resolution": "backend/models/octa/octa_vessel_unet.onnx, then legacy backend/models/octa_vessel_unet.onnx if absent",
+  "failure_behavior": "analysis_status unavailable, engine none and null measurements; never automatic heuristic fallback",
+  "measurement_unit": "percent_0_100",
+  "measurement_definitions": {
+    "vessel_density": "Vessel pixels / all pixels in the nearest-neighbour resized source-dimension mask * 100",
+    "faz_risk_proxy": "Non-vessel fraction in the central 30% rectangle * 100; not anatomical FAZ area or disease risk",
+    "perfusion_density": "Unavailable (null); no calibrated perfusion measurement is implemented"
+  },
+  "runtime_output": "sigmoid(logits) thresholded at 0.5; nearest-neighbour resize to source dimensions",
+  "device": "cpu",
+  "checkpoint": "models\\octa\\octa_vessel_unet.pt",
+  "test": {
+    "loss": 0.9574043684535556,
+    "dice": 0.707841674486796
+  },
+  "test_rows": 9,
+  "split": "published ROSE-O test split",
+  "note": "Artifact exported from the completed checkpoint; independent clinical validation is required."
+}

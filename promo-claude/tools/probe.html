@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>probe</title>
+<style>html,body{margin:0;height:100%;background:#081628;color:#e8f2fb;font:600 64px/1.2 system-ui,sans-serif;display:grid;place-items:center}</style>
+</head>
+<body><div id="out">PROBE OK</div>
+<script>
+  window.__probe = {
+    webcodecsVideoEncoder: typeof VideoEncoder !== "undefined",
+    videoFrame: typeof VideoFrame !== "undefined",
+    mp4Recorder: typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("video/mp4;codecs=avc1.640028"),
+    mp4RecorderBasic: typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("video/mp4"),
+    webmRecorder: typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("video/webm;codecs=vp9"),
+  };
+  document.getElementById("out").textContent = JSON.stringify(window.__probe);
+</script>
+</body>
+</html>

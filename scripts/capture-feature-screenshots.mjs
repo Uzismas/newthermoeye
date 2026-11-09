@@ -1,11 +1,14 @@
 import { spawn } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { basename } from "node:path";
+import { tmpdir } from "node:os";
+import { basename, join } from "node:path";
 
 const appUrl = process.env.APP_URL ?? "http://localhost:3000/console/dashboard";
 const baseConsoleUrl = new URL(appUrl);
 baseConsoleUrl.pathname = "/console";
-const chromeBin = process.env.CHROME_BIN ?? "google-chrome";
+const chromeBin = process.env.CHROME_BIN ?? (process.platform === "win32"
+  ? "C:/Program Files/Google/Chrome/Application/chrome.exe"
+  : "google-chrome");
 const outputDir = "web/feature-screenshots";
 const normalFixture = {
   caseCode: "TE-CAPTURE-NORMAL",
@@ -31,7 +34,7 @@ const mobilePages = [
   { label: "13-mobile-report-normal", route: "report", waitForText: "Clinical report preview" },
 ];
 
-const userDataDir = `/tmp/thermoeye-feature-capture-${Date.now()}`;
+const userDataDir = join(tmpdir(), `thermoeye-feature-capture-${Date.now()}`);
 let stderrBuffer = "";
 let ws;
 
@@ -45,7 +48,7 @@ const chrome = spawn(
     `--user-data-dir=${userDataDir}`,
     "about:blank",
   ],
-  { detached: true, stdio: ["ignore", "pipe", "pipe"] },
+  { detached: process.platform !== "win32", stdio: ["ignore", "pipe", "pipe"] },
 );
 
 chrome.stderr.on("data", (chunk) => {
@@ -143,18 +146,18 @@ async function approveAndOpenReport(cdp) {
 }
 
 async function login(cdp) {
-  await waitFor(cdp, `document.body.innerText.includes("Sign in to review screening cases") || document.body.innerText.includes("Welcome back")`);
+  await waitFor(cdp, `Boolean(document.querySelector("form.lg-form, form.login-form")) || document.body.innerText.includes("Welcome back")`);
   const isLoggedIn = await cdp.eval(`document.body.innerText.includes("Welcome back")`);
   if (isLoggedIn) return;
 
-  await waitFor(cdp, `document.querySelector("form.login-form")?.dataset.ready === "true"`);
+  await waitFor(cdp, `document.querySelector("form.lg-form, form.login-form")?.dataset.ready === "true"`);
   await cdp.eval(`
     (async () => {
-      const form = document.querySelector("form.login-form");
+      const form = document.querySelector("form.lg-form, form.login-form");
       if (!form) throw new Error("Login form not found");
       form.querySelector("button[type='submit']")?.click();
       await new Promise((resolve) => setTimeout(resolve, 500));
-      if (document.body.innerText.includes("Sign in to review screening cases")) {
+      if (document.querySelector("form.lg-form, form.login-form")) {
         const response = await fetch("/api/session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

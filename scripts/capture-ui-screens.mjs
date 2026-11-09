@@ -1,10 +1,15 @@
 import { spawn } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const appPort = Number(process.env.APP_PORT ?? 3012);
 const appUrl = process.env.APP_URL ?? `http://127.0.0.1:${appPort}/console/dashboard`;
-const chromeBin = process.env.CHROME_BIN ?? "google-chrome";
-const userDataDir = `/tmp/thermoeye-ui-capture-${Date.now()}`;
+const nextCli = "node_modules/next/dist/bin/next";
+const chromeBin = process.env.CHROME_BIN ?? (process.platform === "win32"
+  ? "C:/Program Files/Google/Chrome/Application/chrome.exe"
+  : "google-chrome");
+const userDataDir = join(tmpdir(), `thermoeye-ui-capture-${Date.now()}`);
 const outputDir = "output/playwright";
 const shouldStartServer = process.env.SKIP_SERVER !== "1";
 let stderrBuffer = "";
@@ -67,9 +72,9 @@ const mobilePages = [
 
 const server = shouldStartServer
   ? spawn(
-    "npm",
-    ["run", "start", "--", "--hostname", "127.0.0.1", "--port", String(appPort)],
-    { detached: true, stdio: ["ignore", "pipe", "pipe"] },
+    process.execPath,
+    [nextCli, "start", "--hostname", "127.0.0.1", "--port", String(appPort)],
+    { detached: process.platform !== "win32", stdio: ["ignore", "pipe", "pipe"] },
   )
   : null;
 
@@ -90,7 +95,7 @@ const chrome = spawn(
     `--user-data-dir=${userDataDir}`,
     "about:blank",
   ],
-  { detached: true, stdio: ["ignore", "pipe", "pipe"] },
+  { detached: process.platform !== "win32", stdio: ["ignore", "pipe", "pipe"] },
 );
 
 chrome.stderr.on("data", (chunk) => {
@@ -115,9 +120,9 @@ try {
     mobile: false,
   });
 
-  await waitFor(cdp, `document.body.innerText.includes("Sign in to review screening cases")`);
-  await waitFor(cdp, `document.querySelector("form.login-form")?.dataset.ready === "true"`);
-  await waitFor(cdp, `document.querySelector("form.login-form button[type='submit']")?.disabled === false`);
+  await waitFor(cdp, `Boolean(document.querySelector("form.lg-form, form.login-form"))`);
+  await waitFor(cdp, `document.querySelector("form.lg-form, form.login-form")?.dataset.ready === "true"`);
+  await waitFor(cdp, `document.querySelector("form.lg-form button[type='submit'], form.login-form button[type='submit']")?.disabled === false`);
   await sleep(600);
   await submitLogin(cdp);
   await waitFor(cdp, `document.body.innerText.includes("Welcome back, Dr. Nattapong")`);
@@ -267,7 +272,7 @@ async function clickControl(cdp, text) {
 async function submitLogin(cdp) {
   await cdp.eval(`
     (() => {
-      const form = document.querySelector("form.login-form");
+      const form = document.querySelector("form.lg-form, form.login-form");
       if (!form) throw new Error("Login form not found");
       form.requestSubmit();
     })()

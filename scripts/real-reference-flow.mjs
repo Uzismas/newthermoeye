@@ -1,28 +1,33 @@
 import { spawn } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { basename, resolve } from "node:path";
+import { tmpdir } from "node:os";
+import { basename, join } from "node:path";
+import assert from "node:assert/strict";
 
 const appUrl = process.env.APP_URL ?? "http://127.0.0.1:3000/console/dashboard";
-const chromeBin = process.env.CHROME_BIN ?? "google-chrome";
+const chromeBin = process.env.CHROME_BIN ?? (process.platform === "win32"
+  ? "C:/Program Files/Google/Chrome/Application/chrome.exe"
+  : "google-chrome");
 const outputDir = "output/playwright";
+const runId = Date.now().toString(36).toUpperCase();
 const fixtures = [
   {
-    caseCode: "TE-DUKE-NORMAL",
-    expected: "Normal screening pattern",
+    caseCode: `TE-REFERENCE-A-${runId}`,
+    expected: "Indeterminate",
     file: "test-assets/scans/real-reference/duke-reference-normal-octa.png",
-    label: "normal",
-    reportLabel: "Normal",
+    label: "reference-a",
+    reportLabel: "Indeterminate",
   },
   {
-    caseCode: "TE-DUKE-RISK",
-    expected: "Alzheimer-risk screening pattern",
+    caseCode: `TE-REFERENCE-B-${runId}`,
+    expected: "Indeterminate",
     file: "test-assets/scans/real-reference/duke-reference-alzheimer-risk-octa.png",
-    label: "risk",
-    reportLabel: "Alzheimer risk",
+    label: "reference-b",
+    reportLabel: "Indeterminate",
   },
 ];
 
-const userDataDir = `/tmp/thermoeye-real-reference-${Date.now()}`;
+const userDataDir = join(tmpdir(), `thermoeye-real-reference-${Date.now()}`);
 let stderrBuffer = "";
 let ws;
 
@@ -36,7 +41,7 @@ const chrome = spawn(
     `--user-data-dir=${userDataDir}`,
     "about:blank",
   ],
-  { detached: true, stdio: ["ignore", "pipe", "pipe"] },
+  { detached: process.platform !== "win32", stdio: ["ignore", "pipe", "pipe"] },
 );
 
 chrome.stderr.on("data", (chunk) => {
@@ -55,35 +60,42 @@ try {
   await cdp.send("Page.enable");
   await cdp.send("Runtime.enable");
 
-  await waitFor(cdp, `document.body.innerText.includes("Sign in to review screening cases")`);
-  await waitFor(cdp, `document.querySelector("form.login-form")?.dataset.ready === "true"`);
-  await waitFor(cdp, `document.querySelector("form.login-form button[type='submit']")?.disabled === false`);
+  await waitFor(cdp, `Boolean(document.querySelector("form.lg-form, form.login-form"))`);
+  await waitFor(cdp, `document.querySelector("form.lg-form, form.login-form")?.dataset.ready === "true"`);
+  await waitFor(cdp, `document.querySelector("form.lg-form button[type='submit'], form.login-form button[type='submit']")?.disabled === false`);
   await submitLogin(cdp);
-  await waitFor(cdp, `document.body.innerText.includes("Welcome back")`);
+  await waitFor(cdp, `document.body.innerText.includes("Retinal vessel review run")`);
   await mkdir(outputDir, { recursive: true });
 
   for (const fixture of fixtures) {
     await uploadFixture(cdp, fixture);
+    await waitFor(cdp, `document.body.innerText.includes("Analysis Result") && document.body.innerText.includes(${JSON.stringify(fixture.caseCode)})`);
     await waitFor(cdp, `document.body.innerText.includes(${JSON.stringify(fixture.reportLabel)})`);
-    await waitFor(cdp, `document.body.innerText.includes(${JSON.stringify(
-      fixture.expected.includes("Alzheimer")
-        ? "Alzheimer-risk literature signals"
-        : "normal/reference band",
-    )})`);
+    await waitFor(cdp, `document.body.innerText.includes("Disease risk: N/A")`);
     await waitFor(cdp, `document.body.innerText.includes(${JSON.stringify(basename(fixture.file))})`);
     await captureScreenshot(cdp, `${outputDir}/real-reference-${fixture.label}-analysis.png`);
 
-    await approveCurrentCase(cdp, fixture.expected);
+    const preview = await readPreview(cdp, fixture.caseCode);
+    const result = preview.caseRecord.analysisMetrics.visionResult;
+    assert.equal(result.primaryDisease, "indeterminate");
+    assert.equal(result.riskScore, null);
+    assert.equal(result.confidence, null);
+    assert.deepEqual(result.differentials, []);
+    assert.equal(result.metricUnit, "percent_0_100");
+    await reviewCurrentCase(cdp, fixture.caseCode, result.analysisStatus === "measured");
     await clickButton(cdp, "Preview report");
-    await waitFor(cdp, `document.body.innerText.includes("Clinical report preview")`);
+    await waitFor(cdp, `document.body.innerText.includes("Research report preview")`);
     await waitFor(cdp, `document.body.innerText.includes(${JSON.stringify(fixture.reportLabel)})`);
-    await waitFor(cdp, `document.body.innerText.includes("Uploaded reference")`);
+    await waitFor(cdp, `document.body.innerText.includes(${JSON.stringify(fixture.caseCode)})`);
+    const reportPreview = await readPreview(cdp, fixture.caseCode);
+    assert.equal(reportPreview.caseRecord.analysisMetrics.vesselDensity, preview.caseRecord.analysisMetrics.vesselDensity, "report preserves uploaded measurement");
+    assert.equal(reportPreview.releaseStatus, result.analysisStatus === "measured" ? "ready" : "locked");
     await captureScreenshot(cdp, `${outputDir}/real-reference-${fixture.label}-report.png`);
   }
 
   console.log("Real reference flow passed:");
   for (const fixture of fixtures) {
-    console.log(`- ${basename(fixture.file)} -> ${fixture.expected}`);
+    console.log(`- ${basename(fixture.file)} -> research transport verified; disease result remains indeterminate`);
   }
 } finally {
   ws?.close();
@@ -117,25 +129,29 @@ async function uploadFixture(cdp, fixture) {
   await clickButton(cdp, "Queue secure screening");
 }
 
-async function approveCurrentCase(cdp, expected) {
+async function reviewCurrentCase(cdp, caseCode, measured) {
   await clickButton(cdp, "Dashboard");
   await waitFor(cdp, `document.body.innerText.includes("Selected Case Review")`);
-  await waitFor(cdp, `document.body.innerText.includes(${JSON.stringify(expected)})`);
   await cdp.eval(`
     (() => {
       const form = document.querySelector("form.review-form");
       if (!form) throw new Error("Review form not found");
-      form.elements.decision.value = "Approved for release";
-      form.elements.followUpWindow.value = ${JSON.stringify(expected.includes("Alzheimer") ? "30 days" : "Routine")};
-      form.elements.note.value = ${JSON.stringify(
-        expected.includes("Alzheimer")
-          ? "Approved for release after OCTA review. Recommend cognitive screening correlation within 30 days."
-          : "Approved for release after OCTA review. Normal screening pattern can continue routine care.",
-      )};
+      form.elements.decision.value = ${JSON.stringify(measured ? "Approved for release" : "Pending review")};
+      form.elements.followUpWindow.value = "Routine";
+      form.elements.note.value = "Research measurements reviewed; no disease classification is available.";
       form.requestSubmit();
     })()
   `);
-  await waitFor(cdp, `document.body.innerText.includes("Approved for release")`);
+  const expected = measured ? "Approved for release" : "Pending review";
+  await waitFor(cdp, `(async () => (await (await fetch(${JSON.stringify(`/api/cases/${caseCode}/review`)})).json()).review.decision === ${JSON.stringify(expected)})()`);
+}
+
+async function readPreview(cdp, caseCode) {
+  return cdp.eval(`(async () => {
+    const response = await fetch(${JSON.stringify(`/api/cases/${caseCode}/report/preview`)});
+    if (!response.ok) throw new Error("Saved reference case is unavailable");
+    return response.json();
+  })()`);
 }
 
 async function waitForHttp(url) {
@@ -243,13 +259,13 @@ async function clickButton(cdp, text) {
 async function submitLogin(cdp) {
   await cdp.eval(`
     (async () => {
-      const form = document.querySelector("form.login-form");
+      const form = document.querySelector("form.lg-form, form.login-form");
       if (!form) throw new Error("Login form not found");
       const button = form.querySelector("button[type='submit']");
       if (!button) throw new Error("Login button not found");
       button.click();
       await new Promise((resolve) => setTimeout(resolve, 500));
-      if (document.body.innerText.includes("Sign in to review screening cases")) {
+      if (document.querySelector("form.lg-form, form.login-form")) {
         const response = await fetch("/api/session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

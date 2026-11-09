@@ -11,22 +11,22 @@ from PIL import Image, ImageDraw, ImageFilter
 OUTPUT_DIR = Path("test-assets/scans")
 WIDTH = 666
 HEIGHT = 375
-SAMPLE_SIZE = 96
 
 
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     specs = [
-        ("upload-demo-normal-octa.png", "upload_demo_normal", 0, 72, 5, 12, 68),
-        ("upload-demo-alzheimer-risk-octa.png", "upload_demo_alzheimer_risk", 0, 34, 4, 26, 68),
-        ("upload-demo-quality-blocked-octa.png", "upload_demo_quality_blocked", 0, 22, 2, 42, 68),
-        ("normal-control-01-octa.png", "normal_control", 0, 60, 5, 24, 34),
-        ("normal-control-02-octa.png", "normal_control", 1, 60, 5, 24, 34),
-        ("normal-control-03-octa.png", "normal_control", 2, 60, 5, 24, 34),
-        ("autism-demo-placeholder-01-octa.png", "autism_placeholder", 10, 45, 4, 55, 12),
-        ("autism-demo-placeholder-02-octa.png", "autism_placeholder", 11, 50, 4, 55, 12),
-        ("autism-demo-placeholder-03-octa.png", "autism_placeholder", 12, 55, 4, 55, 12),
+        # Keep existing filenames for asset compatibility; names are not labels or diagnoses.
+        ("upload-demo-normal-octa.png", "synthetic_dense_vessels", 0, 72, 5, 12, 68),
+        ("upload-demo-alzheimer-risk-octa.png", "synthetic_sparse_vessels", 0, 34, 4, 26, 68),
+        ("upload-demo-quality-blocked-octa.png", "synthetic_large_center", 0, 22, 2, 42, 68),
+        ("normal-control-01-octa.png", "synthetic_variant_01", 0, 60, 5, 24, 34),
+        ("normal-control-02-octa.png", "synthetic_variant_02", 1, 60, 5, 24, 34),
+        ("normal-control-03-octa.png", "synthetic_variant_03", 2, 60, 5, 24, 34),
+        ("autism-demo-placeholder-01-octa.png", "synthetic_large_center_01", 10, 45, 4, 55, 12),
+        ("autism-demo-placeholder-02-octa.png", "synthetic_large_center_02", 11, 50, 4, 55, 12),
+        ("autism-demo-placeholder-03-octa.png", "synthetic_large_center_03", 12, 55, 4, 55, 12),
     ]
 
     records = []
@@ -41,9 +41,12 @@ def main() -> None:
                 "file": str(path),
                 "intended_demo_label": intended_label,
                 "current_app_expected_result": classification["label"],
-                "demo_age_used_for_expected_result": demo_age,
+                "classification": classification,
+                "demo_age": demo_age,
+                "analysis_status": "unavailable",
+                "filename_notice": "Historical filename retained for compatibility; not a clinical label.",
                 "medical_use": "synthetic demo asset only; not diagnostic; not derived from patient data",
-                "metrics_for_current_app": metrics,
+                "generator_metadata": metrics,
             }
         )
 
@@ -51,11 +54,10 @@ def main() -> None:
     (OUTPUT_DIR / "README.md").write_text(readme(records), encoding="utf-8")
 
     for record in records:
-        metrics = record["metrics_for_current_app"]
         print(
             f"{record['file']} -> {record['intended_demo_label']} / "
             f"{record['current_app_expected_result']} "
-            f"(VD {metrics['vesselDensity']}%, quality {round(metrics['qualityScore'])}%)"
+            "(synthetic asset; disease risk/confidence unavailable)"
         )
 
 
@@ -145,69 +147,30 @@ def add_texture(image: Image.Image, rng: Random) -> Image.Image:
     return image
 
 
-def analyze_image(image: Image.Image) -> dict[str, float | int | str]:
-    sample = image.resize((SAMPLE_SIZE, SAMPLE_SIZE)).convert("RGB")
-    pixels = list(sample.getdata())
-    grayscale = [r * 0.299 + g * 0.587 + b * 0.114 for r, g, b in pixels]
-    total = sum(grayscale)
-    dark_pixels = sum(1 for value in grayscale if value < 92)
-    bright_pixels = sum(1 for value in grayscale if value > 178)
-    brightness = total / len(grayscale)
-    variance = sum((value - brightness) ** 2 for value in grayscale)
-    edge_total = 0.0
-    for y in range(1, SAMPLE_SIZE - 1):
-        for x in range(1, SAMPLE_SIZE - 1):
-            index = y * SAMPLE_SIZE + x
-            value = grayscale[index]
-            edge_total += abs(value - grayscale[index - 1]) + abs(value - grayscale[index - SAMPLE_SIZE])
-
-    contrast = math.sqrt(variance / len(grayscale))
-    sharpness = min(100, edge_total / len(grayscale) / 1.8)
-    vessel_density = min(96, max(12, (dark_pixels / len(grayscale)) * 140 + contrast * 0.3))
-    exposure_penalty = abs(brightness - 128) * 0.22 + (bright_pixels / len(grayscale)) * 18
-    quality_score = min(99, max(42, sharpness * 0.58 + contrast * 0.42 + 68 - exposure_penalty))
-    confidence_score = min(95, max(62, quality_score * 0.68 + contrast * 0.22 + 22))
-    artifact_score = round(max(3, 100 - quality_score))
-
-    vessel_density_proxy = round(vessel_density)
-    perfusion_density_proxy = round(min(98, max(18, vessel_density_proxy + contrast * 0.18 - artifact_score * 0.12)))
-    faz_risk_proxy = round(min(95, max(8, 70 - vessel_density_proxy + max(0, artifact_score - 12) * 0.45)))
-
+def analyze_image(image: Image.Image) -> dict[str, int | str | None]:
+    """Describe generated assets only. Actual analysis belongs to the local backend."""
     return {
-        "artifactScore": artifact_score,
-        "brightness": round(brightness),
-        "confidenceScore": round(confidence_score),
-        "contrast": round(contrast),
-        "demoEngineVersion": "thermoeye-literature-ruleset-2026.05",
-        "fazRiskProxy": faz_risk_proxy,
-        "imageHeight": HEIGHT,
-        "imageWidth": WIDTH,
-        "perfusionDensityProxy": perfusion_density_proxy,
-        "qualityScore": quality_score,
-        "sharpness": round(sharpness),
-        "vesselDensity": vessel_density_proxy,
+        "artifactScore": None,
+        "brightness": None,
+        "confidenceScore": None,
+        "contrast": None,
+        "demoEngineVersion": "synthetic-generator-no-inference",
+        "fazRiskProxy": None,
+        "imageHeight": image.height,
+        "imageWidth": image.width,
+        "perfusionDensityProxy": None,
+        "qualityScore": None,
+        "sharpness": None,
+        "vesselDensity": None,
     }
 
 
-def classify_metrics(metrics: dict[str, float | int | str], age: int) -> dict[str, str | int]:
-    quality = float(metrics["qualityScore"])
-    artifact = int(metrics["artifactScore"])
-    vessel_density = int(metrics["vesselDensity"])
-    faz = int(metrics["fazRiskProxy"])
-    perfusion = int(metrics["perfusionDensityProxy"])
-    if quality < 55 or artifact > 45:
-        return {"kind": "quality_blocked", "riskScore": 0, "label": "Quality blocked"}
-
-    age_adjustment = max(0, age - 60) * 0.35
-    density_signal = max(0, 50 - vessel_density) * 1.05
-    faz_signal = max(0, faz - 38) * 0.55
-    perfusion_signal = max(0, 50 - perfusion) * 0.65
-    quality_adjustment = max(0, 74 - quality) * 0.22
-    risk_score = round(min(92, max(8, 18 + age_adjustment + density_signal + faz_signal + perfusion_signal + quality_adjustment)))
-    is_risk = risk_score >= 50 or vessel_density < 42 or faz >= 45 or perfusion < 44
-    if is_risk:
-        return {"kind": "alzheimer_risk", "riskScore": max(risk_score, 58), "label": "Alzheimer-risk screening pattern"}
-    return {"kind": "normal", "riskScore": min(risk_score, 34), "label": "Normal screening pattern"}
+def classify_metrics(metrics: dict[str, object], age: int) -> dict[str, object]:
+    """Compatibility helper: synthetic pixels and age cannot establish a diagnosis."""
+    return {
+        "kind": "indeterminate", "primaryDisease": "indeterminate", "riskLevel": "indeterminate",
+        "riskScore": None, "confidence": None, "differentials": [], "label": "Indeterminate",
+    }
 
 
 def readme(records: list[dict[str, object]]) -> str:
@@ -219,24 +182,19 @@ def readme(records: list[dict[str, object]]) -> str:
         "",
         "Quick upload test files:",
         "",
-        "- `upload-demo-normal-octa.png`: expected `Normal screening pattern` with the default upload age 68.",
-        "- `upload-demo-alzheimer-risk-octa.png`: expected `Alzheimer-risk screening pattern` with the default upload age 68.",
-        "- `upload-demo-quality-blocked-octa.png`: expected `Quality blocked` with the default upload age 68.",
+        "All assets have disease status `indeterminate`, `riskScore: null`, `confidence: null`, and no differentials.",
+        "Quality, modality, and vessel measurements are unavailable until the actual local backend processes an upload.",
         "",
-        "Important: the current app ruleset has only Normal, Alzheimer-risk, and Quality-blocked outcomes.",
-        "Files named `autism-demo-placeholder-*` are placeholders requested for autism-flow testing, but the current app will not output Autism until the clinical ruleset and UI are changed.",
+        "Historical filenames containing normal, Alzheimer, autism, or quality-blocked are retained only for compatibility.",
+        "They are not clinical labels or promises about the backend quality gate. No disease classifier is provided by this generator.",
         "",
         "## Files",
         "",
     ]
     for record in records:
-        metrics = record["metrics_for_current_app"]
-        assert isinstance(metrics, dict)
         lines.append(
             f"- `{Path(str(record['file'])).name}`: intended demo label `{record['intended_demo_label']}`, "
-            f"current app expected `{record['current_app_expected_result']}`, "
-            f"demo age {record['demo_age_used_for_expected_result']}, "
-            f"VD {metrics['vesselDensity']}%, quality {round(float(metrics['qualityScore']))}%."
+            f"disease status `{record['current_app_expected_result']}`; no measured result is generated."
         )
     lines.append("")
     return "\n".join(lines)

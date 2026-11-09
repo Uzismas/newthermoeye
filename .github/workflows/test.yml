@@ -1,0 +1,118 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Run smoke tests
+        run: npm run smoke
+        env:
+          CI: true
+          # GitHub's Ubuntu runner includes Chrome; scripts launch it directly via CDP.
+          CHROME_BIN: /usr/bin/google-chrome
+
+      - name: Upload test screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-screenshots
+          path: output/playwright/*.png
+          retention-days: 7
+
+  accessibility-tests:
+    name: Accessibility Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Run accessibility tests
+        run: npm run a11y
+        env:
+          CI: true
+          # No Playwright dependency is needed by the CDP accessibility flow.
+          CHROME_BIN: /usr/bin/google-chrome
+
+      - name: Upload accessibility reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-reports
+          path: tmp/*.json
+          retention-days: 7
+
+  api-tests:
+    name: API Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Run clinical contract regressions
+        run: |
+          npm run clinical-format-test
+          npm run contract-test
+          npm run state-test
+          npm run ui-safety-test
+
+      - name: Run API tests
+        run: npm run api
+        env:
+          CI: true
+
+      - name: Upload API test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-results
+          path: tmp/*.json
+          retention-days: 7

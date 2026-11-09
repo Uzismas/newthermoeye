@@ -7,6 +7,7 @@ dist/
 coverage/
 output/
 tmp/
+.thermoeye-private/
 *.tsbuildinfo
 __pycache__/
 .env
@@ -17,3 +18,19 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 *.log
+
+# Local datasets and trained artifacts must stay outside source control.
+backend/train/data/
+backend/train/models/
+backend/train/*.venv/
+backend/train/.venv/
+backend/models/*
+!backend/models/octa/
+backend/models/octa/*
+!backend/models/octa/model_card.json
+
+.vercel
+
+# Reference images whose reuse rights are unverified (D4); keep local only.
+internet-reference-images/_moved-from-public/
+internet-reference-images/research-figures/

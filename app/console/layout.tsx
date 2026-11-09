@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { ThermoeyeConsole } from "@/features/clinical-console/ThermoeyeConsole";
 
 export const metadata: Metadata = {
-  title: "Thermoeye Clinical Console",
-  description: "Doctor-gated OCTA/OCT screening workflow for Thermoeye pilot review.",
+  title: "Eyezheimer Clinical Console",
+  description: "Doctor-gated OCTA/OCT vessel-segmentation research workflow for Eyezheimer pilot review.",
 };
 
 type ConsoleLayoutProps = {

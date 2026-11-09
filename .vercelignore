@@ -1,0 +1,25 @@
+.claude/
+.github/
+.next/
+backend/
+coverage/
+dist/
+internet-reference-images/
+LogoNew/
+node_modules/
+out/
+output/
+test-assets/
+test-upload-images/
+tmp/
+web/
+ต้นแบบ ui/
+
+*.log
+*.tsbuildinfo
+.env
+.env*.local
+.env.local.txt
+
+*.pdf
+*.zip

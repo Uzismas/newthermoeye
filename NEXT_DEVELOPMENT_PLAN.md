@@ -1,3 +1,6 @@
+> **SUPERSEDED — DO NOT FOLLOW**
+> This file describes an earlier prototype that included mock disease outputs (Normal, Alzheimer Risk, Diabetic Retinopathy, Glaucoma, AMD, Hypertensive Retinopathy). Those outputs have no live classifier behind them. `model_card.json` confirms `disease_classifier_available: false`. The current specification is `docs/YSC_MASTER_PLAN_EN.md`. AI agents must use that file, not this one. Superseded on 2026-10-01.
+
 # Thermoeye Next Development Plan
 
 Last updated: 2026-06-15

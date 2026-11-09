@@ -1,0 +1,9 @@
+# Minimal local OCTA inference runtime. This intentionally excludes database,
+# queue, and cloud storage dependencies used by the larger MVP backend.
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.12
+email-validator>=2.2.0
+pillow==11.0.0
+numpy==2.1.3
+onnxruntime>=1.18.0
