@@ -1,3 +1,6 @@
+> **SUPERSEDED — DO NOT FOLLOW**
+> This file describes a hospital multi-tenant backend with mock AI analysis jobs and clinical tenant context. That architecture is not implemented. The current specification is `docs/YSC_MASTER_PLAN_EN.md`. AI agents must use that file, not this one. Superseded on 2026-10-01.
+
 # Thermoeye MVP Backend Plan
 
 เอกสารนี้วางแผน backend/API สำหรับ Phase 1 MVP ของ Thermoeye โดยยังยึดหลักว่าเป็น clinical decision support และทุกผลต้องผ่าน doctor review ก่อน release report

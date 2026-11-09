@@ -5,6 +5,7 @@ export const riskTone: Record<CaseRecord["riskLevel"], string> = {
   moderate: "moderate",
   low: "low",
   blocked: "blocked",
+  indeterminate: "indeterminate",
 };
 
 export const meterColor: Record<CaseRecord["riskLevel"], string> = {
@@ -12,6 +13,7 @@ export const meterColor: Record<CaseRecord["riskLevel"], string> = {
   moderate: "var(--amber)",
   low: "var(--green)",
   blocked: "#6b7280",
+  indeterminate: "#6b7280",
 };
 
 export function titleCase(value: string) {

@@ -1,8 +1,9 @@
-import { clinicalEvidenceSources, clinicalModelVersion, getCaseClassification, getClinicalResultLabel } from "../clinical-analysis";
+import { clinicalEvidenceSources, formatPercent, getCaseClassification, getClinicalResultLabel } from "../clinical-analysis";
 import type { CaseRecord, ReviewRecord, ViewId } from "../types";
 import { riskTone } from "../utils";
-import { HeatmapSvg, SegmentationSvg } from "./scan-visuals";
+import { analysisProvenance, hasUsableMeasurements, isSyntheticCase } from "../analysis-presentation";
 import { PanelHeader, SectionHeading } from "./shared";
+import { canReleaseResearchReport } from "../case-state";
 
 export function ReportView({
   selectedCase,
@@ -17,34 +18,42 @@ export function ReportView({
   onBack: (viewId: ViewId) => void;
   onDownload: () => void;
 }) {
-  const isApproved = selectedReview.decision === "Approved for release";
   const classification = getCaseClassification(selectedCase);
+  const isApproved = selectedReview.decision === "Approved for release" && canReleaseResearchReport(selectedCase);
   const metrics = selectedCase.analysisMetrics;
+  const measured = hasUsableMeasurements(selectedCase);
 
   return (
     <section className="view active" aria-labelledby="report-title">
       <SectionHeading
         eyebrow="Report release"
-        title="Clinical report preview"
-        note={isApproved ? "Doctor approval is complete. The PDF mock is ready for download." : "Draft PDF mock can be downloaded now. Doctor approval is still required for clinical release."}
+        title="Research report preview"
+        note={isApproved ? "Doctor approval is complete. The PDF is ready for download." : "Preview only. Review and approve this case before downloading or releasing the PDF."}
       />
 
       <div className="report-grid">
         <article className="panel report-document" aria-labelledby="report-document-title">
           <div className="report-header">
             <div>
-              <p className="eyebrow">Thermoeye screening report</p>
+              <p className="eyebrow">Eyezheimer research measurement report</p>
               <h2 id="report-document-title">{selectedCase.id}</h2>
             </div>
             <span className={`risk-chip ${riskTone[selectedCase.riskLevel]}`}>
-              {classification.kind === "quality_blocked" ? "Blocked" : `${getClinicalResultLabel(classification.kind)} ${selectedCase.riskScore}%`}
+              {classification.kind === "quality_blocked" ? "Blocked" : getClinicalResultLabel(classification.kind)}
             </span>
           </div>
           <div className="report-top-actions">
-            <button className="primary-button" type="button" onClick={onDownload} disabled={isDownloading}>
-              {isDownloading ? "Preparing PDF..." : "Download PDF mock"}
+            <button className="primary-button" type="button" onClick={onDownload} disabled={isDownloading || !isApproved}>
+              {isDownloading ? "Preparing PDF..." : "Download PDF"}
             </button>
-            {!isApproved ? <span>Draft only: approval is still required before clinical release.</span> : null}
+            {!isApproved ? (
+              <>
+                <span>Download locked until doctor approval.</span>
+                <button className="text-button report-review-link" type="button" onClick={() => onBack("dashboard")}>
+                  Review and approve case
+                </button>
+              </>
+            ) : null}
           </div>
 
           <div className="report-summary">
@@ -60,18 +69,16 @@ export function ReportView({
                 </dd>
               </div>
               <div>
-                <dt>Screening result</dt>
-                <dd>{getClinicalResultLabel(classification.kind)} {classification.kind === "quality_blocked" ? "" : `${selectedCase.riskScore}%`}</dd>
+                <dt>Analysis result</dt>
+                <dd>{getClinicalResultLabel(classification.kind)}{classification.kind === "quality_blocked" ? " (blocked)" : " — disease classifier unavailable"}</dd>
               </div>
               <div>
-                <dt>AI confidence</dt>
-                <dd>{selectedCase.confidence.replace("Confidence ", "")}</dd>
+                <dt>Vessel density / Central non-vessel fraction</dt>
+                <dd>{metrics && measured ? `${formatPercent(metrics.vesselDensity)} / ${formatPercent(metrics.fazRiskProxy)}` : "N/A"}</dd>
               </div>
               <div>
-                <dt>VD / FAZ proxy</dt>
-                <dd>
-                  {metrics ? `${metrics.vesselDensity}% / ${metrics.fazRiskProxy}%` : "Reference-derived"}
-                </dd>
+                <dt>Engine / unit</dt>
+                <dd>{metrics?.visionResult?.engine ?? "N/A"} / {metrics?.visionResult?.metricUnit ?? "percent_0_100"}</dd>
               </div>
               <div>
                 <dt>Doctor review</dt>
@@ -95,20 +102,18 @@ export function ReportView({
           <div className="report-visuals">
             <ReportScanFrame
               alt={`Report source scan for ${selectedCase.uploadedFileName ?? selectedCase.id}`}
-              label="Uploaded reference"
-              mode="original"
+              label={isSyntheticCase(selectedCase) ? "Synthetic source image" : "Uploaded source image"}
               src={selectedCase.uploadedImageUrl}
             />
             <ReportScanFrame
-              alt={`Report risk overlay for ${selectedCase.uploadedFileName ?? selectedCase.id}`}
-              label={classification.kind === "normal" ? "Low attention overlay" : "Risk attention overlay"}
-              mode="heatmap"
-              src={selectedCase.uploadedImageUrl}
+              alt={`Returned vessel segmentation mask for ${selectedCase.id}`}
+              label="Vessel segmentation mask"
+              src={measured ? metrics?.visionResult?.segmentationMaskDataUrl : undefined}
             />
           </div>
 
           <section className="report-section">
-            <h3>Screening interpretation</h3>
+            <h3>Research interpretation</h3>
             <p>{classification.finding}</p>
             <div className="report-evidence-list">
               {classification.evidence.map((item) => (
@@ -118,7 +123,7 @@ export function ReportView({
           </section>
 
           <section className="report-section">
-            <h3>Clinical recommendation</h3>
+            <h3>Acquisition and review guidance</h3>
             <p>{classification.recommendation}</p>
           </section>
 
@@ -128,14 +133,9 @@ export function ReportView({
           </section>
 
           <section className="report-section">
-            <h3>Release controls</h3>
-            <ul>
-              <li>Model: {clinicalModelVersion}</li>
-              <li>Threshold: 2026.05</li>
-              <li>Purpose: screening support only</li>
-              <li>Raw identifiers: de-identified before analysis</li>
-              <li>Report wording: locked to multi-disease screening support language</li>
-            </ul>
+            <h3>Analysis provenance</h3>
+            <p>Research only. Reviewer approval does not validate a disease classifier. De-identification and consent are not independently verified by this report.</p>
+            <dl>{analysisProvenance(selectedCase).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
           </section>
 
           <section className="report-section">
@@ -153,34 +153,20 @@ export function ReportView({
         <section className="panel report-actions" aria-labelledby="report-actions-title">
           <PanelHeader eyebrow="Controls" title="Report actions" badge="Audit logged" />
           <div className="checklist">
-            <div className="check-item pass">
-              <strong>Model version attached</strong>
-              <span>{clinicalModelVersion}</span>
-            </div>
-            <div className="check-item pass">
-              <strong>Threshold version attached</strong>
-              <span>2026.05</span>
-            </div>
-            <div className="check-item pass">
-              <strong>Screening language locked</strong>
-              <span>{classification.kind === "quality_blocked" ? "Quality block only" : "Multi-disease screening support only"}</span>
-            </div>
-            <div className="check-item pass">
-              <strong>Patient identifiers removed</strong>
-              <span>Case code only in report preview</span>
-            </div>
+            <div className="check-item hold"><strong>Disease classifier unavailable</strong><span>Indeterminate; disease risk and confidence N/A</span></div>
+            <div className="check-item pass"><strong>Research provenance attached</strong><span>{metrics?.visionResult?.engine ?? "Synthetic fixture"}</span></div>
             <div className={isApproved ? "check-item pass" : "check-item hold"}>
               <strong>Doctor approval</strong>
-              <span>{isApproved ? "Ready for release" : "Draft download only"}</span>
+              <span>{isApproved ? "Ready for release" : "Download locked until approval"}</span>
             </div>
           </div>
 
           <div className="actions-row vertical-actions">
-            <button className="primary-button wide" type="button" onClick={onDownload} disabled={isDownloading}>
-              {isDownloading ? "Preparing PDF..." : "Download PDF mock"}
+            <button className="primary-button wide" type="button" onClick={onDownload} disabled={isDownloading || !isApproved}>
+              {isDownloading ? "Preparing PDF..." : "Download PDF"}
             </button>
             <button className="ghost-button wide" type="button" onClick={() => onBack("dashboard")}>
-              Back to case review
+              Review and approve case
             </button>
           </div>
         </section>
@@ -189,30 +175,15 @@ export function ReportView({
   );
 }
 
-function ReportScanFrame({
-  alt,
-  label,
-  mode,
-  src,
-}: {
-  alt: string;
-  label: string;
-  mode: "heatmap" | "original";
-  src?: string;
-}) {
+function ReportScanFrame({ alt, label, src }: { alt: string; label: string; src?: string }) {
   return (
     <figure className="report-scan-frame">
-      <div className={`retina-scan report-scan uploaded-scan-frame ${mode}`}>
+      <div className="retina-scan report-scan uploaded-scan-frame">
         {src ? (
-          // Blob/object URLs from local demo uploads cannot go through next/image optimization.
+          // Local object URLs and returned masks are displayed without image optimization.
           // eslint-disable-next-line @next/next/no-img-element
           <img alt={alt} src={src} />
-        ) : mode === "heatmap" ? (
-          <HeatmapSvg />
-        ) : (
-          <SegmentationSvg />
-        )}
-        {mode === "heatmap" && src ? <span className="scan-hotspot primary" aria-hidden="true" /> : null}
+        ) : <p>N/A — no image available</p>}
       </div>
       <figcaption>{label}</figcaption>
     </figure>

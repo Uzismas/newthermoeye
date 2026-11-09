@@ -1,9 +1,10 @@
 import type { AuditEvent, CaseRecord, ViewId } from "./types";
-import { classifyClinicalMetrics, createClinicalMetrics } from "./clinical-analysis";
+import { classifyClinicalMetrics, createClinicalMetrics, formatPercent, normalizeCaseRecord } from "./clinical-analysis";
 import { referenceCases } from "./reference-cases";
 
 export const navigationItems: Array<{ id: ViewId; label: string; icon: string }> = [
   { id: "dashboard", label: "Dashboard", icon: "pulse-icon" },
+  { id: "tasks", label: "Task Manager", icon: "task-icon" },
   { id: "cases", label: "Upload New Scan", icon: "upload-icon" },
   { id: "patients", label: "Patients", icon: "patient-icon" },
   { id: "analysis", label: "Analysis Results", icon: "scan-icon" },
@@ -15,69 +16,69 @@ export const navigationItems: Array<{ id: ViewId; label: string; icon: string }>
 ];
 
 const highRiskMetrics = createClinicalMetrics({
-  artifactScore: 18, brightness: 118, confidenceScore: 88,
+  artifactScore: 18, brightness: 118, confidenceScore: null,
   contrast: 44, imageHeight: 375, imageWidth: 666,
   qualityScore: 96, sharpness: 82, vesselDensity: 20,
 });
 
 const moderateRiskMetrics = createClinicalMetrics({
-  artifactScore: 11, brightness: 123, confidenceScore: 84,
+  artifactScore: 11, brightness: 123, confidenceScore: null,
   contrast: 39, imageHeight: 375, imageWidth: 666,
   qualityScore: 91, sharpness: 74, vesselDensity: 39,
 });
 
 const normalMetrics = createClinicalMetrics({
-  artifactScore: 4, brightness: 130, confidenceScore: 92,
+  artifactScore: 4, brightness: 130, confidenceScore: null,
   contrast: 36, imageHeight: 375, imageWidth: 666,
   qualityScore: 98, sharpness: 80, vesselDensity: 58,
 });
 
 const blockedMetrics = createClinicalMetrics({
-  artifactScore: 58, brightness: 184, confidenceScore: 0,
+  artifactScore: 58, brightness: 184, confidenceScore: null,
   contrast: 18, imageHeight: 375, imageWidth: 666,
   qualityScore: 42, sharpness: 22, vesselDensity: 24,
 });
 
-// Disease-specific demo metrics
+// Synthetic image-measurement fixtures, without disease outcomes.
 const drMetrics = createClinicalMetrics({
-  artifactScore: 28, brightness: 162, confidenceScore: 82,
+  artifactScore: 28, brightness: 162, confidenceScore: null,
   contrast: 52, imageHeight: 375, imageWidth: 666,
   qualityScore: 88, sharpness: 76, vesselDensity: 26,
 });
 
 const glaucomaMetrics = createClinicalMetrics({
-  artifactScore: 12, brightness: 122, confidenceScore: 86,
+  artifactScore: 12, brightness: 122, confidenceScore: null,
   contrast: 28, imageHeight: 375, imageWidth: 666,
   qualityScore: 93, sharpness: 71, vesselDensity: 34,
 });
 
 const amdMetrics = createClinicalMetrics({
-  artifactScore: 22, brightness: 168, confidenceScore: 80,
+  artifactScore: 22, brightness: 168, confidenceScore: null,
   contrast: 45, imageHeight: 375, imageWidth: 666,
   qualityScore: 90, sharpness: 68, vesselDensity: 38,
 });
 
 const hypertensiveMetrics = createClinicalMetrics({
-  artifactScore: 32, brightness: 138, confidenceScore: 78,
+  artifactScore: 32, brightness: 138, confidenceScore: null,
   contrast: 62, imageHeight: 375, imageWidth: 666,
   qualityScore: 85, sharpness: 72, vesselDensity: 44,
 });
 
 const myopiaMetrics = createClinicalMetrics({
-  artifactScore: 8, brightness: 98, confidenceScore: 83,
+  artifactScore: 8, brightness: 98, confidenceScore: null,
   contrast: 22, imageHeight: 375, imageWidth: 666,
   qualityScore: 92, sharpness: 69, vesselDensity: 30,
 });
 
-export const cases: CaseRecord[] = [
+export const cases: CaseRecord[] = ([
   ...referenceCases,
   {
     id: "TE-2405-0187", age: 67, sex: "F", scanType: "OCTA", eye: "OD",
     riskLevel: classifyClinicalMetrics(highRiskMetrics, 67).riskLevel,
     riskScore: classifyClinicalMetrics(highRiskMetrics, 67).riskScore,
     qualityLabel: "Pass 96", status: "Review pending",
-    context: "67F · working senior · OCTA OD", confidence: "Confidence 88%",
-    density: "Vessel density -30.0%", heatmap: "Alzheimer Risk — high signal",
+    context: "Synthetic research fixture · 67F · workflow example · OCTA OD", confidence: null,
+    density: `Synthetic vessel density: ${formatPercent(highRiskMetrics.vesselDensity)}`, heatmap: "Unavailable - no disease model",
     note: classifyClinicalMetrics(highRiskMetrics, 67).finding,
     analysisMetrics: highRiskMetrics, clinicalClassification: classifyClinicalMetrics(highRiskMetrics, 67),
   },
@@ -85,9 +86,9 @@ export const cases: CaseRecord[] = [
     id: "TE-2405-0182", age: 73, sex: "M", scanType: "OCT", eye: "OS",
     riskLevel: classifyClinicalMetrics(moderateRiskMetrics, 73).riskLevel,
     riskScore: classifyClinicalMetrics(moderateRiskMetrics, 73).riskScore,
-    qualityLabel: "Pass 91", status: "AI completed",
-    context: "73M · follow-up case · OCT OS", confidence: "Confidence 81%",
-    density: "Vessel density -7.6%", heatmap: "Alzheimer Risk — moderate signal",
+    qualityLabel: "Pass 91", status: "Measurement fixture",
+    context: "Synthetic research fixture · 73M · workflow example · OCT OS", confidence: null,
+    density: `Synthetic vessel density: ${formatPercent(moderateRiskMetrics.vesselDensity)}`, heatmap: "Unavailable - no disease model",
     note: classifyClinicalMetrics(moderateRiskMetrics, 73).finding,
     analysisMetrics: moderateRiskMetrics, clinicalClassification: classifyClinicalMetrics(moderateRiskMetrics, 73),
   },
@@ -96,8 +97,8 @@ export const cases: CaseRecord[] = [
     riskLevel: classifyClinicalMetrics(normalMetrics, 61).riskLevel,
     riskScore: classifyClinicalMetrics(normalMetrics, 61).riskScore,
     qualityLabel: "Pass 98", status: "Report ready",
-    context: "61F · routine scan · OCTA OU", confidence: "Confidence 92%",
-    density: "Vessel density -1.8%", heatmap: "Low attention",
+    context: "Synthetic research fixture · 61F · workflow example · OCTA OU", confidence: null,
+    density: `Synthetic vessel density: ${formatPercent(normalMetrics.vesselDensity)}`, heatmap: "Unavailable - no disease model",
     note: classifyClinicalMetrics(normalMetrics, 61).finding,
     analysisMetrics: normalMetrics, clinicalClassification: classifyClinicalMetrics(normalMetrics, 61),
   },
@@ -106,8 +107,8 @@ export const cases: CaseRecord[] = [
     riskLevel: classifyClinicalMetrics(blockedMetrics, 70).riskLevel,
     riskScore: classifyClinicalMetrics(blockedMetrics, 70).riskScore,
     qualityLabel: "Fail 42", status: "Rescan needed",
-    context: "70F · OCTA OS · quality failure", confidence: "Confidence unavailable",
-    density: "Artifact detected", heatmap: "Quality blocked",
+    context: "Synthetic research fixture · 70F · OCTA OS · quality failure", confidence: null,
+    density: `Synthetic vessel density: ${formatPercent(blockedMetrics.vesselDensity)}`, heatmap: "Unavailable - no disease model",
     note: classifyClinicalMetrics(blockedMetrics, 70).finding,
     analysisMetrics: blockedMetrics, clinicalClassification: classifyClinicalMetrics(blockedMetrics, 70),
   },
@@ -116,8 +117,8 @@ export const cases: CaseRecord[] = [
     riskLevel: classifyClinicalMetrics(drMetrics, 55).riskLevel,
     riskScore: classifyClinicalMetrics(drMetrics, 55).riskScore,
     qualityLabel: "Pass 88", status: "Review pending",
-    context: "55M · diabetes follow-up · OCTA OD", confidence: "Confidence 82%",
-    density: "Vessel density -24.0%", heatmap: "Diabetic Retinopathy — high signal",
+    context: "Synthetic research fixture · 55M · workflow example · OCTA OD", confidence: null,
+    density: `Synthetic vessel density: ${formatPercent(drMetrics.vesselDensity)}`, heatmap: "Unavailable - no disease model",
     note: classifyClinicalMetrics(drMetrics, 55).finding,
     analysisMetrics: drMetrics, clinicalClassification: classifyClinicalMetrics(drMetrics, 55),
   },
@@ -125,9 +126,9 @@ export const cases: CaseRecord[] = [
     id: "TE-2405-0198", age: 62, sex: "F", scanType: "OCTA", eye: "OS",
     riskLevel: classifyClinicalMetrics(glaucomaMetrics, 62).riskLevel,
     riskScore: classifyClinicalMetrics(glaucomaMetrics, 62).riskScore,
-    qualityLabel: "Pass 93", status: "AI completed",
-    context: "62F · IOP elevated follow-up · OCTA OS", confidence: "Confidence 86%",
-    density: "Vessel density -16.0%", heatmap: "Glaucoma — high signal",
+    qualityLabel: "Pass 93", status: "Measurement fixture",
+    context: "Synthetic research fixture · 62F · workflow example · OCTA OS", confidence: null,
+    density: `Synthetic vessel density: ${formatPercent(glaucomaMetrics.vesselDensity)}`, heatmap: "Unavailable - no disease model",
     note: classifyClinicalMetrics(glaucomaMetrics, 62).finding,
     analysisMetrics: glaucomaMetrics, clinicalClassification: classifyClinicalMetrics(glaucomaMetrics, 62),
   },
@@ -136,8 +137,8 @@ export const cases: CaseRecord[] = [
     riskLevel: classifyClinicalMetrics(amdMetrics, 74).riskLevel,
     riskScore: classifyClinicalMetrics(amdMetrics, 74).riskScore,
     qualityLabel: "Pass 90", status: "Review pending",
-    context: "74F · AMD screening · OCTA OD", confidence: "Confidence 80%",
-    density: "Vessel density -12.0%", heatmap: "AMD — moderate signal",
+    context: "Synthetic research fixture · 74F · workflow example · OCTA OD", confidence: null,
+    density: `Synthetic vessel density: ${formatPercent(amdMetrics.vesselDensity)}`, heatmap: "Unavailable - no disease model",
     note: classifyClinicalMetrics(amdMetrics, 74).finding,
     analysisMetrics: amdMetrics, clinicalClassification: classifyClinicalMetrics(amdMetrics, 74),
   },
@@ -145,9 +146,9 @@ export const cases: CaseRecord[] = [
     id: "TE-2405-0204", age: 48, sex: "M", scanType: "OCT", eye: "OU",
     riskLevel: classifyClinicalMetrics(hypertensiveMetrics, 48).riskLevel,
     riskScore: classifyClinicalMetrics(hypertensiveMetrics, 48).riskScore,
-    qualityLabel: "Pass 85", status: "AI completed",
-    context: "48M · hypertension history · OCT OU", confidence: "Confidence 78%",
-    density: "Vessel density -6.0%", heatmap: "Hypertensive Retinopathy — moderate signal",
+    qualityLabel: "Pass 85", status: "Measurement fixture",
+    context: "Synthetic research fixture · 48M · workflow example · OCT OU", confidence: null,
+    density: `Synthetic vessel density: ${formatPercent(hypertensiveMetrics.vesselDensity)}`, heatmap: "Unavailable - no disease model",
     note: classifyClinicalMetrics(hypertensiveMetrics, 48).finding,
     analysisMetrics: hypertensiveMetrics, clinicalClassification: classifyClinicalMetrics(hypertensiveMetrics, 48),
   },
@@ -155,27 +156,15 @@ export const cases: CaseRecord[] = [
     id: "TE-2405-0207", age: 35, sex: "F", scanType: "OCTA", eye: "OS",
     riskLevel: classifyClinicalMetrics(myopiaMetrics, 35).riskLevel,
     riskScore: classifyClinicalMetrics(myopiaMetrics, 35).riskScore,
-    qualityLabel: "Pass 92", status: "AI completed",
-    context: "35F · high myopia -12D · OCTA OS", confidence: "Confidence 83%",
-    density: "Vessel density -20.0%", heatmap: "Pathologic Myopia — moderate signal",
+    qualityLabel: "Pass 92", status: "Measurement fixture",
+    context: "Synthetic research fixture · 35F · workflow example · OCTA OS", confidence: null,
+    density: `Synthetic vessel density: ${formatPercent(myopiaMetrics.vesselDensity)}`, heatmap: "Unavailable - no disease model",
     note: classifyClinicalMetrics(myopiaMetrics, 35).finding,
     analysisMetrics: myopiaMetrics, clinicalClassification: classifyClinicalMetrics(myopiaMetrics, 35),
   },
-];
+] satisfies CaseRecord[]).map(normalizeCaseRecord);
 
-export const initialAuditEvents: AuditEvent[] = [
-  { time: "19:14", message: "Dr. K approved report for TE-2405-0179" },
-  { time: "19:09", message: "Quality worker passed TE-2405-0187 with score 96" },
-  { time: "18:57", message: "De-identification service removed direct identifiers from upload batch" },
-  { time: "18:43", message: "Hospital staff downloaded released PDF report TE-2405-0171" },
-];
-
-export const dashboardMetrics = [
-  { label: "OCTA Scans Reviewed", value: "1,248", caption: "3x3 macula protocol", tone: "purple" },
-  { label: "Diseases Screened", value: "6", caption: "AD · DR · Glaucoma · AMD · HTN · PM", tone: "blue" },
-  { label: "Mean Risk Score", value: "0.38", caption: "Screening support only", tone: "orange" },
-  { label: "Positive Signals", value: "317", caption: "Across all disease modules", tone: "green" },
-];
+export const initialAuditEvents: AuditEvent[] = [];
 
 export const researchEvidence = [
   // ── Alzheimer’s ───────────────────────────────────────────────────────────

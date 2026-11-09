@@ -1,12 +1,13 @@
 import type { CSSProperties } from "react";
-import { clinicalModelVersion, getCaseClassification, getClinicalResultLabel } from "../clinical-analysis";
-import { dashboardMetrics } from "../mock-data";
+import { formatPercent, getCaseClassification, getClinicalResultLabel } from "../clinical-analysis";
+import { isSyntheticCase } from "../analysis-presentation";
+import { buildTasks, caseStage, pct, reviewFor } from "../tasks";
 import type { CaseRecord, ReviewDecision, ReviewRecord, ViewId } from "../types";
-import { riskTone, titleCase } from "../utils";
 import { PanelHeader, SectionHeading } from "./shared";
 
 export function DashboardView({
   cases,
+  reviews,
   selectedCase,
   selectedReview,
   onCaseSelect,
@@ -16,6 +17,7 @@ export function DashboardView({
   onPreviewReport,
 }: {
   cases: CaseRecord[];
+  reviews: Record<string, ReviewRecord>;
   selectedCase: CaseRecord;
   selectedReview: ReviewRecord;
   onCaseSelect: (caseId: string) => void;
@@ -24,71 +26,101 @@ export function DashboardView({
   onReviewSubmit: (review: ReviewRecord) => void;
   onPreviewReport: () => void;
 }) {
+  const total = cases.length;
+  const measuredCases = cases.filter((item) => caseStage(item) === "measured");
+  const blocked = cases.filter((item) => caseStage(item) === "blocked").length;
+  const notEvaluated = total - measuredCases.length - blocked;
+  const synthetic = cases.filter(isSyntheticCase).length;
+  const decisions = cases.map((item) => reviewFor(item, reviews, reviewer).decision);
+  const approved = decisions.filter((d) => d === "Approved for release").length;
+  const rescans = decisions.filter((d) => d === "Rescan requested").length;
+  const tasks = buildTasks(cases, reviews, reviewer);
+  const waitingReview = tasks.filter((t) => t.kind === "review").length;
+  const densities = measuredCases
+    .map((item) => item.analysisMetrics?.vesselDensity)
+    .filter((value): value is number => typeof value === "number");
+  const meanDensity = densities.length ? densities.reduce((a, b) => a + b, 0) / densities.length : null;
+  const evaluated = measuredCases.length + blocked;
+
+  const metrics = [
+    { label: "Cases in workspace", value: String(total), caption: `${synthetic} synthetic reference cases`, tone: "blue", bars: null },
+    { label: "Measured cases", value: String(measuredCases.length), caption: "Vessel segmentation completed", tone: "green", bars: densities.slice(-6) },
+    { label: "Mean vessel density", value: meanDensity == null ? "N/A" : formatPercent(meanDensity), caption: "Across measured cases", tone: "orange", bars: null },
+    { label: "Quality blocked", value: String(blocked), caption: "Need a clearer rescan", tone: "purple", bars: null },
+  ];
+
   return (
     <section className="view active" aria-labelledby="dashboard-title">
       <SectionHeading
-        eyebrow="OCTA retinal biomarker workflow for Alzheimer's screening research"
-        title="Welcome back, Dr. Nattapong"
-        note="Clinical decision-support view grounded in OCTA vessel density, perfusion density, and FAZ signals."
+        eyebrow="OCTA vessel research workflow"
+        title={<span id="dashboard-title">Welcome back, {reviewer}</span>}
+        note="Vessel-segmentation research view. Disease classification is not available; every report needs a reviewer decision."
       />
 
       <section className="ops-hero dashboard-ops" aria-labelledby="dashboard-ops-title">
         <div className="ops-hero-copy">
-          <p className="eyebrow">Live pilot workspace</p>
-          <h2 id="dashboard-ops-title">Retina-to-brain screening run</h2>
-          <p>
-            Prioritize cases with reduced retinal vessel density, FAZ enlargement, and lower perfusion density while keeping every report doctor-approved.
-          </p>
+          <p className="eyebrow">Research workspace</p>
+          <h2 id="dashboard-ops-title">Retinal vessel review run</h2>
+          <p>Check image quality, review the vessel map and density for each measured case, then record a decision before any report is released.</p>
           <div className="ops-actions">
-            <button className="primary-button" type="button" onClick={() => onNavigate("analysis")}>
-              Review priority case
+            <button className="primary-button" type="button" onClick={() => onNavigate("tasks")}>
+              Open Task Manager
             </button>
             <button className="ghost-button" type="button" onClick={() => onNavigate("cases")}>
               Queue new scan
             </button>
           </div>
         </div>
-        <div className="ops-status-grid" aria-label="Screening run status">
+        <div className="ops-status-grid" aria-label="Research run status">
           <span>
-            <strong>14</strong>
-            <em>Doctor reviews waiting</em>
-            <small>5 include VD/DCP signal</small>
+            <strong>{waitingReview}</strong>
+            <em>Reviews waiting</em>
+            <small>Measured, no decision yet</small>
           </span>
           <span>
-            <strong>96%</strong>
-            <em>OCTA quality pass rate</em>
-            <small>Artifact and focus gate</small>
+            <strong>{evaluated ? `${pct(measuredCases.length, evaluated)}%` : "N/A"}</strong>
+            <em>Quality pass rate</em>
+            <small>{evaluated} image{evaluated === 1 ? "" : "s"} evaluated</small>
           </span>
           <span>
             <strong>VD</strong>
-            <em>Top retinal marker</em>
-            <small>DCP/SCP density proxy</small>
+            <em>Measured marker</em>
+            <small>Vessel density from the U-Net mask</small>
           </span>
           <span>
             <strong>0</strong>
             <em>Reports without review</em>
-            <small>Clinical safety gate</small>
+            <small>Release gate enforced</small>
           </span>
         </div>
       </section>
 
       <div className="metrics-grid">
-        {dashboardMetrics.map((metric, index) => (
+        {metrics.map((metric, index) => (
           <article className={`metric metric-${metric.tone}`} key={metric.label}>
             <span className="metric-icon" aria-hidden="true">{["▣", "☷", "⌾", "▤"][index]}</span>
             <span>{metric.label}</span>
             <strong>{metric.value}</strong>
-            <small className={metric.caption.startsWith("+") ? "trend-up" : undefined}>{metric.caption}</small>
-            <MetricMiniChart tone={metric.tone} index={index} />
+            <small>{metric.caption}</small>
+            {metric.bars && metric.bars.length > 0 ? <MetricBars tone={metric.tone} values={metric.bars} /> : null}
           </article>
         ))}
       </div>
 
-      <StatusDashboard />
+      <StatusDashboard
+        total={total}
+        measured={measuredCases.length}
+        blocked={blocked}
+        notEvaluated={notEvaluated}
+        waitingReview={waitingReview}
+        approved={approved}
+        rescans={rescans}
+        cases={cases}
+      />
 
       <div className="dashboard-main-grid">
         <section className="panel queue-panel" aria-labelledby="queue-title">
-          <PanelHeader eyebrow="Recent analysis" title="Recent Analyses" badge="View all" />
+          <PanelHeader eyebrow="Recent analysis" title="Recent Analyses" badge={`${total} cases`} />
           <CaseTable cases={cases} selectedCaseId={selectedCase.id} onCaseSelect={onCaseSelect} />
           <div className="panel-link-row">
             <button className="text-button" type="button" onClick={() => onNavigate("analysis")}>Go to Analysis Results</button>
@@ -97,9 +129,10 @@ export function DashboardView({
 
         <UploadShortcut onNavigate={() => onNavigate("cases")} />
 
-        <section className="panel distribution-panel" aria-labelledby="risk-dist-title">
-          <PanelHeader eyebrow="Risk Level Distribution" title="Risk Level Distribution" badge="1,248 scans" />
-          <RiskDonut />
+        <section className="panel distribution-panel" aria-labelledby="status-dist-title">
+          <PanelHeader eyebrow="Analysis status" title="Analysis Status Mix" badge={`${total} cases`} />
+          <StatusDonut measured={measuredCases.length} blocked={blocked} notEvaluated={notEvaluated} />
+          <p className="panel-footnote">Disease risk distribution is not shown: no disease classifier is connected.</p>
         </section>
       </div>
 
@@ -118,6 +151,156 @@ export function DashboardView({
   );
 }
 
+function MetricBars({ tone, values }: { tone: string; values: number[] }) {
+  const max = Math.max(...values, 1);
+  return (
+    <div className={`metric-bars ${tone}`} aria-hidden="true">
+      {values.map((value, index) => (
+        <i style={{ "--bar": `${Math.max(8, (value / max) * 100)}%` } as CSSProperties} key={index} />
+      ))}
+    </div>
+  );
+}
+
+function StatusDashboard({
+  total,
+  measured,
+  blocked,
+  notEvaluated,
+  waitingReview,
+  approved,
+  rescans,
+  cases,
+}: {
+  total: number;
+  measured: number;
+  blocked: number;
+  notEvaluated: number;
+  waitingReview: number;
+  approved: number;
+  rescans: number;
+  cases: CaseRecord[];
+}) {
+  const pipeline: Array<[string, number]> = [
+    ["In workspace", total],
+    ["Image evaluated", measured + blocked],
+    ["Vessels measured", measured],
+    ["Review approved", approved],
+  ];
+  const eyes = (["OD", "OS", "OU"] as const)
+    .map((eye) => {
+      const group = cases.filter((item) => item.eye === eye);
+      return {
+        eye,
+        n: group.length,
+        measured: group.filter((item) => caseStage(item) === "measured").length,
+        blocked: group.filter((item) => caseStage(item) === "blocked").length,
+      };
+    })
+    .filter((row) => row.n > 0);
+  const queue: Array<[string, number, string]> = [
+    ["Quality passed", pct(measured, measured + blocked), "good"],
+    ["Review pending", pct(waitingReview, Math.max(measured, 1)), "warn"],
+    ["Reports approved", pct(approved, Math.max(measured, 1)), "good"],
+    ["Rescan requested", pct(rescans, Math.max(total, 1)), "risk"],
+  ];
+
+  return (
+    <section className="panel status-dashboard" aria-labelledby="status-dashboard-title">
+      <PanelHeader eyebrow="Status dashboard" title="Research Operations Status" badge="Live data" badgeTone="secure" />
+      <div className="status-dashboard-grid">
+        <div className="status-chart-card status-bars-card">
+          <div>
+            <strong>Case pipeline</strong>
+            <span>How far each case has progressed</span>
+          </div>
+          <div className="queue-bars" aria-label="Case pipeline">
+            {pipeline.map(([label, value]) => (
+              <span className="queue-bar good" key={label}>
+                <strong>{label}</strong>
+                <i style={{ "--bar": `${pct(value, Math.max(total, 1))}%` } as CSSProperties} />
+                <em>{value}</em>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="status-chart-card stacked-risk-chart">
+          <div>
+            <strong>Analysis outcome by eye</strong>
+            <span>Measured, quality-blocked, or not yet evaluated</span>
+          </div>
+          <div className="stacked-bars" aria-label="Analysis outcome by eye">
+            {eyes.map((row) => (
+              <span key={row.eye}>
+                <em>{row.eye}</em>
+                <i
+                  style={{
+                    "--low": `${pct(row.measured, row.n)}%`,
+                    "--moderate": `${pct(row.blocked, row.n)}%`,
+                    "--high": `${100 - pct(row.measured, row.n) - pct(row.blocked, row.n)}%`,
+                  } as CSSProperties}
+                />
+              </span>
+            ))}
+          </div>
+          <div className="chart-legend inline">
+            <span><i className="dot low-dot" /> Measured</span>
+            <span><i className="dot moderate-dot" /> Blocked</span>
+            <span><i className="dot neutral-dot" /> Not evaluated</span>
+          </div>
+        </div>
+
+        <div className="status-chart-card status-bars-card">
+          <div>
+            <strong>Current queue status</strong>
+            <span>Share of cases at each gate</span>
+          </div>
+          <div className="queue-bars" aria-label="Current queue status">
+            {queue.map(([label, value, tone]) => (
+              <span className={`queue-bar ${tone}`} key={label}>
+                <strong>{label}</strong>
+                <i style={{ "--bar": `${value}%` } as CSSProperties} />
+                <em>{value}%</em>
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+      {notEvaluated > 0 ? (
+        <p className="panel-footnote">
+          {notEvaluated} synthetic reference {notEvaluated === 1 ? "case is" : "cases are"} listed for the workflow demo and not yet analysed.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+function StatusDonut({ measured, blocked, notEvaluated }: { measured: number; blocked: number; notEvaluated: number }) {
+  const total = measured + blocked + notEvaluated;
+  const a = total ? (measured / total) * 100 : 0;
+  const b = total ? a + (blocked / total) * 100 : 0;
+  const share = (n: number) => (total ? `${Math.round((n / total) * 100)}%` : "0%");
+  return (
+    <div className="risk-donut-wrap">
+      <div
+        className="donut-chart"
+        role="img"
+        aria-label={`Analysis status: ${measured} measured, ${blocked} blocked, ${notEvaluated} not evaluated`}
+        style={{ background: `radial-gradient(circle at center, #ffffff 0 54%, transparent 55%), conic-gradient(var(--green) 0 ${a}%, var(--amber) ${a}% ${b}%, #c5d3e2 ${b}% 100%)` }}
+      >
+        <strong>{total}</strong>
+        <span>Cases</span>
+      </div>
+      <div className="donut-legend">
+        <span><i className="dot low-dot" /> Measured <strong>{measured} ({share(measured)})</strong></span>
+        <span><i className="dot moderate-dot" /> Blocked <strong>{blocked} ({share(blocked)})</strong></span>
+        <span><i className="dot neutral-dot" /> Not evaluated <strong>{notEvaluated} ({share(notEvaluated)})</strong></span>
+      </div>
+    </div>
+  );
+}
+
 function CaseTable({
   cases,
   selectedCaseId,
@@ -129,12 +312,12 @@ function CaseTable({
 }) {
   return (
     <table className="case-table">
-      <caption className="visually-hidden">Recent Thermoeye cases</caption>
+      <caption className="visually-hidden">Recent Eyezheimer cases</caption>
       <thead>
           <tr className="case-row table-head">
-          <th scope="col">Patient ID</th>
-          <th scope="col">Risk Score</th>
-          <th scope="col">Risk Level</th>
+          <th scope="col">Case ID</th>
+          <th scope="col">Vessel Density</th>
+          <th scope="col">Quality</th>
           <th scope="col">Status</th>
         </tr>
       </thead>
@@ -148,16 +331,16 @@ function CaseTable({
                 onClick={() => onCaseSelect(caseRecord.id)}
                 aria-pressed={selectedCaseId === caseRecord.id}
               >
-                <strong>{caseRecord.id.replace("TE", "PT")}</strong>
+                <strong>{caseRecord.id}</strong>
                 <small>
-                  12 May 2025 · {caseRecord.scanType} {caseRecord.eye}
+                  {isSyntheticCase(caseRecord) ? "Synthetic · " : ""}{caseRecord.scanType} {caseRecord.eye}
                 </small>
               </button>
             </td>
-            <td>{caseRecord.riskLevel === "blocked" ? "N/A" : `0.${String(caseRecord.riskScore).padStart(2, "0")}`}</td>
+            <td>{caseRecord.analysisMetrics?.vesselDensity != null ? formatPercent(caseRecord.analysisMetrics.vesselDensity) : "N/A"}</td>
             <td>
-              <span className={`risk-chip ${riskTone[caseRecord.riskLevel]}`}>
-                {caseRecord.riskLevel === "blocked" ? "Blocked" : titleCase(caseRecord.riskLevel)}
+              <span className={`status-pill ${caseRecord.analysisMetrics?.visionResult?.analysisStatus === "measured" ? "" : "pending"}`}>
+                {caseRecord.qualityLabel ?? (caseRecord.analysisMetrics?.visionResult?.analysisStatus === "measured" ? "Pass" : "Blocked")}
               </span>
             </td>
             <td>
@@ -191,20 +374,17 @@ function ActiveCasePanel({
 
   return (
     <section className="panel active-case" aria-labelledby="active-case-title">
-      <PanelHeader eyebrow="Doctor workflow" title="Selected Case Review" badge="De-identified" badgeTone="secure" />
+      <PanelHeader eyebrow="Review workflow" title="Selected Case Review" badge="Research only" />
 
       <div className={`case-alert ${selectedCase.riskLevel}`}>
         <strong>
-          {classification.kind === "quality_blocked" ? "Rescan required before AI reporting" : `${getClinicalResultLabel(classification.kind)} screening result`}
+          {classification.kind === "quality_blocked" ? "Acquisition blocked" : getClinicalResultLabel(classification.kind)}
         </strong>
         <span>{classification.finding}</span>
       </div>
 
       <div className="case-focus">
-        <div className="risk-meter reference-gauge" style={{ "--risk-fill": `${selectedCase.riskScore}%` } as CSSProperties}>
-          <span>{selectedCase.riskScore}</span>
-          <small>{getClinicalResultLabel(classification.kind)}</small>
-        </div>
+        <div className="assessment-copy"><strong>Vessel segmentation only</strong><small>Disease classifier unavailable — indeterminate</small></div>
         <div className="case-summary">
           <dl>
             <div>
@@ -216,15 +396,15 @@ function ActiveCasePanel({
               <dd>{selectedCase.context}</dd>
             </div>
             <div>
-              <dt>Model</dt>
-              <dd>{clinicalModelVersion} · threshold 2026.05</dd>
+              <dt>Measurement engine</dt>
+              <dd>{selectedCase.analysisMetrics?.visionResult?.engine ?? (isSyntheticCase(selectedCase) ? "Synthetic fixture" : "Unavailable")}</dd>
             </div>
           </dl>
         </div>
       </div>
 
       <div className="decision-strip">
-        <span>{selectedCase.confidence}</span>
+        <span>Vessel density: {selectedCase.analysisMetrics?.vesselDensity != null ? formatPercent(selectedCase.analysisMetrics.vesselDensity) : "N/A"}</span>
         <span>{selectedCase.density}</span>
         <span>{classification.label}</span>
         <span>{selectedReview.decision}</span>
@@ -325,7 +505,7 @@ function DoctorReviewPanel({
 function UploadShortcut({ onNavigate }: { onNavigate: () => void }) {
   return (
     <section className="panel upload-shortcut" aria-labelledby="upload-shortcut-title">
-      <PanelHeader eyebrow="Upload New OCTA Scan" title="Upload New OCTA Scan" badge="DICOM" />
+      <PanelHeader eyebrow="Upload New OCTA Scan" title="Upload New OCTA Scan" badge="Raster images" />
       <button className="dropzone compact" type="button" onClick={onNavigate}>
         <span className="drop-mark" aria-hidden="true" />
         <strong>Drag and drop OCTA images</strong>
@@ -336,137 +516,17 @@ function UploadShortcut({ onNavigate }: { onNavigate: () => void }) {
   );
 }
 
-function MetricMiniChart({ tone, index }: { tone: string; index: number }) {
-  const series = [
-    [46, 58, 52, 72, 68, 84],
-    [78, 74, 82, 86, 91, 96],
-    [32, 36, 34, 40, 38, 42],
-    [18, 24, 21, 28, 30, 34],
-  ][index] ?? [40, 48, 52, 58, 64, 70];
-
-  return (
-    <div className={`metric-bars ${tone}`} aria-hidden="true">
-      {series.map((value, itemIndex) => (
-        <i style={{ "--bar": `${value}%` } as CSSProperties} key={`${value}-${itemIndex}`} />
-      ))}
-    </div>
-  );
-}
-
-function StatusDashboard() {
-  return (
-    <section className="panel status-dashboard" aria-labelledby="status-dashboard-title">
-      <PanelHeader eyebrow="Status dashboard" title="Screening Operations Status" badge="Live pilot" badgeTone="secure" />
-      <div className="status-dashboard-grid">
-        <div className="status-chart-card throughput-chart">
-          <div>
-            <strong>Weekly screening throughput</strong>
-            <span>Uploads, analyses, and doctor approvals</span>
-          </div>
-          <svg viewBox="0 0 520 220" role="img" aria-label="Weekly screening throughput area chart">
-            <defs>
-              <linearGradient id="throughputFill" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#39bf7f" stopOpacity="0.34" />
-                <stop offset="100%" stopColor="#39bf7f" stopOpacity="0.02" />
-              </linearGradient>
-            </defs>
-            {[48, 88, 128, 168].map((y) => (
-              <line className="status-grid-line" x1="42" y1={y} x2="492" y2={y} key={y} />
-            ))}
-            <path className="status-area" d="M42 170 C92 150 114 122 158 132 C204 142 222 82 274 96 C326 110 350 66 402 72 C444 76 462 52 492 44 L492 190 L42 190 Z" />
-            <path className="status-line upload" d="M42 170 C92 150 114 122 158 132 C204 142 222 82 274 96 C326 110 350 66 402 72 C444 76 462 52 492 44" />
-            <path className="status-line approval" d="M42 184 C96 176 132 150 176 154 C220 158 236 118 284 124 C332 130 360 98 410 104 C452 108 468 86 492 78" />
-            <g className="status-points">
-              {[42, 158, 274, 402, 492].map((x, index) => (
-                <circle cx={x} cy={[170, 132, 96, 72, 44][index]} r="4" key={x} />
-              ))}
-            </g>
-          </svg>
-          <div className="chart-legend inline">
-            <span><i className="dot green-dot" /> Uploads analyzed</span>
-            <span><i className="dot blue-dot" /> Doctor approvals</span>
-          </div>
-        </div>
-
-        <div className="status-chart-card stacked-risk-chart">
-          <div>
-            <strong>Risk mix by clinic day</strong>
-            <span>Low, moderate, and high screening buckets</span>
-          </div>
-          <div className="stacked-bars" aria-label="Risk mix stacked bar chart">
-            {[
-              ["Mon", 58, 28, 14],
-              ["Tue", 64, 23, 13],
-              ["Wed", 55, 30, 15],
-              ["Thu", 61, 26, 13],
-              ["Fri", 49, 34, 17],
-            ].map(([day, low, moderate, high]) => (
-              <span key={day}>
-                <em>{day}</em>
-                <i style={{ "--low": `${low}%`, "--moderate": `${moderate}%`, "--high": `${high}%` } as CSSProperties} />
-              </span>
-            ))}
-          </div>
-          <div className="chart-legend inline">
-            <span><i className="dot low-dot" /> Low</span>
-            <span><i className="dot moderate-dot" /> Moderate</span>
-            <span><i className="dot high-dot" /> High</span>
-          </div>
-        </div>
-
-        <div className="status-chart-card status-bars-card">
-          <div>
-            <strong>Current queue status</strong>
-            <span>Operational blockers and ready states</span>
-          </div>
-          <div className="queue-bars" aria-label="Current queue status bar chart">
-            {[
-              ["Quality passed", 96, "good"],
-              ["Doctor pending", 42, "warn"],
-              ["Reports ready", 74, "good"],
-              ["Rescan needed", 9, "risk"],
-            ].map(([label, value, tone]) => (
-              <span className={`queue-bar ${tone}`} key={label}>
-                <strong>{label}</strong>
-                <i style={{ "--bar": `${value}%` } as CSSProperties} />
-                <em>{value}%</em>
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function RiskDonut() {
-  return (
-    <div className="risk-donut-wrap">
-      <div className="donut-chart" aria-label="Risk level distribution">
-        <strong>1,248</strong>
-        <span>Total</span>
-      </div>
-      <div className="donut-legend">
-        <span><i className="dot high-dot" /> High Risk <strong>142 (11.4%)</strong></span>
-        <span><i className="dot moderate-dot" /> Moderate Risk <strong>326 (26.1%)</strong></span>
-        <span><i className="dot low-dot" /> Low Risk <strong>780 (62.5%)</strong></span>
-      </div>
-    </div>
-  );
-}
-
 function AiInsightCard() {
   return (
     <section className="panel ai-insight-card" aria-labelledby="ai-insight-title">
       <PanelHeader eyebrow="Clinical guardrails" title="Screening Safety" badge="Updated" badgeTone="secure" />
       <p>
-        Thermoeye locks outputs to Normal, Alzheimer-risk, or Quality-blocked screening language. It does not release reports
-        until image quality, de-identification, ruleset output, and doctor approval are complete.
+        Disease status remains indeterminate. Image quality and modality gates control whether research measurements are available. Report approval records a review decision and does not establish clinical validation.
       </p>
       <div className="insight-benefits">
-        <span>Decision support</span>
+        <span>Research measurements</span>
         <span>Doctor approval</span>
-        <span>Audit-ready</span>
+        <span>Recorded provenance</span>
       </div>
     </section>
   );

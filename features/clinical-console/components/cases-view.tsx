@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { createCaseFromClinicalInput, createClinicalMetrics } from "../clinical-analysis";
-import { referenceCaseDefinitions } from "../reference-cases";
-import type { CaseRecord } from "../types";
+import { useRef, useState } from "react";
+import { createCaseFromClinicalInput, metricsFromAnalysis } from "../clinical-analysis";
+import { normalizeAnalysis } from "../analysis-contract";
+import { detectImageMime, mimeMatches, MAX_IMAGE_BYTES, NON_OCT_FILENAME } from "../image-input";
+import type { CaseRecord, VisionResult } from "../types";
 import { PanelHeader, SectionHeading } from "./shared";
 
 export function CasesView({
@@ -12,34 +13,34 @@ export function CasesView({
   uploadLabel,
   onCreateDemoCase,
   onFileSelected,
-  onQueueUpload,
 }: {
   errorMessage?: string;
   isQueueing?: boolean;
   uploadLabel: string;
-  onCreateDemoCase: (caseRecord: CaseRecord) => void;
+  onCreateDemoCase: (caseRecord: CaseRecord, sourceFile: File) => void | Promise<void>;
   onFileSelected: (label: string) => void;
-  onQueueUpload: () => void;
 }) {
   const [localError, setLocalError] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const analyzingRef = useRef(false);
 
   return (
     <section className="view active" aria-labelledby="cases-title">
       <SectionHeading
         eyebrow="Ingestion"
         title="Case intake and upload"
-        note="Raw files remain quarantined until consent, de-identification, and quality checks complete."
+        note="Research workflow. Upload de-identified scans only; automatic de-identification is not implemented."
       />
 
       <div className="two-column">
         <section className="panel upload-panel" aria-labelledby="upload-title">
-          <PanelHeader eyebrow="New scan" title="Secure upload" badge="Encrypted intake" badgeTone="secure" />
+          <PanelHeader eyebrow="New scan" title="Secure upload" badge="Local analysis" badgeTone="secure" />
 
           <label className="dropzone" htmlFor="scan-file">
             <input
               id="scan-file"
               type="file"
-              accept="image/*,.dcm,.dicom"
+              accept="image/jpeg,image/png,image/webp,image/tiff,.jpg,.jpeg,.png,.webp,.tif,.tiff"
               onChange={(event) => {
                 const fileName = event.target.files?.[0]?.name;
                 setLocalError("");
@@ -48,7 +49,14 @@ export function CasesView({
             />
             <span className="drop-mark" aria-hidden="true" />
             <strong>{uploadLabel}</strong>
-            <small>DICOM, OCTA image, or exported scan package. Demo stores no real patient data.</small>
+            <small>JPEG, PNG, WebP, or TIFF OCTA/OCT image. DICOM must be exported to one of these image formats first.</small>
+            <span className="upload-format-list" aria-label="Supported image formats">
+              <span>JPG</span>
+              <span>PNG</span>
+              <span>WebP</span>
+              <span>TIFF</span>
+              <span className="upload-format-limit">Max 8 MB</span>
+            </span>
             <span className="file-picker-button">Choose scan image</span>
             <span className={uploadLabel.endsWith(" selected") ? "upload-state ready" : "upload-state"}>
               {uploadLabel.endsWith(" selected") ? "File ready for screening" : "No file selected yet"}
@@ -58,7 +66,7 @@ export function CasesView({
           <div className="form-grid">
             <label>
               <span>Case code</span>
-              <input name="caseCode" type="text" defaultValue="TE-2405-0192" aria-label="Case code" />
+              <input name="caseCode" type="text" placeholder="Auto-generated if empty" aria-label="Case code" />
             </label>
             <label>
               <span>Age</span>
@@ -84,14 +92,15 @@ export function CasesView({
 
           <div className="consent-box">
             <label>
-              <input type="checkbox" defaultChecked /> Screening allowed
+              <input type="checkbox" name="consentScreening" defaultChecked /> Screening allowed
             </label>
             <label>
-              <input type="checkbox" /> Research allowed
+              <input type="checkbox" name="consentResearch" /> Research allowed
             </label>
             <label>
-              <input type="checkbox" /> Model training allowed
+              <input type="checkbox" name="consentTraining" /> Model training allowed
             </label>
+            <p className="consent-note">Consent fields are recorded in the researcher&apos;s case record. Backend enforcement is not yet implemented in this research prototype.</p>
           </div>
 
           {localError ? (
@@ -110,6 +119,7 @@ export function CasesView({
             className="primary-button wide"
             type="button"
             onClick={() => {
+              if (analyzingRef.current) return;
               const fileInput = document.querySelector<HTMLInputElement>("#scan-file");
               const file = fileInput?.files?.[0];
               const form = fileInput?.closest(".upload-panel");
@@ -121,25 +131,29 @@ export function CasesView({
               }
 
               setLocalError("");
+              analyzingRef.current = true;
+              setIsAnalyzing(true);
               void createBaselineDemoCase(file, {
-                caseCode: getField("caseCode") || "TE-2405-0192",
-                age: Number(getField("age")) || 68,
+                caseCode: getField("caseCode"),
+                age: Number(getField("age")),
                 sex: getField("sex") === "Male" ? "M" : "F",
                 scanType: getField("scanType") || "OCTA macula",
-              }).then(onCreateDemoCase);
+              }).then(({ caseRecord, sourceFile }) => onCreateDemoCase(caseRecord, sourceFile)).catch((error: unknown) => {
+                setLocalError(error instanceof Error ? error.message : "The file could not be accepted as an OCT/OCTA scan.");
+              }).finally(() => { analyzingRef.current = false; setIsAnalyzing(false); });
             }}
-            disabled={isQueueing}
+            disabled={isQueueing || isAnalyzing}
           >
-            {isQueueing ? "Queueing..." : "Queue secure screening"}
+            {isQueueing ? "Queueing..." : isAnalyzing ? "Analyzing..." : "Queue secure screening"}
           </button>
         </section>
 
         <section className="panel" aria-labelledby="checks-title">
           <PanelHeader eyebrow="Pre-analysis gates" title="Required checks" badge="MVP rules" />
           <div className="checklist">
-            <CheckItem tone="pass" title="Metadata scan" text="No direct identifier in visible fields" />
-            <CheckItem tone="pass" title="Consent purpose" text="Screening allowed before processing" />
-            <CheckItem tone="pass" title="Image quality" text="Blur, artifact, resolution, and macula region" />
+            <CheckItem tone="hold" title="Metadata" text="Remove identifiers before upload; no automatic de-identification claim" />
+            <CheckItem tone="hold" title="Purpose" text="Research measurements only" />
+            <CheckItem tone="hold" title="Image quality" text="Evaluated by the local backend after decoding" />
             <CheckItem tone="hold" title="Model release gate" text="Using mock/baseline model until validation package exists" />
           </div>
         </section>
@@ -155,212 +169,26 @@ type DemoCaseInput = {
   sex: "F" | "M";
 };
 
-async function createBaselineDemoCase(file: File, input: DemoCaseInput): Promise<CaseRecord> {
-  const imageUrl = URL.createObjectURL(file);
-  const metrics = await analyzeImage(file);
-
-  return createCaseFromClinicalInput({
-    age: input.age,
-    caseCode: input.caseCode,
-    fileName: file.name,
-    metrics,
-    scanType: input.scanType,
-    sex: input.sex,
-    uploadedImageUrl: imageUrl,
-  });
+async function createBaselineDemoCase(file: File, input: DemoCaseInput): Promise<{ caseRecord: CaseRecord; sourceFile: File }> {
+  if (!Number.isInteger(input.age) || input.age < 0 || input.age > 120) throw new Error("Age must be between 0 and 120.");
+  if (input.caseCode && !/^[A-Z0-9-]{4,64}$/i.test(input.caseCode.trim())) throw new Error("Case code must contain 4–64 letters, digits, or hyphens.");
+  const { metrics, analysisReceipt } = await analyzeImage(file);
+  // Decoder-generated preview also supports TIFF without a browser TIFF codec.
+  const imageUrl = metrics.visionResult?.previewDataUrl ?? (file.type.includes("tif") ? undefined : URL.createObjectURL(file));
+  return { caseRecord: { ...createCaseFromClinicalInput({ ...input, fileName: file.name, metrics, uploadedImageUrl: imageUrl }), analysisReceipt }, sourceFile: file };
 }
 
 async function analyzeImage(file: File) {
-  // Try known fixture first (offline demo images)
-  const fixtureMetrics = getKnownReferenceFixtureMetrics(file.name);
-  if (fixtureMetrics) return fixtureMetrics;
-
-  // Try Claude Vision API (real AI analysis)
-  try {
-    const form = new FormData();
-    form.append("image", file);
-    const res = await fetch("/api/analyze", { method: "POST", body: form });
-    if (res.ok) {
-      const { analysis } = await res.json() as { analysis: import("../types").VisionResult };
-      return createClinicalMetrics({
-        brightness: 128, contrast: 42,
-        sharpness: Math.round(analysis.qualityScore * 0.8),
-        vesselDensity: analysis.vesselDensity,
-        qualityScore: analysis.qualityScore,
-        confidenceScore: analysis.confidence,
-        artifactScore: Math.round(Math.max(3, 100 - analysis.qualityScore)),
-        imageWidth: 512, imageHeight: 512,
-        visionResult: analysis,
-      });
-    }
-  } catch {
-    // Fall through to canvas fallback
-  }
-
-  // Canvas fallback (no API key or offline)
-  return analyzeImageCanvas(file);
-}
-
-type VisionResult = {
-  primaryDisease: string;
-  riskLevel: string;
-  riskScore: number;
-  confidence: number;
-  label: string;
-  finding: string;
-  recommendation: string;
-  evidence: string[];
-  vesselDensity: number;
-  fazRisk: number;
-  perfusion: number;
-  qualityScore: number;
-  differentials: { kind: string; label: string; score: number; evidence: string[] }[];
-};
-
-async function analyzeImageCanvas(file: File) {
-  const bitmap = await createImageBitmap(file);
-  const sampleSize = 96;
-  const canvas = document.createElement("canvas");
-  canvas.width = sampleSize;
-  canvas.height = sampleSize;
-  const context = canvas.getContext("2d", { willReadFrequently: true });
-  if (!context) throw new Error("Browser canvas is unavailable for demo analysis.");
-
-  context.drawImage(bitmap, 0, 0, sampleSize, sampleSize);
-  const { data } = context.getImageData(0, 0, sampleSize, sampleSize);
-  const grayscale = new Float32Array(sampleSize * sampleSize);
-  let total = 0, darkPixels = 0, brightPixels = 0;
-
-  for (let i = 0; i < grayscale.length; i++) {
-    const o = i * 4;
-    const v = data[o] * 0.299 + data[o + 1] * 0.587 + data[o + 2] * 0.114;
-    grayscale[i] = v; total += v;
-    if (v < 92) darkPixels++;
-    if (v > 178) brightPixels++;
-  }
-
-  const brightness = total / grayscale.length;
-  let variance = 0, edgeTotal = 0;
-  for (let y = 1; y < sampleSize - 1; y++) {
-    for (let x = 1; x < sampleSize - 1; x++) {
-      const i = y * sampleSize + x;
-      variance += (grayscale[i] - brightness) ** 2;
-      edgeTotal += Math.abs(grayscale[i] - grayscale[i - 1]) + Math.abs(grayscale[i] - grayscale[i - sampleSize]);
-    }
-  }
-  const contrast = Math.sqrt(variance / grayscale.length);
-  const sharpness = Math.min(100, edgeTotal / grayscale.length / 1.8);
-  const vesselDensity = Math.min(96, Math.max(12, (darkPixels / grayscale.length) * 140 + contrast * 0.3));
-  const exposurePenalty = Math.abs(brightness - 128) * 0.22 + (brightPixels / grayscale.length) * 18;
-  const qualityScore = Math.min(99, Math.max(42, sharpness * 0.58 + contrast * 0.42 + 68 - exposurePenalty));
-  const confidenceScore = Math.min(95, Math.max(62, qualityScore * 0.68 + contrast * 0.22 + 22));
-
-  return createClinicalMetrics({
-    brightness: Math.round(brightness), contrast: Math.round(contrast),
-    sharpness: Math.round(sharpness), vesselDensity: Math.round(vesselDensity),
-    qualityScore, confidenceScore,
-    artifactScore: Math.round(Math.max(3, 100 - qualityScore)),
-    imageWidth: bitmap.width, imageHeight: bitmap.height,
-  });
-}
-
-function getKnownReferenceFixtureMetrics(fileName: string) {
-  const normalized = fileName.toLowerCase();
-  const referenceDefinition = referenceCaseDefinitions.find((definition) => normalized.includes(definition.caseCode.toLowerCase()));
-
-  if (referenceDefinition) {
-    return createClinicalMetrics({
-      ...referenceDefinition.metrics,
-      imageWidth: 512,
-      imageHeight: 512,
-    });
-  }
-
-  if (normalized === "upload-demo-normal-octa.png") {
-    return createClinicalMetrics({
-      artifactScore: 3,
-      brightness: 128,
-      confidenceScore: 95,
-      contrast: 69,
-      imageWidth: 666,
-      imageHeight: 375,
-      qualityScore: 99,
-      sharpness: 24,
-      vesselDensity: 82,
-    });
-  }
-
-  if (normalized === "upload-demo-alzheimer-risk-octa.png") {
-    return createClinicalMetrics({
-      artifactScore: 25,
-      brightness: 192,
-      confidenceScore: 84,
-      contrast: 48,
-      imageWidth: 666,
-      imageHeight: 375,
-      qualityScore: 75,
-      sharpness: 25,
-      vesselDensity: 22,
-    });
-  }
-
-  if (normalized.includes("quality-blocked") || normalized.includes("quality_blocked") || normalized === "upload-demo-quality-blocked-octa.png") {
-    return createClinicalMetrics({
-      artifactScore: 46,
-      brightness: 216,
-      confidenceScore: 65,
-      contrast: 31,
-      imageWidth: 666,
-      imageHeight: 375,
-      qualityScore: 54,
-      sharpness: 14,
-      vesselDensity: 12,
-    });
-  }
-
-  if (normalized.includes("autism-not-supported") || normalized.startsWith("autism-demo-placeholder")) {
-    return createClinicalMetrics({
-      artifactScore: 18,
-      brightness: 183,
-      confidenceScore: 89,
-      contrast: 53,
-      imageWidth: 666,
-      imageHeight: 375,
-      qualityScore: 82,
-      sharpness: 26,
-      vesselDensity: 27,
-    });
-  }
-
-  if (normalized === "duke-reference-normal-octa.png") {
-    return createClinicalMetrics({
-      artifactScore: 5,
-      brightness: 132,
-      confidenceScore: 92,
-      contrast: 42,
-      imageWidth: 666,
-      imageHeight: 666,
-      qualityScore: 96,
-      sharpness: 78,
-      vesselDensity: 58,
-    });
-  }
-
-  if (normalized === "duke-reference-alzheimer-risk-octa.png") {
-    return createClinicalMetrics({
-      artifactScore: 12,
-      brightness: 128,
-      confidenceScore: 88,
-      contrast: 44,
-      imageWidth: 666,
-      imageHeight: 666,
-      qualityScore: 94,
-      sharpness: 76,
-      vesselDensity: 29,
-    });
-  }
-
-  return null;
+  if (!file.size || file.size > MAX_IMAGE_BYTES) throw new Error("Choose a non-empty image up to 8 MB.");
+  if (NON_OCT_FILENAME.test(file.name)) throw new Error("Explicit non-OCT photograph filename. Upload an OCT/OCTA scan.");
+  const mime = detectImageMime(new Uint8Array(await file.slice(0, 16).arrayBuffer()));
+  if (!mime || !mimeMatches(file.type, mime)) throw new Error("Image signature must match JPEG, PNG, WebP, or TIFF.");
+  const form = new FormData();
+  form.append("image", file);
+  const res = await fetch("/api/analyze", { method: "POST", body: form, cache: "no-store" });
+  const body = await res.json().catch(() => null) as { error?: string; analysis?: VisionResult; analysisReceipt?: string } | null;
+  if (!res.ok || !body?.analysis) throw new Error(body?.error ?? "Analysis failed. No fallback result was created.");
+  return { metrics: metricsFromAnalysis(normalizeAnalysis(body.analysis)), analysisReceipt: body.analysisReceipt };
 }
 
 function CheckItem({ tone, title, text }: { tone: "pass" | "hold"; title: string; text: string }) {

@@ -1,0 +1,52 @@
+{
+  "status": "ready",
+  "checked_at": "2026-11-09T13:22:25.951Z",
+  "host": "127.0.0.1",
+  "frontend_port": 40545,
+  "backend_port": 40546,
+  "frontend": {
+    "status": "ready",
+    "url": "http://127.0.0.1:40545/login",
+    "http_status": 200,
+    "error": null
+  },
+  "backend": {
+    "status": "ready",
+    "url": "http://127.0.0.1:40546",
+    "service": "thermoeye-local-backend",
+    "error": null
+  },
+  "engine": "onnx_vessel_unet",
+  "model": {
+    "status": "ready",
+    "engine": "onnx_vessel_unet",
+    "model_hash": "195ff40370049e3be850b88ed8bed68f05abd006565afd1fbe01de6982777c87",
+    "model_version": "octa-vessel-unet-sha256:195ff40370049e3be850b88ed8bed68f05abd006565afd1fbe01de6982777c87",
+    "artifact": "backend/models/octa/octa_vessel_unet.onnx",
+    "error": null
+  },
+  "pipeline": {
+    "version": "octa-measurement-2026.09.19",
+    "preprocessing": "octa-luma-u16-v2"
+  },
+  "external_vision": "disabled",
+  "processes": [
+    {
+      "kind": "backend",
+      "status": "launcher-owned"
+    },
+    {
+      "kind": "frontend",
+      "status": "launcher-owned"
+    }
+  ],
+  "logs": {
+    "frontend": "frontend.log",
+    "backend": "backend.log"
+  },
+  "verification": {
+    "offline_network_guard": "active",
+    "synthetic_onnx_inference": "passed",
+    "provider_transport": "disabled"
+  }
+}

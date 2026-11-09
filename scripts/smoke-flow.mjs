@@ -1,19 +1,27 @@
 import { spawn } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import assert from "node:assert/strict";
+import { startInferenceFixture } from "./integration-fixture.mjs";
 
 const appPort = Number(process.env.APP_PORT ?? 3010);
 const appUrl = process.env.APP_URL ?? `http://127.0.0.1:${appPort}/console/dashboard`;
-const chromeBin = process.env.CHROME_BIN ?? "google-chrome";
-const userDataDir = `/tmp/thermoeye-smoke-${Date.now()}`;
+const nextCli = "node_modules/next/dist/bin/next";
+const chromeBin = process.env.CHROME_BIN ?? (process.platform === "win32"
+  ? "C:/Program Files/Google/Chrome/Application/chrome.exe"
+  : "google-chrome");
+const userDataDir = join(tmpdir(), `thermoeye-smoke-${Date.now()}`);
 const screenshotPath = "output/playwright/thermoeye-smoke.png";
 let stderrBuffer = "";
 let serverOutput = "";
 let ws;
+const fixture = await startInferenceFixture();
 
 const server = spawn(
-  "npm",
-  ["run", "start", "--", "--hostname", "127.0.0.1", "--port", String(appPort)],
-  { detached: true, stdio: ["ignore", "pipe", "pipe"] },
+  process.execPath,
+  [nextCli, "start", "--hostname", "127.0.0.1", "--port", String(appPort)],
+  { detached: process.platform !== "win32", stdio: ["ignore", "pipe", "pipe"], env: fixture.env },
 );
 
 server.stdout.on("data", (chunk) => {
@@ -33,7 +41,7 @@ const chrome = spawn(
     `--user-data-dir=${userDataDir}`,
     "about:blank",
   ],
-  { detached: true, stdio: ["ignore", "pipe", "pipe"] },
+  { detached: process.platform !== "win32", stdio: ["ignore", "pipe", "pipe"] },
 );
 
 chrome.stderr.on("data", (chunk) => {
@@ -51,19 +59,20 @@ try {
   await cdp.ready;
   await cdp.send("Page.enable");
   await cdp.send("Runtime.enable");
-  await waitFor(cdp, `document.body.innerText.includes("Sign in to review screening cases")`);
-  await waitFor(cdp, `document.querySelector("form.login-form")?.dataset.ready === "true"`);
-  await waitFor(cdp, `document.querySelector("form.login-form button[type='submit']")?.disabled === false`);
+  await waitFor(cdp, `Boolean(document.querySelector("form.lg-form, form.login-form"))`);
+  await waitFor(cdp, `document.querySelector("form.lg-form, form.login-form")?.dataset.ready === "true"`);
+  await waitFor(cdp, `document.querySelector("form.lg-form button[type='submit'], form.login-form button[type='submit']")?.disabled === false`);
 
   await sleep(600);
   await submitLogin(cdp);
-  await waitFor(cdp, `document.body.innerText.includes("Welcome back, Dr. Nattapong")`);
+  await waitFor(cdp, `document.body.innerText.includes("Retinal vessel review run")`);
 
-  await clickButton(cdp, "New scan");
+  await clickButton(cdp, "Queue new scan");
   await waitFor(cdp, `document.body.innerText.includes("Case intake and upload")`);
   await cdp.eval(`
     (async () => {
       const input = document.querySelector("#scan-file");
+      document.querySelector("[name='caseCode']").value = "TE-SMOKE-FIRST";
       const canvas = document.createElement("canvas");
       canvas.width = 320;
       canvas.height = 320;
@@ -87,17 +96,18 @@ try {
         ctx.stroke();
       }
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-      const file = new File([blob], "demo-octa-upload.png", { type: "image/png" });
+      const file = new File([blob], "first-octa.png", { type: "image/png" });
       const transfer = new DataTransfer();
       transfer.items.add(file);
       input.files = transfer.files;
       input.dispatchEvent(new Event("change", { bubbles: true }));
     })()
   `);
-  await waitFor(cdp, `document.body.innerText.includes("demo-octa-upload.png selected")`);
+  await waitFor(cdp, `document.body.innerText.includes("first-octa.png selected")`);
   await clickButton(cdp, "Queue secure screening");
-  await waitFor(cdp, `document.body.innerText.includes("Uploaded image analyzed")`);
-  await waitFor(cdp, `document.body.innerText.includes("demo-octa-upload.png")`);
+  await waitFor(cdp, `document.body.innerText.includes("Analysis Result") && document.body.innerText.includes("TE-SMOKE-FIRST")`);
+  await waitFor(cdp, `document.body.innerText.includes("first-octa.png") && document.body.innerText.includes("16%")`);
+  assert.equal(await cdp.eval(`document.body.innerText.includes("Disease risk: N/A")`), true);
   await clickButton(cdp, "Dashboard");
   await waitFor(cdp, `document.body.innerText.includes("Selected Case Review")`);
 
@@ -106,35 +116,59 @@ try {
       const form = document.querySelector("form.review-form");
       form.elements.decision.value = "Approved for release";
       form.elements.followUpWindow.value = "30 days";
-      form.elements.note.value = "Approved for release after OCTA review. Recommend cognitive screening correlation within 30 days.";
+      form.elements.note.value = "Research measurements reviewed; no clinical diagnosis is made.";
       form.requestSubmit();
     })()
   `);
-  await waitFor(cdp, `document.body.innerText.includes("Approved for release")`);
+  await waitFor(cdp, `(async () => (await (await fetch("/api/cases/TE-SMOKE-FIRST/review")).json()).review.decision === "Approved for release")()`);
 
   await clickButton(cdp, "Preview report");
-  await waitFor(cdp, `document.body.innerText.includes("Clinical report preview")`);
+  await waitFor(cdp, `document.body.innerText.includes("Eyezheimer research measurement report") && document.body.innerText.includes("TE-SMOKE-FIRST") && document.body.innerText.includes("16%")`);
   await waitFor(cdp, `
     (() => {
-      const button = [...document.querySelectorAll("button")].find((item) => item.textContent.includes("Download PDF mock"));
+      const button = [...document.querySelectorAll("button")].find((item) => item.textContent.includes("Download PDF"));
       return Boolean(button && !button.disabled);
     })()
   `);
 
-  await clickButton(cdp, "Download PDF mock");
+  await clickButton(cdp, "Download PDF");
   await clickButton(cdp, "Data Management");
-  await waitFor(cdp, `document.body.innerText.includes("PDF mock downloaded")`);
+  await waitFor(cdp, `document.body.innerText.includes("Research PDF downloaded")`);
+
+  // A second upload must replace the selection and keep its own measurement in the report.
+  await clickButton(cdp, "Dashboard");
+  await waitFor(cdp, `document.body.innerText.includes("Retinal vessel review run")`);
+  await clickButton(cdp, "Queue new scan");
+  await waitFor(cdp, `Boolean(document.querySelector("#scan-file"))`);
+  await cdp.eval(`(async () => {
+    document.querySelector("[name='caseCode']").value = "TE-SMOKE-SECOND";
+    const canvas = document.createElement("canvas"); canvas.width = 320; canvas.height = 320;
+    canvas.getContext("2d").fillRect(0, 0, 320, 320);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+    const transfer = new DataTransfer(); transfer.items.add(new File([blob], "second-octa.png", { type: "image/png" }));
+    const input = document.querySelector("#scan-file"); input.files = transfer.files; input.dispatchEvent(new Event("change", { bubbles: true }));
+  })()`);
+  await clickButton(cdp, "Queue secure screening");
+  await waitFor(cdp, `document.body.innerText.includes("Analysis Result") && document.body.innerText.includes("TE-SMOKE-SECOND") && document.body.innerText.includes("42%")`);
+  const pair = await cdp.eval(`(async () => Promise.all(["TE-SMOKE-FIRST", "TE-SMOKE-SECOND"].map(async (id) => (await (await fetch("/api/cases/" + id + "/report/preview")).json()).caseRecord.analysisMetrics.vesselDensity)))()`);
+  assert.deepEqual(pair, [16, 42], "separate uploads keep separate report measurements");
+  await clickButton(cdp, "Dashboard");
+  await waitFor(cdp, `document.body.innerText.includes("Selected Case Review") && document.body.innerText.includes("TE-SMOKE-SECOND")`);
+  await clickButton(cdp, "Preview report");
+  await waitFor(cdp, `document.body.innerText.includes("Eyezheimer research measurement report") && document.body.innerText.includes("TE-SMOKE-SECOND") && document.body.innerText.includes("42%")`);
+  assert.equal(await cdp.eval(`[...document.querySelectorAll("button")].find((item) => item.textContent.includes("Download PDF"))?.disabled`), true, "new case review must not inherit previous approval");
 
   await mkdir("output/playwright", { recursive: true });
   const screenshot = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: true });
   await writeFile(screenshotPath, Buffer.from(screenshot.data, "base64"));
 
-  console.log(`Smoke flow passed: login -> review -> report -> audit`);
+  console.log(`Smoke flow passed: two isolated fixture uploads -> selected measurements -> research review/report -> audit. No external providers.`);
   console.log(`Screenshot: ${screenshotPath}`);
 } finally {
   ws?.close();
   killProcessGroup(chrome);
   killProcessGroup(server);
+  await fixture.close();
 }
 
 async function waitForHttp(url) {
@@ -242,7 +276,7 @@ async function clickButton(cdp, text) {
 async function submitLogin(cdp) {
   await cdp.eval(`
     (() => {
-      const form = document.querySelector("form.login-form");
+      const form = document.querySelector("form.lg-form, form.login-form");
       if (!form) throw new Error("Login form not found");
       form.requestSubmit();
     })()

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { getCaseClassification } from "@/features/clinical-console/clinical-analysis";
+import { canReleaseResearchReport } from "@/features/clinical-console/case-state";
 import {
   apiError,
+  decorateStateCases,
   getConsoleState,
   getDefaultReview,
   isSafeCaseId,
@@ -36,9 +38,9 @@ export async function GET(request: Request, context: CaseRouteContext) {
   const review = state.reviews[caseId] ?? getDefaultReview(caseId, state.sessionUser.name);
 
   return NextResponse.json({
-    caseRecord,
+    caseRecord: decorateStateCases().find((item) => item.id === caseId) ?? caseRecord,
     clinicalClassification: getCaseClassification(caseRecord),
     review,
-    releaseStatus: review.decision === "Approved for release" ? "ready" : "locked",
+    releaseStatus: review.decision === "Approved for release" && canReleaseResearchReport(caseRecord) ? "ready" : "locked",
   }, { headers: noStoreHeaders() });
 }

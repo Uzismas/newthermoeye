@@ -1,5 +1,20 @@
 # Thermoeye Worklist
 
+## สถานะปัจจุบัน — 19 กันยายน 2026
+
+รายการด้านล่างเป็นประวัติการพัฒนา ไม่ใช่ความสามารถปัจจุบัน ข้อความเดิมเรื่อง
+disease risk, confidence, simulated overlays และ automatic fallback ถูกยกเลิกแล้ว
+ระบบปัจจุบันทำ OCTA vessel segmentation เพื่อการวิจัยเท่านั้น ไม่มี disease
+classifier: risk/confidence เป็น null, disease เป็น indeterminate และไม่มีข้อมูลวัดที่สร้างขึ้นแทน
+เมื่อ backend/model ใช้งานไม่ได้ อ่านสถานะล่าสุดและผลตรวจใน
+[รายงานวิศวกรรม](docs/ENGINEERING_REPORT.md) และ [สัญญาข้อมูล](docs/ANALYSIS_CONTRACT.md)
+
+ข้อจำกัดที่ยังมี: memory-only store, demo authentication, ยังไม่มี clinical validation
+และ PDF ไม่รองรับบันทึก Unicode/ภาษาไทย (คืน 422 โดยเก็บข้อความต้นฉบับไว้ใน console)
+ยังไม่พร้อมสำหรับข้อมูลผู้ป่วยจริงหรือ deployment แบบ production หลายผู้ใช้
+
+## ประวัติการพัฒนา
+
 ใช้ไฟล์นี้เป็นรายการสถานะงานหลักของโปรเจกต์ Thermoeye เพื่อให้เห็นว่าเราทำอะไรไปแล้ว อะไรยังไม่ทำ และติดอะไรอยู่
 
 ## ทำแล้ว
@@ -72,7 +87,7 @@
   - ปุ่ม `Preview report` ใน selected case
   - หน้า `Clinical report preview`
   - report summary, scan preview, interpretation, release controls
-  - ปุ่ม `Download PDF mock` ที่ unlock เมื่อสถานะเป็น `Doctor approved`
+  - ปุ่ม `Download PDF` ที่ unlock เมื่อสถานะเป็น `Doctor approved`
   - audit event เมื่อเปิด preview หรือ download mock
 - เพิ่ม style สำหรับ report preview และ disabled action state
 - ตรวจซ้ำหลัง refactor:
@@ -262,6 +277,51 @@
   - `npm run a11y` ผ่าน
   - `node scripts/ui-health-flow.mjs` ผ่าน
   - `npm audit` พบ `0 vulnerabilities`
+- เพิ่ม Insights PDF export:
+  - ปุ่ม `Export Insights Report` เรียก API จริง
+  - สร้างรายงานสรุปข้อมูลเคสและ aggregate insights
+  - ฝังภาพสแกนที่อัปโหลดเป็นหน้าแยกใน PDF เมื่อมีภาพ
+  - เพิ่ม audit event และ guard session สำหรับ endpoint ดาวน์โหลด
+  - ตรวจ render PDF แล้ว: แบบมีภาพ 2 หน้า, แบบไม่มีภาพ 1 หน้า
+- เพิ่ม analysis-mode transparency:
+  - หน้า Analysis แสดงว่าใช้ `Ruleset demo`, `Local OCTA measurement` หรือ `External Vision provider`
+  - แจ้งสถานะ trained disease model และข้อจำกัดการใช้งานอย่างชัดเจน
+- เพิ่ม API smoke coverage สำหรับ Insights PDF และตรวจซ้ำ:
+  - `npm run typecheck` ผ่าน
+  - `npm run lint` ผ่าน
+  - `npm run build` ผ่าน
+  - `npm run api` ผ่าน
+  - `npm run smoke` ผ่าน
+  - `npm run a11y` ผ่าน
+  - `node scripts/ui-health-flow.mjs` ผ่าน
+- ทำให้ Analysis Actions ใช้งานได้จริงใน MVP:
+  - Add to Patient Record บันทึกสถานะและ audit event
+  - Request Second Review สร้าง review state แบบ Follow-up required และ audit event
+  - Export DICOM ดาวน์โหลดไฟล์ `.dcm` แบบ de-identified metadata
+  - Delete Scan มี confirmation, ลบ state ของเคส และ audit event
+  - เพิ่ม API routes `/api/cases/[caseId]/actions` และ `/api/cases/[caseId]/dicom`
+- ตรวจซ้ำหลังเพิ่ม Analysis Actions:
+  - `npm run typecheck` ผ่าน
+  - `npm run lint` ผ่าน
+  - `npm run build` ผ่าน
+  - `npm run api` ผ่าน
+- เพิ่ม OCT/OCTA modality preflight เพื่อกันภาพที่ไม่ใช่ retinal scan:
+  - หน้า upload ปฏิเสธชื่อไฟล์ที่ชัดเจนว่าเป็นภาพคน/ผิว/สิว และภาพสีทั่วไปที่ไม่มี OCT hint
+  - API `/api/analyze` ปฏิเสธชื่อไฟล์ non-OCT และส่งต่อผล 422 จาก local OCTA backend
+  - local FastAPI `/octa/analyze` ตรวจสัดส่วนสีและชื่อไฟล์ก่อนวัด vessel/FAZ
+  - ข้อความแจ้งเตือนระบุชัดว่าเป็น preflight heuristic ไม่ใช่ clinical modality classifier
+- เพิ่ม automated modality-gate test:
+  - `npm run modality-test` ตรวจ OCT fixture ผ่าน และชื่อไฟล์ภาพสิว/ใบหน้าถูกปฏิเสธ HTTP 422
+  - ไม่ใช้ API key และไม่ส่งภาพไป external provider
+- ตรวจซ้ำรอบล่าสุด:
+  - `npm run typecheck` ผ่าน
+  - `npm run lint` ผ่าน
+  - `npm run modality-test` ผ่าน
+  - `backend/.venv/Scripts/python.exe train/preflight_octa.py --data-dir train/data/octa` ผ่าน (39 rows)
+  - `backend/.venv/Scripts/python.exe train/smoke_octa_pipeline.py` ผ่าน
+- ตรวจซ้ำหลังเพิ่ม OCT/OCTA gate:
+  - `npm run typecheck` ผ่าน
+  - `npm run lint` ผ่าน
 
 ## กำลังทำ
 
@@ -271,6 +331,9 @@
 
 - ทำ manual accessibility review แบบละเอียดเพิ่มเติม เช่น screen reader, keyboard-only walkthrough, และ zoom/text scaling
 - ต่อ backend production จริงตาม `MVP_BACKEND_PLAN.md` เช่น database persistence, secure session cookie, object storage, worker queue, และ tenant authorization จริง
+- ฝึกและ validate โมเดลจำแนก Healthy/MCI/AD จากข้อมูลที่มี diagnosis ระดับผู้ป่วยและสิทธิ์ใช้งานชัดเจน
+- เชื่อม DICOM export กับ pixel data/DICOMweb หรือ PACS จริง; ไฟล์ปัจจุบันเป็น metadata export สำหรับ workflow demo
+- ทำ trained OCT/OCTA-vs-non-OCT modality classifier ที่ผ่าน validation; gate ปัจจุบันเป็นเพียง heuristic preflight
 
 ## ติดอยู่
 

@@ -9,7 +9,7 @@ import {
   requireConsoleSession,
   validateReviewInput,
 } from "@/features/clinical-console/server/store";
-import { getCaseClassification } from "@/features/clinical-console/clinical-analysis";
+import { canReleaseResearchReport } from "@/features/clinical-console/case-state";
 
 export const dynamic = "force-dynamic";
 
@@ -62,8 +62,8 @@ export async function POST(request: Request, context: CaseRouteContext) {
     return apiError("BAD_REQUEST", result.message, 400);
   }
 
-  if (getCaseClassification(caseRecord).kind === "quality_blocked" && result.review.decision === "Approved for release") {
-    return apiError("FORBIDDEN", "Blocked image quality cannot be approved for report release.", 403);
+  if (!canReleaseResearchReport(caseRecord) && result.review.decision === "Approved for release") {
+    return apiError("FORBIDDEN", "Blocked or unavailable analysis cannot be approved for research report release.", 403);
   }
 
   state.reviews[caseId] = result.review;

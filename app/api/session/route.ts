@@ -25,7 +25,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json().catch(() => null)) as { email?: unknown; password?: unknown } | null;
+  const contentType = request.headers.get("content-type") ?? "";
+  const body = contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")
+    ? await readFormBody(request)
+    : ((await request.json().catch(() => null)) as { email?: unknown; password?: unknown } | null);
 
   if (typeof body?.email !== "string" || typeof body.password !== "string") {
     return apiError("BAD_REQUEST", "Email and password are required.", 400);
@@ -50,6 +53,21 @@ export async function POST(request: Request) {
   const { sessionUser } = getConsoleState();
   addAudit(`${sessionUser.name} signed in as ${sessionUser.role}`);
 
+  // Keep the login form usable if client-side hydration is delayed or fails.
+  // JavaScript fetches still receive the JSON response below.
+  const acceptsHtml = request.headers.get("accept")?.includes("text/html");
+  if (acceptsHtml) {
+    const response = NextResponse.redirect(new URL("/console/dashboard", request.url));
+    response.cookies.set(sessionCookieName, sessionCookieValue, {
+      httpOnly: true,
+      maxAge: 60 * 60 * 8,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+    return response;
+  }
+
   const response = NextResponse.json({ user: sessionUser }, { headers: noStoreHeaders() });
   response.cookies.set(sessionCookieName, sessionCookieValue, {
     httpOnly: true,
@@ -60,6 +78,13 @@ export async function POST(request: Request) {
   });
 
   return response;
+}
+
+async function readFormBody(request: Request) {
+  const form = await request.formData().catch(() => null);
+  return form
+    ? { email: form.get("email"), password: form.get("password") }
+    : null;
 }
 
 export function DELETE() {

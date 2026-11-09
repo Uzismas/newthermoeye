@@ -48,10 +48,13 @@ cd backend/train
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements-train.txt
-python train_dr.py
+python preflight.py
+python train_dr.py --data-dir data/aptos2019 --epochs 30
 ```
 
-ก่อนรันจริงต้องดาวน์โหลด dataset ที่ script ต้องใช้ และจัดวางไว้ตาม path ในไฟล์ `train_dr.py`
+ก่อนรันจริงต้องดาวน์โหลด dataset ที่มีสิทธิ์ใช้งาน, de-identify และจัดวางไว้ตามโครงสร้างใน `backend/train/README_TH.md` ถ้า `preflight.py` ขึ้น `[FAIL]` แปลว่ายังไม่มีข้อมูลพร้อมเทรน และห้ามใช้ fixture/synthetic images แทน dataset ผู้ป่วย
+
+ผลจาก script นี้เป็น baseline ของ **Diabetic Retinopathy จาก APTOS เท่านั้น** ไม่ใช่ Alzheimer/OCTA และไม่ใช่ clinical validation โดย script จะบันทึก patient-level split (ถ้ามี patient id), AUROC, sensitivity, specificity, balanced accuracy, confusion matrix และ ONNX artifact เพื่อให้ตรวจสอบต่อได้
 
 ## สิ่งที่ไม่ควรทำ
 

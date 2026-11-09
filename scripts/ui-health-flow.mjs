@@ -1,19 +1,24 @@
 import { spawn } from "node:child_process";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const appPort = Number(process.env.APP_PORT ?? 3014);
 const appUrl = process.env.APP_URL ?? `http://127.0.0.1:${appPort}/console/dashboard`;
-const chromeBin = process.env.CHROME_BIN ?? "google-chrome";
-const userDataDir = `/tmp/thermoeye-ui-health-${Date.now()}`;
+const nextCli = "node_modules/next/dist/bin/next";
+const chromeBin = process.env.CHROME_BIN ?? (process.platform === "win32"
+  ? "C:/Program Files/Google/Chrome/Application/chrome.exe"
+  : "google-chrome");
+const userDataDir = join(tmpdir(), `thermoeye-ui-health-${Date.now()}`);
 let stderrBuffer = "";
 let serverOutput = "";
 let ws;
 
 const pages = [
-  { label: "dashboard", control: "Dashboard", waitForText: "Welcome back, Dr. Nattapong" },
+  { label: "dashboard", control: "Dashboard", waitForText: "Retinal vessel review run" },
   { label: "upload", control: "Upload New Scan", waitForText: "Case intake and upload" },
   { label: "patients", control: "Patients", waitForText: "Patients" },
   { label: "analysis", control: "Analysis Results", waitForText: "Analysis Result" },
-  { label: "report", control: "Reports", waitForText: "Clinical report preview" },
+  { label: "report", control: "Reports", waitForText: "Research report preview" },
   { label: "insights", control: "Data Insights", waitForText: "Data Insights" },
   { label: "performance", control: "Model Performance", waitForText: "Model Performance" },
   { label: "data-management", control: "Data Management", waitForText: "Data Management" },
@@ -26,9 +31,9 @@ const viewports = [
 ];
 
 const server = spawn(
-  "npm",
-  ["run", "start", "--", "--hostname", "127.0.0.1", "--port", String(appPort)],
-  { detached: true, stdio: ["ignore", "pipe", "pipe"] },
+  process.execPath,
+  [nextCli, "start", "--hostname", "127.0.0.1", "--port", String(appPort)],
+  { detached: process.platform !== "win32", stdio: ["ignore", "pipe", "pipe"] },
 );
 
 server.stdout.on("data", (chunk) => {
@@ -48,7 +53,7 @@ const chrome = spawn(
     `--user-data-dir=${userDataDir}`,
     "about:blank",
   ],
-  { detached: true, stdio: ["ignore", "pipe", "pipe"] },
+  { detached: process.platform !== "win32", stdio: ["ignore", "pipe", "pipe"] },
 );
 
 chrome.stderr.on("data", (chunk) => {
@@ -67,13 +72,13 @@ try {
   await cdp.ready;
   await cdp.send("Page.enable");
   await cdp.send("Runtime.enable");
-  await waitFor(cdp, `document.body.innerText.includes("Sign in to review screening cases")`);
-  await waitFor(cdp, `document.querySelector("form.login-form")?.dataset.ready === "true"`);
-  await waitFor(cdp, `document.querySelector("form.login-form button[type='submit']")?.disabled === false`);
+  await waitFor(cdp, `Boolean(document.querySelector("form.lg-form, form.login-form"))`);
+  await waitFor(cdp, `document.querySelector("form.lg-form, form.login-form")?.dataset.ready === "true"`);
+  await waitFor(cdp, `document.querySelector("form.lg-form button[type='submit'], form.login-form button[type='submit']")?.disabled === false`);
 
   await sleep(600);
   await submitLogin(cdp);
-  await waitFor(cdp, `document.body.innerText.includes("Welcome back, Dr. Nattapong")`);
+  await waitFor(cdp, `document.body.innerText.includes("Retinal vessel review run")`);
   await cdp.send("Emulation.setEmulatedMedia", {
     features: [{ name: "prefers-reduced-motion", value: "reduce" }],
   });
@@ -286,6 +291,16 @@ async function clickControl(cdp, text) {
     (() => {
       const control = [...document.querySelectorAll("button, a")].find((item) => item.textContent.includes(${JSON.stringify(text)}));
       if (!control) throw new Error("Control not found: ${text}");
+      const menu = control.closest("details.workspace-menu");
+      const summary = menu?.querySelector("summary");
+      if (menu && summary && getComputedStyle(summary).display !== "none") {
+        menu.open = false;
+        menu.open = true;
+        const menuList = menu.querySelector(".nav-list");
+        if (!menuList || menuList.getBoundingClientRect().height === 0) {
+          throw new Error("Workspace menu did not open before selecting a view");
+        }
+      }
       control.click();
     })()
   `);
@@ -294,7 +309,7 @@ async function clickControl(cdp, text) {
 async function submitLogin(cdp) {
   await cdp.eval(`
     (() => {
-      const form = document.querySelector("form.login-form");
+      const form = document.querySelector("form.lg-form, form.login-form");
       if (!form) throw new Error("Login form not found");
       form.requestSubmit();
     })()

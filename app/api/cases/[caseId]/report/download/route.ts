@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCaseClassification } from "@/features/clinical-console/clinical-analysis";
+import { canReleaseResearchReport } from "@/features/clinical-console/case-state";
 import { buildReportPdf } from "@/features/clinical-console/server/report-pdf";
 import {
   addAudit,
@@ -38,12 +39,18 @@ export async function POST(request: Request, context: CaseRouteContext) {
   const review = state.reviews[caseId] ?? getDefaultReview(caseId, state.sessionUser.name);
   const classification = getCaseClassification(caseRecord);
 
-  const report = buildReportPdf({ caseRecord, classification, review });
-  addAudit(
-    review.decision === "Approved for release"
-      ? `PDF mock downloaded for ${caseId}`
-      : `Draft PDF mock downloaded for ${caseId} before doctor release`,
-  );
+  if (!canReleaseResearchReport(caseRecord)) {
+    return apiError("FORBIDDEN", "Blocked or unavailable analysis cannot produce a released research report PDF.", 403);
+  }
+
+  if (review.decision !== "Approved for release") {
+    return apiError("FORBIDDEN", "Doctor approval is required before downloading a report PDF.", 403);
+  }
+
+  let report;
+  try { report = buildReportPdf({ caseRecord, classification, review }); }
+  catch (error) { return apiError("BAD_REQUEST", error instanceof Error ? error.message : "Report generation failed.", 422); }
+  addAudit(`Research PDF downloaded for ${caseId}`);
 
   return new NextResponse(report.bytes, {
     status: 200,

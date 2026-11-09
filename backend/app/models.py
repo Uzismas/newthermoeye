@@ -11,6 +11,7 @@ class UserRole(str, Enum):
 
 
 class RiskLevel(str, Enum):
+    indeterminate = "indeterminate"
     low = "low"
     moderate = "moderate"
     high = "high"
@@ -18,6 +19,7 @@ class RiskLevel(str, Enum):
 
 
 class DiseaseKind(str, Enum):
+    indeterminate = "indeterminate"
     normal = "normal"
     alzheimer_risk = "alzheimer_risk"
     diabetic_retinopathy = "diabetic_retinopathy"
@@ -95,11 +97,11 @@ class AnalysisResult(BaseModel):
     case_id: str
     disease_kind: DiseaseKind
     risk_level: RiskLevel
-    risk_score: float
-    confidence: float
-    vessel_density: float
-    faz_risk_proxy: float
-    perfusion_density: float
+    risk_score: float | None
+    confidence: float | None
+    vessel_density: float | None
+    faz_risk_proxy: float | None
+    perfusion_density: float | None
     differentials: list[dict]
     model_version: str
     created_at: datetime

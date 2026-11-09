@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getConsoleState, noStoreHeaders, requireConsoleSession } from "@/features/clinical-console/server/store";
+import { decorateStateCases, getConsoleState, noStoreHeaders, requireConsoleSession } from "@/features/clinical-console/server/store";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +11,8 @@ export function GET(request: Request) {
 
   return NextResponse.json({
     auditEvents: state.auditEvents,
-    cases: state.cases,
+    cases: decorateStateCases(),
     reviews: state.reviews,
+    actionStates: state.actionStates,
   }, { headers: noStoreHeaders() });
 }

@@ -70,13 +70,13 @@ try {
 
   await clickText(cdp, "Preview report");
   await waitFor(cdp, `document.body.innerText.includes("Clinical report preview")`);
-  await waitFor(cdp, `Boolean([...document.querySelectorAll("button")].find((item) => item.textContent.includes("Download PDF mock") && !item.disabled))`);
+  await waitFor(cdp, `Boolean([...document.querySelectorAll("button")].find((item) => item.textContent.includes("Download PDF") && !item.disabled))`);
   await capture(cdp, "04-report.png");
 
-  await clickText(cdp, "Download PDF mock");
+  await clickText(cdp, "Download PDF");
   await sleep(1200);
   await clickText(cdp, "Data Management");
-  await waitFor(cdp, `document.body.innerText.includes("PDF mock downloaded")`);
+  await waitFor(cdp, `document.body.innerText.includes("Clinical PDF downloaded")`);
   await capture(cdp, "05-audit.png");
 
   if (consoleErrors.length) {
