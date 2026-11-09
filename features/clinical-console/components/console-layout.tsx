@@ -2,9 +2,23 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { BarChart3, Database, FileText, Gauge, LayoutDashboard, ListChecks, ScanEye, Settings, UploadCloud, Users, type LucideIcon } from "lucide-react";
 import { clinicalModelVersion } from "../clinical-analysis";
 import { navigationItems } from "../mock-data";
 import type { SessionUser, ViewId } from "../types";
+
+const navIcons: Record<ViewId, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  tasks: ListChecks,
+  cases: UploadCloud,
+  patients: Users,
+  analysis: ScanEye,
+  report: FileText,
+  insights: BarChart3,
+  performance: Gauge,
+  governance: Database,
+  settings: Settings,
+};
 
 export function Sidebar({
   activeView,
@@ -89,7 +103,7 @@ export function Sidebar({
                   onClick={() => setMenuOpen(false)}
                 >
                   <span className="nav-icon-wrap" aria-hidden="true">
-                    <span className={`nav-icon ${item.icon}`} />
+                    {(() => { const Icon = navIcons[item.id]; return <Icon size={18} strokeWidth={1.8} />; })()}
                   </span>
                   {item.label}
                 </Link>

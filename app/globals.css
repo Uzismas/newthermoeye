@@ -4690,3 +4690,6 @@ h1, h2, h3 { text-wrap: balance; }
 /* Hospital picker should show its full name. */
 .hospital-picker select { min-width: 230px; text-overflow: ellipsis; }
 @media (max-width: 700px) { .hospital-picker select { min-width: 0; } }
+
+/* Lucide icons inherit the nav item colour; the wrapper keeps the existing tile. */
+.nav-icon-wrap svg { display: block; flex-shrink: 0; }
