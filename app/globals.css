@@ -4782,3 +4782,26 @@ figure.scan-panel { margin: 0; }
 .cm-cell { display: grid; gap: 2px; padding: 16px 6px; border-radius: 8px; }
 .cm-cell strong { font-size: 1.55rem; line-height: 1; font-variant-numeric: tabular-nums; }
 .cm-cell span { font-size: 0.72rem; opacity: 0.85; }
+
+/* Dashboard: charts share the .ec- kit; hero stat cells no longer stretch into empty boxes. */
+.ops-status-grid { align-content: center; align-items: start; }
+.ops-status-grid span { min-height: 0; }
+.ops-status-grid strong { color: #0b5d8f; }
+.metric-bars.green i { background: linear-gradient(180deg, #38bdf8, #0b5d8f); }
+.hbars b.warn { background: linear-gradient(90deg, #fbbf24, #d97706); }
+.hbars b.mute { background: #c5d3e2; }
+.sbars { display: grid; gap: 14px; padding: 6px 0; }
+.sbars > div { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; font-size: 0.85rem; }
+.sbars span { font-weight: 600; color: #3f5068; }
+.sbars i { display: flex; height: 26px; gap: 2px; border-radius: 7px; overflow: hidden; background: #e6eef6; }
+.sbars b { display: grid; place-items: center; min-width: 4px; color: #fff; font-size: 0.78rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sbars b:last-child { color: #3f5068; }
+.sbars em { font-style: normal; font-weight: 700; min-width: 2.2em; text-align: right; font-variant-numeric: tabular-nums; }
+.donut-chart strong { font-variant-numeric: tabular-nums; }
+.status-dashboard .ec-grid { margin-top: 4px; }
+.sbars b, .sbars i { font-style: normal; }
+.case-table td > strong + small, .case-table td > small { display: block; }
+.case-select-button strong { white-space: nowrap; }
+@media (min-width: 1100px) {
+  .dashboard-main-grid:not(.secondary) { grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr) minmax(0, 1fr); }
+}

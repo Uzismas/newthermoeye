@@ -134,13 +134,31 @@ export function ConfusionMatrix({ tp, fn, fp, tn }: { tp: number; fn: number; fp
   );
 }
 
-export function HBars({ rows, max, unit = "", label }: { rows: readonly (readonly [string, number])[]; max?: number; unit?: string; label: string }) {
+export function HBars({ rows, max, unit = "", label }: { rows: readonly (readonly [string, number, ("warn" | "mute")?])[]; max?: number; unit?: string; label: string }) {
   const top = max ?? Math.max(...rows.map((r) => r[1]), 1);
   return (
     <div className="hbars" role="img" aria-label={label}>
-      {rows.map(([name, v]) => (
-        <div key={name}><span>{name}</span><i><b style={{ width: `${Math.max(2, (v / top) * 100)}%` }} /></i><em>{v}{unit}</em></div>
+      {rows.map(([name, v, tone]) => (
+        <div key={name}><span>{name}</span><i><b className={tone ?? ""} style={{ width: `${Math.max(2, (v / top) * 100)}%` }} /></i><em>{v}{unit}</em></div>
       ))}
+    </div>
+  );
+}
+
+/** Part-to-whole rows: each row is one stacked bar of segments that fill 100%. */
+export function StackedBars({ rows, label }: { rows: { name: string; segs: { n: number; color: string; title: string }[] }[]; label: string }) {
+  return (
+    <div className="sbars" role="img" aria-label={label}>
+      {rows.map((r) => {
+        const total = r.segs.reduce((a, g) => a + g.n, 0) || 1;
+        return (
+          <div key={r.name}>
+            <span>{r.name}</span>
+            <i>{r.segs.filter((g) => g.n > 0).map((g) => <b key={g.title} title={`${g.title}: ${g.n}`} style={{ flexGrow: g.n, background: g.color }}>{g.n / total > 0.1 ? g.n : ""}</b>)}</i>
+            <em>{total}</em>
+          </div>
+        );
+      })}
     </div>
   );
 }

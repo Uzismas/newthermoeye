@@ -4,6 +4,7 @@ import { isSyntheticCase } from "../analysis-presentation";
 import { demoCases, demoOps, type DemoCase } from "../demo-data";
 import { buildTasks, caseStage, pct, reviewFor } from "../tasks";
 import type { CaseRecord, ReviewDecision, ReviewRecord, ViewId } from "../types";
+import { ChartCard, HBars, LegendItem, StackedBars, chartColor } from "./demo-charts";
 import { PanelHeader, SectionHeading } from "./shared";
 
 export function DashboardView({
@@ -225,64 +226,21 @@ function StatusDashboard({
   return (
     <section className="panel status-dashboard" aria-labelledby="status-dashboard-title">
       <PanelHeader eyebrow="Status dashboard" title="Research Operations Status" badge={demo ? "Simulated" : "Live data"} badgeTone={demo ? "warning" : "secure"} />
-      <div className="status-dashboard-grid">
-        <div className="status-chart-card status-bars-card">
-          <div>
-            <strong>Case pipeline</strong>
-            <span>How far each case has progressed</span>
-          </div>
-          <div className="queue-bars" aria-label="Case pipeline">
-            {pipeline.map(([label, value]) => (
-              <span className="queue-bar good" key={label}>
-                <strong>{label}</strong>
-                <i style={{ "--bar": `${pct(value, Math.max(total, 1))}%` } as CSSProperties} />
-                <em>{value}</em>
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="status-chart-card stacked-risk-chart">
-          <div>
-            <strong>Analysis outcome by eye</strong>
-            <span>Measured, quality-blocked, or not yet evaluated</span>
-          </div>
-          <div className="stacked-bars" aria-label="Analysis outcome by eye">
-            {eyes.map((row) => (
-              <span key={row.eye}>
-                <em>{row.eye}</em>
-                <i
-                  style={{
-                    "--low": `${pct(row.measured, row.n)}%`,
-                    "--moderate": `${pct(row.blocked, row.n)}%`,
-                    "--high": `${100 - pct(row.measured, row.n) - pct(row.blocked, row.n)}%`,
-                  } as CSSProperties}
-                />
-              </span>
-            ))}
-          </div>
-          <div className="chart-legend inline">
-            <span><i className="dot low-dot" /> Measured</span>
-            <span><i className="dot moderate-dot" /> Blocked</span>
-            <span><i className="dot neutral-dot" /> Not evaluated</span>
-          </div>
-        </div>
-
-        <div className="status-chart-card status-bars-card">
-          <div>
-            <strong>Current queue status</strong>
-            <span>Share of cases at each gate</span>
-          </div>
-          <div className="queue-bars" aria-label="Current queue status">
-            {queue.map(([label, value, tone]) => (
-              <span className={`queue-bar ${tone}`} key={label}>
-                <strong>{label}</strong>
-                <i style={{ "--bar": `${value}%` } as CSSProperties} />
-                <em>{value}%</em>
-              </span>
-            ))}
-          </div>
-        </div>
+      <div className="ec-grid">
+        <ChartCard title="Case pipeline" takeaway={`${pct(measured, Math.max(total, 1))}% of cases reach a measured result.`}>
+          <HBars label="Case pipeline" rows={pipeline} max={Math.max(total, 1)} />
+        </ChartCard>
+        <ChartCard title="Outcome by eye" takeaway="OU scans are blocked most often."
+          legend={<><LegendItem color={chartColor.deep} label="Measured" /><LegendItem color={chartColor.amber} label="Blocked" /><LegendItem color="#c5d3e2" label="Not evaluated" /></>}>
+          <StackedBars label="Analysis outcome by eye" rows={eyes.map((r) => ({ name: r.eye, segs: [
+            { n: r.measured, color: chartColor.deep, title: "Measured" },
+            { n: r.blocked, color: chartColor.amber, title: "Blocked" },
+            { n: Math.max(0, r.n - r.measured - r.blocked), color: "#c5d3e2", title: "Not evaluated" },
+          ] }))} />
+        </ChartCard>
+        <ChartCard title="Queue status" takeaway="Share of cases at each gate. Amber needs attention.">
+          <HBars label="Current queue status" unit="%" max={100} rows={queue.map(([name, v, tone]) => [name, v, tone === "good" ? undefined : "warn"] as const)} />
+        </ChartCard>
       </div>
       {notEvaluated > 0 && !demo ? (
         <p className="panel-footnote">
@@ -304,14 +262,14 @@ function StatusDonut({ measured, blocked, notEvaluated }: { measured: number; bl
         className="donut-chart"
         role="img"
         aria-label={`Analysis status: ${measured} measured, ${blocked} blocked, ${notEvaluated} not evaluated`}
-        style={{ background: `radial-gradient(circle at center, #ffffff 0 54%, transparent 55%), conic-gradient(var(--green) 0 ${a}%, var(--amber) ${a}% ${b}%, #c5d3e2 ${b}% 100%)` }}
+        style={{ background: `radial-gradient(circle at center, #ffffff 0 54%, transparent 55%), conic-gradient(${chartColor.deep} 0 ${a}%, ${chartColor.amber} ${a}% ${b}%, #c5d3e2 ${b}% 100%)` }}
       >
         <strong>{total}</strong>
         <span>Cases</span>
       </div>
       <div className="donut-legend">
-        <span><i className="dot low-dot" /> Measured <strong>{measured} ({share(measured)})</strong></span>
-        <span><i className="dot moderate-dot" /> Blocked <strong>{blocked} ({share(blocked)})</strong></span>
+        <span><i className="dot" style={{ background: chartColor.deep }} /> Measured <strong>{measured} ({share(measured)})</strong></span>
+        <span><i className="dot" style={{ background: chartColor.amber }} /> Blocked <strong>{blocked} ({share(blocked)})</strong></span>
         <span><i className="dot neutral-dot" /> Not evaluated <strong>{notEvaluated} ({share(notEvaluated)})</strong></span>
       </div>
     </div>
