@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { AnalysisView } from "./components/analysis-view";
 import { CasesView } from "./components/cases-view";
 import { Sidebar, Topbar } from "./components/console-layout";
@@ -34,6 +34,9 @@ const viewIds: ViewId[] = [
 
 const viewSet = new Set<string>(viewIds);
 
+const DEMO_KEY = "eyezheimer-demo";
+const subscribeDemo = (notify: () => void) => { window.addEventListener(DEMO_KEY, notify); return () => window.removeEventListener(DEMO_KEY, notify); };
+
 const viewTitles: Record<ViewId, string> = {
   dashboard: "Dashboard",
   tasks: "Task Manager",
@@ -61,6 +64,9 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
   const [caseRecords, setCaseRecords] = useState<CaseRecord[]>(() => cases.map(normalizeCaseRecord));
   const [selectedCaseId, setSelectedCaseId] = useState("");
+  // Simulated numbers for presentations. Default on so first-time viewers see a populated workspace; stored per browser.
+  const demo = useSyncExternalStore(subscribeDemo, () => localStorage.getItem(DEMO_KEY) !== "off", () => true);
+  const toggleDemo = () => { localStorage.setItem(DEMO_KEY, demo ? "off" : "on"); window.dispatchEvent(new Event(DEMO_KEY)); };
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>(initialAuditEvents);
   const [uploadLabel, setUploadLabel] = useState("Drop OCTA/OCT file or choose file");
   const [reviewState, setReviewState] = useState<Record<string, ReviewRecord>>({});
@@ -381,7 +387,13 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
           user={sessionUser}
           onLogout={logout}
           onAuditExport={exportAudit}
+          demo={demo}
+          onToggleDemo={toggleDemo}
         />
+
+        {demo && activeView !== "demo" ? (
+          <p className="demo-strip" role="note"><strong>Simulated demo data is on.</strong> Aggregate numbers and charts are made up for layout preview; vessel results from uploads stay real. <button type="button" className="link-button" onClick={toggleDemo}>Turn off</button></p>
+        ) : null}
 
         {actionError ? (
           <p className="workspace-alert" role="alert">
@@ -404,6 +416,7 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
             onCaseSelect={setSelectedCaseId}
             onNavigate={navigate}
             reviewer={sessionUser.name}
+            demo={demo}
             onReviewSubmit={updateReview}
             onPreviewReport={openReportPreview}
           />
@@ -453,8 +466,8 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
         {activeView === "insights" ? (
           <InsightsView isExporting={isInsightsDownloading} onExport={downloadInsightsReport} />
         ) : null}
-        {activeView === "performance" ? <PerformanceView subview={performanceSubview} onSubviewChange={setPerformanceSubview} /> : null}
-        {activeView === "governance" ? <GovernanceView auditEvents={auditEvents} subview={governanceSubview} onSubviewChange={setGovernanceSubview} /> : null}
+        {activeView === "performance" ? <PerformanceView demo={demo} subview={performanceSubview} onSubviewChange={setPerformanceSubview} /> : null}
+        {activeView === "governance" ? <GovernanceView demo={demo} auditEvents={auditEvents} subview={governanceSubview} onSubviewChange={setGovernanceSubview} /> : null}
         {activeView === "settings" ? <SettingsView /> : null}
         {activeView === "report" ? (
           <ReportView

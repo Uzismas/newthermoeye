@@ -149,7 +149,11 @@ export function Topbar({
   onAuditExport,
   user,
   onLogout,
+  demo,
+  onToggleDemo,
 }: {
+  demo: boolean;
+  onToggleDemo: () => void;
   onNavigate: (viewId: ViewId) => void;
   onAuditExport: () => void;
   user: SessionUser;
@@ -180,6 +184,9 @@ export function Topbar({
           </div>
         </div>
         <div className="topbar-commands">
+          <button className={`ghost-button compact-action demo-toggle ${demo ? "on" : ""}`} type="button" aria-pressed={demo} onClick={onToggleDemo}>
+            Demo data: {demo ? "On" : "Off"}
+          </button>
           <button className="ghost-button compact-action" type="button" onClick={onAuditExport}>
             Export audit
           </button>

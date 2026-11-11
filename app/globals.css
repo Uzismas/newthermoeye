@@ -4746,3 +4746,9 @@ figure.scan-panel { margin: 0; }
 .scan-panel .uploaded-scan-frame { height: auto; aspect-ratio: 1; }
 .scan-panel .uploaded-scan-frame img { object-fit: contain; }
 .octa-analysis > p { margin: 12px 0 0; }
+.demo-subhead { margin: 0 0 8px; font-size: 0.95rem; }
+.demo-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 16px; }
+.demo-charts .queue-bars { padding: 4px 2px; }
+.demo-toggle.on { border-color: #d97706; color: #7a4300; background: #fff7e6; }
+.demo-strip { margin: 10px 0 0; padding: 10px 14px; border: 1px dashed #d97706; border-radius: var(--radius); background: #fff7e6; color: #7a4300; font-size: 0.85rem; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.demo-strip .link-button { min-height: 32px; }

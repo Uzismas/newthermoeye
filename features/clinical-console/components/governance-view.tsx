@@ -1,6 +1,7 @@
 "use client";
 
 import type { AuditEvent } from "../types";
+import { DemoGovernance } from "./demo-panels";
 import { PanelHeader, SectionHeading } from "./shared";
 
 const GOV_TABS = [
@@ -9,8 +10,8 @@ const GOV_TABS = [
   { id: "usage-log", label: "Data Usage Log" },
 ];
 
-export function GovernanceView({ auditEvents, subview = "data-overview", onSubviewChange }: {
-  auditEvents: AuditEvent[]; subview?: string; onSubviewChange?: (sub: string) => void;
+export function GovernanceView({ auditEvents, subview = "data-overview", onSubviewChange, demo = false }: {
+  auditEvents: AuditEvent[]; subview?: string; onSubviewChange?: (sub: string) => void; demo?: boolean;
 }) {
   const details: Record<string, string> = {
     "data-overview": "This research workspace contains labelled synthetic fixtures and user uploads. Population counts, training split sizes, and quality rates are unavailable without a connected dataset registry.",
@@ -22,8 +23,9 @@ export function GovernanceView({ auditEvents, subview = "data-overview", onSubvi
   return <section className="view active" aria-labelledby="governance-title">
     <SectionHeading eyebrow="Research data workflow" title="Data Management" note="Unavailable controls and unverified status are shown explicitly." />
     <div className="tab-strip" role="tablist" aria-label="Data management sections">{GOV_TABS.map((tab) => <button key={tab.id} type="button" role="tab" aria-selected={subview === tab.id} className={subview === tab.id ? "active" : ""} onClick={() => onSubviewChange?.(tab.id)}>{tab.label}</button>)}</div>
+    {demo ? <DemoGovernance subview={subview} /> : <>
     <section className="panel" role="tabpanel"><PanelHeader eyebrow="Connection status" title={GOV_TABS.find((tab) => tab.id === subview)?.label ?? "Data Overview"} badge="Research only" badgeTone="warning" /><p>{details[subview] ?? details["data-overview"]}</p></section>
-    <div className="metrics-grid">{["Dataset registry", "Consent verification", "De-identification verification", "Clinical validation"].map((label) => <article className="metric metric-blue" key={label}><span>{label}</span><strong>N/A</strong><small>Not independently verified</small></article>)}</div>
+    <div className="metrics-grid">{["Dataset registry", "Consent verification", "De-identification verification", "Clinical validation"].map((label) => <article className="metric metric-blue" key={label}><span>{label}</span><strong>N/A</strong><small>Not independently verified</small></article>)}</div></>}
     <section className="panel audit-panel"><PanelHeader eyebrow="Workspace activity" title="Recorded Events" badge={`${auditEvents.length} events`} /><ul className="audit-log">{auditEvents.map((event, i) => <li key={`${event.time}-${i}`}><strong>{event.time}</strong><span>{event.message}</span></li>)}</ul></section>
   </section>;
 }

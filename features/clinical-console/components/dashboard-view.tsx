@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { formatPercent, getCaseClassification, getClinicalResultLabel } from "../clinical-analysis";
 import { isSyntheticCase } from "../analysis-presentation";
+import { demoCases, demoOps, type DemoCase } from "../demo-data";
 import { buildTasks, caseStage, pct, reviewFor } from "../tasks";
 import type { CaseRecord, ReviewDecision, ReviewRecord, ViewId } from "../types";
 import { PanelHeader, SectionHeading } from "./shared";
@@ -15,7 +16,9 @@ export function DashboardView({
   reviewer,
   onReviewSubmit,
   onPreviewReport,
+  demo = false,
 }: {
+  demo?: boolean;
   cases: CaseRecord[];
   reviews: Record<string, ReviewRecord>;
   selectedCase: CaseRecord;
@@ -26,27 +29,32 @@ export function DashboardView({
   onReviewSubmit: (review: ReviewRecord) => void;
   onPreviewReport: () => void;
 }) {
-  const total = cases.length;
-  const measuredCases = cases.filter((item) => caseStage(item) === "measured");
-  const blocked = cases.filter((item) => caseStage(item) === "blocked").length;
-  const notEvaluated = total - measuredCases.length - blocked;
+  const realMeasured = cases.filter((item) => caseStage(item) === "measured");
+  const realBlocked = cases.filter((item) => caseStage(item) === "blocked").length;
+  // Demo mode swaps in simulated aggregates for the whole workspace; the recent-cases table stays real.
+  const total = demo ? demoOps.total : cases.length;
+  const blocked = demo ? demoOps.blocked : realBlocked;
+  const notEvaluated = demo ? demoOps.notEvaluated : cases.length - realMeasured.length - realBlocked;
+  const measuredCases = demo ? { length: demoOps.measured } : realMeasured;
   const synthetic = cases.filter(isSyntheticCase).length;
   const decisions = cases.map((item) => reviewFor(item, reviews, reviewer).decision);
-  const approved = decisions.filter((d) => d === "Approved for release").length;
-  const rescans = decisions.filter((d) => d === "Rescan requested").length;
+  const approved = demo ? demoOps.approved : decisions.filter((d) => d === "Approved for release").length;
+  const rescans = demo ? demoOps.rescans : decisions.filter((d) => d === "Rescan requested").length;
   const tasks = buildTasks(cases, reviews, reviewer);
-  const waitingReview = tasks.filter((t) => t.kind === "review").length;
-  const densities = measuredCases
+  const waitingReview = demo ? demoOps.waitingReview : tasks.filter((t) => t.kind === "review").length;
+  const densities = realMeasured
     .map((item) => item.analysisMetrics?.vesselDensity)
     .filter((value): value is number => typeof value === "number");
-  const meanDensity = densities.length ? densities.reduce((a, b) => a + b, 0) / densities.length : null;
+  const meanDensity = demo ? demoOps.meanDensity : densities.length ? densities.reduce((a, b) => a + b, 0) / densities.length : null;
   const evaluated = measuredCases.length + blocked;
   // Real work first, so the dashboard stays short; the full list lives in Patients.
-  const recent = [...cases].sort((a, b) => Number(caseStage(a) === "not-evaluated") - Number(caseStage(b) === "not-evaluated")).slice(0, 6);
+  const recent = [...cases].filter((item) => !demo || caseStage(item) !== "not-evaluated").sort((a, b) => Number(caseStage(a) === "not-evaluated") - Number(caseStage(b) === "not-evaluated")).slice(0, 6);
+  const need = Math.max(0, 6 - recent.length);
+  const simulatedRows = demo && need > 0 ? demoCases.slice(-need).reverse() : [];
 
   const metrics = [
-    { label: "Cases in workspace", value: String(total), caption: `${synthetic} synthetic reference cases`, tone: "blue", bars: null },
-    { label: "Measured cases", value: String(measuredCases.length), caption: "Vessel segmentation completed", tone: "green", bars: densities.slice(-6) },
+    { label: "Cases in workspace", value: String(total), caption: demo ? "Simulated workspace totals" : `${synthetic} synthetic reference cases`, tone: "blue", bars: null },
+    { label: "Measured cases", value: String(measuredCases.length), caption: "Vessel segmentation completed", tone: "green", bars: demo ? demoCases.slice(-6).map((c) => c.vesselDensity) : densities.slice(-6) },
     { label: "Mean vessel density", value: meanDensity == null ? "N/A" : formatPercent(meanDensity), caption: "Across measured cases", tone: "orange", bars: null },
     { label: "Quality blocked", value: String(blocked), caption: "Need a clearer rescan", tone: "purple", bars: null },
   ];
@@ -118,12 +126,14 @@ export function DashboardView({
         approved={approved}
         rescans={rescans}
         cases={cases}
+        eyes={demo ? demoOps.eyes : undefined}
+        demo={demo}
       />
 
       <div className="dashboard-main-grid">
         <section className="panel queue-panel" aria-labelledby="queue-title">
-          <PanelHeader eyebrow="Recent analysis" title="Recent Analyses" badge={`${recent.length} of ${total}`} />
-          <CaseTable cases={recent} selectedCaseId={selectedCase.id} onCaseSelect={onCaseSelect} />
+          <PanelHeader eyebrow="Recent analysis" title="Recent Analyses" badge={`${recent.length + simulatedRows.length} of ${total}`} />
+          <CaseTable cases={recent} simulated={simulatedRows} selectedCaseId={selectedCase.id} onCaseSelect={onCaseSelect} />
           <div className="panel-link-row">
             <button className="text-button" type="button" onClick={() => onNavigate("analysis")}>Go to Analysis Results</button>
             <button className="text-button" type="button" onClick={() => onNavigate("patients")}>View all {total} cases</button>
@@ -174,7 +184,11 @@ function StatusDashboard({
   approved,
   rescans,
   cases,
+  eyes: eyesOverride,
+  demo = false,
 }: {
+  eyes?: { eye: string; n: number; measured: number; blocked: number }[];
+  demo?: boolean;
   total: number;
   measured: number;
   blocked: number;
@@ -190,7 +204,7 @@ function StatusDashboard({
     ["Vessels measured", measured],
     ["Review approved", approved],
   ];
-  const eyes = (["OD", "OS", "OU"] as const)
+  const eyes = eyesOverride ?? (["OD", "OS", "OU"] as const)
     .map((eye) => {
       const group = cases.filter((item) => item.eye === eye);
       return {
@@ -210,7 +224,7 @@ function StatusDashboard({
 
   return (
     <section className="panel status-dashboard" aria-labelledby="status-dashboard-title">
-      <PanelHeader eyebrow="Status dashboard" title="Research Operations Status" badge="Live data" badgeTone="secure" />
+      <PanelHeader eyebrow="Status dashboard" title="Research Operations Status" badge={demo ? "Simulated" : "Live data"} badgeTone={demo ? "warning" : "secure"} />
       <div className="status-dashboard-grid">
         <div className="status-chart-card status-bars-card">
           <div>
@@ -270,7 +284,7 @@ function StatusDashboard({
           </div>
         </div>
       </div>
-      {notEvaluated > 0 ? (
+      {notEvaluated > 0 && !demo ? (
         <p className="panel-footnote">
           {notEvaluated} synthetic reference {notEvaluated === 1 ? "case is" : "cases are"} listed for the workflow demo and not yet analysed.
         </p>
@@ -306,9 +320,11 @@ function StatusDonut({ measured, blocked, notEvaluated }: { measured: number; bl
 
 function CaseTable({
   cases,
+  simulated = [],
   selectedCaseId,
   onCaseSelect,
 }: {
+  simulated?: DemoCase[];
   cases: CaseRecord[];
   selectedCaseId: string;
   onCaseSelect: (caseId: string) => void;
@@ -351,6 +367,14 @@ function CaseTable({
                 {caseRecord.status}
               </span>
             </td>
+          </tr>
+        ))}
+        {simulated.map((c) => (
+          <tr className="case-row" key={c.id}>
+            <td><strong>{c.id}</strong><small>Simulated · OCTA {c.eye}</small></td>
+            <td>{c.vesselDensity}%</td>
+            <td><span className="status-pill">passed {Math.round(c.confidence * 100)}%</span></td>
+            <td><span className={`status-pill ${c.status === "Report ready" ? "" : "pending"}`}>{c.status}</span></td>
           </tr>
         ))}
       </tbody>

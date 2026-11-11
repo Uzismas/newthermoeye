@@ -1,3 +1,4 @@
+import { DemoPerformance } from "./demo-panels";
 import { PanelHeader, SectionHeading } from "./shared";
 
 const PERF_TABS = [
@@ -6,7 +7,7 @@ const PERF_TABS = [
   { id: "drift", label: "Model Drift" }, { id: "version-history", label: "Version History" },
 ];
 
-export function PerformanceView({ subview = "overview", onSubviewChange }: { subview?: string; onSubviewChange?: (sub: string) => void }) {
+export function PerformanceView({ subview = "overview", onSubviewChange, demo = false }: { subview?: string; onSubviewChange?: (sub: string) => void; demo?: boolean }) {
   const descriptions: Record<string, string> = {
     overview: "No validated disease classifier is connected. A trained vessel segmentation model, when connected, measures vessels only.",
     metrics: "No patient-level held-out disease evaluation artifact is connected. AUC, accuracy, sensitivity, specificity, F1, and precision are unavailable.",
@@ -18,8 +19,9 @@ export function PerformanceView({ subview = "overview", onSubviewChange }: { sub
   return <section className="view active" aria-labelledby="performance-title">
     <SectionHeading eyebrow="Research readiness" title="Model Performance" note="Segmentation measurements and disease classification are separate tasks." />
     <div className="tab-strip" role="tablist" aria-label="Performance sections">{PERF_TABS.map((tab) => <button key={tab.id} type="button" role="tab" aria-selected={subview === tab.id} className={subview === tab.id ? "active" : ""} onClick={() => onSubviewChange?.(tab.id)}>{tab.label}</button>)}</div>
+    {demo ? <DemoPerformance subview={subview} /> : <>
     <section className="panel" role="tabpanel"><PanelHeader eyebrow="Validation status" title={PERF_TABS.find((tab) => tab.id === subview)?.label ?? "Overview"} badge="Unavailable" badgeTone="warning" /><p>{descriptions[subview] ?? descriptions.overview}</p></section>
-    <div className="metrics-grid">{["Disease AUC", "Accuracy", "Sensitivity", "Specificity", "F1", "Precision"].map((label) => <article className="metric metric-blue" key={label}><span>{label}</span><strong>N/A</strong><small>No disease validation artifact</small></article>)}</div>
+    <div className="metrics-grid">{["Disease AUC", "Accuracy", "Sensitivity", "Specificity", "F1", "Precision"].map((label) => <article className="metric metric-blue" key={label}><span>{label}</span><strong>N/A</strong><small>No disease validation artifact</small></article>)}</div></>}
     <section className="panel"><PanelHeader eyebrow="Interpretation" title="Current capability" badge="Research only" /><p>ONNX vessel U-Net and heuristic vessel baselines do not diagnose Alzheimer disease, MCI, or retinal disease. Literature results are not Thermoeye performance measurements.</p></section>
   </section>;
 }

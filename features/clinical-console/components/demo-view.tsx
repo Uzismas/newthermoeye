@@ -1,15 +1,13 @@
 "use client";
 
 import { useMemo, useState, type CSSProperties } from "react";
-import { demoCases, riskLevel, rocAndMatrix, trainingCurve, weeklyScans, type DemoGroup } from "../demo-data";
+import { demoCases, riskLevel, rocAndMatrix, weeklyScans, type DemoGroup } from "../demo-data";
+import { DemoTrainingPanel } from "./demo-panels";
 import { PanelHeader, SectionHeading } from "./shared";
 
 const tone: Record<string, string> = { Low: "low", Moderate: "moderate", High: "high" };
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
-function line(values: number[], w: number, h: number, lo: number, hi: number) {
-  return values.map((v, i) => `${i ? "L" : "M"}${(i / (values.length - 1)) * w},${h - ((v - lo) / (hi - lo)) * h}`).join(" ");
-}
 
 export function DemoView() {
   const [selectedId, setSelectedId] = useState("DEMO-300");
@@ -23,8 +21,6 @@ export function DemoView() {
   const b = a + (levels[1].n / total) * 100;
   const meanVd = demoCases.reduce((s, c) => s + c.vesselDensity, 0) / total;
   const maxScan = Math.max(...weeklyScans.map((w) => w[1]));
-  const last = trainingCurve[trainingCurve.length - 1];
-  const bestEpoch = trainingCurve.reduce((m, p) => (p.val < m.val ? p : m));
 
   return (
     <section className="view active" aria-labelledby="demo-title">
@@ -103,41 +99,7 @@ export function DemoView() {
         </div>
       </section>
 
-      <section className="panel" aria-labelledby="demo-ai">
-        <PanelHeader eyebrow="AI training" title="Model training dashboard" badge="Simulated" badgeTone="warning" />
-        <div className="metrics-grid">
-          <article className="metric metric-green"><span>Validation AUC</span><strong>{stats.auc.toFixed(2)}</strong><small>Epoch {last.epoch} of {trainingCurve.length}</small></article>
-          <article className="metric metric-blue"><span>Sensitivity</span><strong>{pct(stats.sensitivity)}</strong><small>Specificity {pct(stats.specificity)}</small></article>
-          <article className="metric metric-orange"><span>Best epoch</span><strong>{bestEpoch.epoch}</strong><small>Lowest validation loss {bestEpoch.val.toFixed(2)}</small></article>
-          <article className="metric metric-purple"><span>PPV</span><strong>{pct(stats.ppv)}</strong><small>Precision at threshold 0.50</small></article>
-        </div>
-        <div className="demo-charts">
-          <figure>
-            <svg viewBox="0 0 320 180" role="img" aria-label="Training and validation loss by epoch">
-              <path d={line(trainingCurve.map((p) => p.train), 300, 150, 0.1, 1.2)} transform="translate(10,10)" className="demo-line train" />
-              <path d={line(trainingCurve.map((p) => p.val), 300, 150, 0.1, 1.2)} transform="translate(10,10)" className="demo-line val" />
-              <path d={line(trainingCurve.map((p) => p.auc), 300, 150, 0.4, 1)} transform="translate(10,10)" className="demo-line auc" />
-            </svg>
-            <figcaption><i className="dot blue-dot" /> train loss <i className="dot high-dot" /> validation loss <i className="dot green-dot" /> AUC · 40 epochs</figcaption>
-          </figure>
-          <figure>
-            <svg viewBox="0 0 200 200" role="img" aria-label="ROC curve">
-              <rect x="20" y="10" width="170" height="170" className="demo-frame" />
-              <path d="M20,180 L190,10" className="demo-diag" />
-              <path d={stats.points.map((p, i) => `${i ? "L" : "M"}${20 + p.fpr * 170},${180 - p.tpr * 170}`).join(" ")} className="demo-line val" />
-            </svg>
-            <figcaption>ROC · AUC {stats.auc.toFixed(2)} · n={stats.n} simulated</figcaption>
-          </figure>
-          <figure>
-            <div className="demo-matrix" role="img" aria-label="Confusion matrix">
-              <span /><b>Pred +</b><b>Pred −</b>
-              <b>True +</b><i className="ok">{stats.tp}</i><i>{stats.fn}</i>
-              <b>True −</b><i>{stats.fp}</i><i className="ok">{stats.tn}</i>
-            </div>
-            <figcaption>Confusion matrix at 0.50</figcaption>
-          </figure>
-        </div>
-      </section>
+      <DemoTrainingPanel />
     </section>
   );
 }
