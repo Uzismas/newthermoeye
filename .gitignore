@@ -34,3 +34,6 @@ backend/models/octa/*
 # Reference images whose reuse rights are unverified (D4); keep local only.
 internet-reference-images/_moved-from-public/
 internet-reference-images/research-figures/
+
+# Real ROSE-O test images: local only (dataset redistribution not confirmed).
+test-upload-images/real-octa/

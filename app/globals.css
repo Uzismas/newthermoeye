@@ -4732,3 +4732,17 @@ h1, h2, h3 { text-wrap: balance; }
 @media (min-width: 981px) and (max-height: 820px) {
   .side-nav .pilot-status small:last-child { display: none; }
 }
+
+/* Analysis view: figures carried the browser's default 40px margin and spilled out of their cards. */
+figure.scan-panel { margin: 0; }
+.octa-analysis .analysis-grid { grid-template-columns: repeat(auto-fit, minmax(240px, 420px)); justify-content: center; gap: 16px; }
+.uploaded-scan-frame > p { margin: 0; padding: 16px; }
+/* When the hero grid drops to two columns the metrics card sat alone beside an empty cell. */
+@media (max-width: 1280px) and (min-width: 701px) {
+  .analysis-hero-grid .key-metrics { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; column-gap: 28px; }
+  .analysis-hero-grid .key-metrics > .panel-header, .analysis-hero-grid .key-metrics > p { grid-column: 1 / -1; }
+}
+/* height:100% plus a title row overflowed the card; let the square frame size itself. */
+.scan-panel .uploaded-scan-frame { height: auto; aspect-ratio: 1; }
+.scan-panel .uploaded-scan-frame img { object-fit: contain; }
+.octa-analysis > p { margin: 12px 0 0; }

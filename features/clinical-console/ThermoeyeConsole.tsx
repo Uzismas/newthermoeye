@@ -60,7 +60,7 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
   const pathname = usePathname();
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
   const [caseRecords, setCaseRecords] = useState<CaseRecord[]>(() => cases.map(normalizeCaseRecord));
-  const [selectedCaseId, setSelectedCaseId] = useState(cases[0].id);
+  const [selectedCaseId, setSelectedCaseId] = useState("");
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>(initialAuditEvents);
   const [uploadLabel, setUploadLabel] = useState("Drop OCTA/OCT file or choose file");
   const [reviewState, setReviewState] = useState<Record<string, ReviewRecord>>({});
@@ -80,7 +80,9 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
   const activeView = getViewFromPathname(pathname) ?? initialView;
 
   const selectedCase = useMemo(
-    () => caseRecords.find((caseRecord) => caseRecord.id === selectedCaseId) ?? caseRecords[0] ?? cases[0],
+    () => caseRecords.find((caseRecord) => caseRecord.id === selectedCaseId)
+      ?? caseRecords.find((caseRecord) => caseRecord.analysisMetrics?.visionResult?.analysisStatus === "measured")
+      ?? caseRecords[0] ?? cases[0],
     [caseRecords, selectedCaseId],
   );
 
