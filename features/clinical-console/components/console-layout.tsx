@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { BarChart3, Database, FileText, Gauge, LayoutDashboard, ListChecks, ScanEye, Settings, UploadCloud, Users, type LucideIcon } from "lucide-react";
+import { BarChart3, Database, FileText, Gauge, LayoutDashboard, ListChecks, FlaskConical, ScanEye, Settings, UploadCloud, Users, type LucideIcon } from "lucide-react";
 import { clinicalModelVersion } from "../clinical-analysis";
 import { navigationItems } from "../mock-data";
 import type { SessionUser, ViewId } from "../types";
@@ -10,6 +10,7 @@ import type { SessionUser, ViewId } from "../types";
 const navIcons: Record<ViewId, LucideIcon> = {
   dashboard: LayoutDashboard,
   tasks: ListChecks,
+  demo: FlaskConical,
   cases: UploadCloud,
   patients: Users,
   analysis: ScanEye,

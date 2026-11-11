@@ -7,6 +7,7 @@ import { CasesView } from "./components/cases-view";
 import { Sidebar, Topbar } from "./components/console-layout";
 import { DashboardView } from "./components/dashboard-view";
 import { TasksView } from "./components/tasks-view";
+import { DemoView } from "./components/demo-view";
 import { GovernanceView } from "./components/governance-view";
 import { InsightsView } from "./components/insights-view";
 import { LoginGate } from "./components/login-gate";
@@ -20,6 +21,7 @@ import type { AuditEvent, CaseAction, CaseActionState, CaseRecord, ReviewRecord,
 const viewIds: ViewId[] = [
   "dashboard",
   "tasks",
+  "demo",
   "cases",
   "patients",
   "analysis",
@@ -35,6 +37,7 @@ const viewSet = new Set<string>(viewIds);
 const viewTitles: Record<ViewId, string> = {
   dashboard: "Dashboard",
   tasks: "Task Manager",
+  demo: "Demo Preview (simulated)",
   cases: "Upload New Scan",
   patients: "Patients",
   analysis: "Analysis Results",
@@ -415,6 +418,8 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
             }}
           />
         ) : null}
+
+        {activeView === "demo" ? <DemoView /> : null}
 
         {activeView === "cases" ? (
           <CasesView

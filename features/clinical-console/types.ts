@@ -1,6 +1,7 @@
 export type ViewId =
   | "dashboard"
   | "tasks"
+  | "demo"
   | "cases"
   | "patients"
   | "analysis"

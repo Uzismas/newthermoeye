@@ -4,6 +4,7 @@ import type { ViewId } from "@/features/clinical-console/types";
 const viewIds: ViewId[] = [
   "dashboard",
   "tasks",
+  "demo",
   "cases",
   "patients",
   "analysis",

@@ -5,6 +5,7 @@ import { referenceCases } from "./reference-cases";
 export const navigationItems: Array<{ id: ViewId; label: string; icon: string }> = [
   { id: "dashboard", label: "Dashboard", icon: "pulse-icon" },
   { id: "tasks", label: "Task Manager", icon: "task-icon" },
+  { id: "demo", label: "Demo Preview", icon: "demo-icon" },
   { id: "cases", label: "Upload New Scan", icon: "upload-icon" },
   { id: "patients", label: "Patients", icon: "patient-icon" },
   { id: "analysis", label: "Analysis Results", icon: "scan-icon" },
