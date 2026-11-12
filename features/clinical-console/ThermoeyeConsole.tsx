@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { AnalysisView } from "./components/analysis-view";
 import { CasesView } from "./components/cases-view";
@@ -512,8 +513,9 @@ function PatientsView({ cases, onCaseSelect }: { cases: CaseRecord[]; onCaseSele
             <span className={`risk-chip ${caseRecord.riskLevel}`}>
               {formatRiskScore(caseRecord) === "N/A" ? "N/A" : `${formatRiskScore(caseRecord)} risk`}
             </span>
-            <button className="ghost-button wide" type="button" onClick={() => onCaseSelect(caseRecord.id)}>
+            <button className="open-analysis" type="button" onClick={() => onCaseSelect(caseRecord.id)}>
               Open analysis
+              <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
             </button>
           </article>
         ))}
