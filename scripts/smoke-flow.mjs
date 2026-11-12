@@ -60,6 +60,8 @@ try {
   await cdp.send("Page.enable");
   await cdp.send("Runtime.enable");
   await waitFor(cdp, `Boolean(document.querySelector("form.lg-form, form.login-form"))`);
+  // The approval lock under test is real-mode behaviour; demo mode adds a one-click approve shortcut.
+  await cdp.eval(`localStorage.setItem("eyezheimer-demo", "off"); window.dispatchEvent(new Event("eyezheimer-demo"))`);
   await waitFor(cdp, `document.querySelector("form.lg-form, form.login-form")?.dataset.ready === "true"`);
   await waitFor(cdp, `document.querySelector("form.lg-form button[type='submit'], form.login-form button[type='submit']")?.disabled === false`);
 

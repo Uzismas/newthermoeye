@@ -133,3 +133,12 @@ export const demoGovernance = {
   deid: { verified: 294, flagged: 6 },
   usage: [["Screening review", 312], ["Model training", 176], ["Research export", 41], ["Quality audit", 58]] as const,
 };
+
+/** Made-up measurements for cases that have none (blocked / synthetic fixtures), stable per case id. Demo mode only. */
+export function simulatedMetrics(caseId: string) {
+  let h = 2166136261;
+  for (const ch of caseId) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  const r = rng(h >>> 0);
+  const pick = (lo: number, hi: number, d = 1) => Math.round((lo + r() * (hi - lo)) * 10 ** d) / 10 ** d;
+  return { vesselDensity: pick(16.5, 25.5), faz: pick(22, 42), perfusion: pick(38, 52), quality: pick(71, 93), contrast: pick(18, 40), artifact: pick(3, 11), risk: pick(0.12, 0.88, 2), confidence: pick(0.62, 0.94, 2) };
+}

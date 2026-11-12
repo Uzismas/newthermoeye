@@ -16,6 +16,7 @@ import { PerformanceView } from "./components/performance-view";
 import { ReportView } from "./components/report-view";
 import { formatPercent, normalizeCaseRecord } from "./clinical-analysis";
 import { caseStage } from "./tasks";
+import { simulatedMetrics } from "./demo-data";
 import { defaultCaseReview, mergeServerCases, withTransientPreview } from "./case-state";
 import { cases, initialAuditEvents } from "./mock-data";
 import type { AuditEvent, CaseAction, CaseActionState, CaseRecord, ReviewRecord, SessionUser, ViewId } from "./types";
@@ -248,6 +249,15 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
     }
   }
 
+  // Demo shortcut: record the reviewer approval, then download. The server still enforces its release gate.
+  async function approveAndDownload() {
+    const current = reviewState[selectedCase.id] ?? defaultCaseReview(selectedCase, sessionUser?.name);
+    if (current.decision !== "Approved for release") {
+      await updateReview({ ...current, decision: "Approved for release", followUpWindow: "Routine", note: current.note || "Approved for research release (demo walkthrough).", reviewer: sessionUser?.name ?? current.reviewer, updatedAt: new Date().toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) });
+    }
+    await downloadReportMock();
+  }
+
   async function downloadInsightsReport() {
     setIsInsightsDownloading(true);
     setActionError("");
@@ -455,10 +465,16 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
             activeAction={analysisAction}
             onAction={handleAnalysisAction}
             selectedCase={selectedCase}
+            demo={demo}
+            isApproved={selectedReview.decision === "Approved for release"}
+            isPdfBusy={isReportDownloading}
+            onDownloadPdf={selectedReview.decision === "Approved for release" ? downloadReportMock : approveAndDownload}
+            onOpenReport={openReportPreview}
           />
         ) : null}
         {activeView === "patients" ? (
           <PatientsView
+            demo={demo}
             cases={caseRecords}
             onCaseSelect={(caseId) => {
               setSelectedCaseId(caseId);
@@ -479,6 +495,8 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
             isDownloading={isReportDownloading}
             onBack={navigate}
             onDownload={downloadReportMock}
+            demo={demo}
+            onApproveDownload={approveAndDownload}
           />
         ) : null}
       </main>
@@ -491,7 +509,7 @@ function getViewFromPathname(pathname: string): ViewId | null {
   return segment && viewSet.has(segment) ? (segment as ViewId) : null;
 }
 
-function PatientsView({ cases, onCaseSelect }: { cases: CaseRecord[]; onCaseSelect: (caseId: string) => void }) {
+function PatientsView({ cases, onCaseSelect, demo = false }: { cases: CaseRecord[]; onCaseSelect: (caseId: string) => void; demo?: boolean }) {
   return (
     <section className="view active" aria-labelledby="patients-title">
       <div className="section-heading">
@@ -517,6 +535,7 @@ function PatientsView({ cases, onCaseSelect }: { cases: CaseRecord[]; onCaseSele
               const density = caseRecord.analysisMetrics?.vesselDensity;
               return stage === "measured" && density != null
                 ? <span className="status-pill">Vessel density {formatPercent(density)}</span>
+                : demo ? <span className="status-pill">Vessel density {formatPercent(simulatedMetrics(caseRecord.id).vesselDensity)} · simulated</span>
                 : <span className="status-pill pending">{stage === "blocked" ? "Blocked by quality gate" : "Not analysed yet"}</span>;
             })()}
             <button className="open-analysis" type="button" onClick={() => onCaseSelect(caseRecord.id)}>

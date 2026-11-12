@@ -1,9 +1,13 @@
 import { formatPercent, getCaseClassification, getClinicalResultLabel } from "../clinical-analysis";
 import { analysisProvenance, hasUsableMeasurements, isSyntheticCase } from "../analysis-presentation";
 import type { CaseAction, CaseActionState, CaseRecord } from "../types";
+import { Download, FileText } from "lucide-react";
+import { canReleaseResearchReport } from "../case-state";
+import { simulatedMetrics } from "../demo-data";
 import { PanelHeader, SectionHeading } from "./shared";
 
-export function AnalysisView({ selectedCase, actionState, activeAction, onAction }: {
+export function AnalysisView({ selectedCase, actionState, activeAction, onAction, demo = false, isApproved = false, isPdfBusy = false, onDownloadPdf, onOpenReport }: {
+  demo?: boolean; isApproved?: boolean; isPdfBusy?: boolean; onDownloadPdf?: () => void; onOpenReport?: () => void;
   selectedCase: CaseRecord;
   actionState?: CaseActionState;
   activeAction?: CaseAction;
@@ -14,10 +18,23 @@ export function AnalysisView({ selectedCase, actionState, activeAction, onAction
   const result = metrics?.visionResult;
   const measured = hasUsableMeasurements(selectedCase);
   const mask = measured ? result?.segmentationMaskDataUrl : undefined;
+  const simulated = demo ? simulatedMetrics(selectedCase.id) : null;
+  // Demo mode fills any missing value; "(sim)" keeps made-up numbers distinguishable from the real measurement.
+  const show = (real: number | null | undefined, sim: number | undefined) => (measured && real != null ? formatPercent(real) : simulated && sim != null ? `${formatPercent(sim)} (sim)` : formatPercent(null));
+  const canRelease = canReleaseResearchReport(selectedCase);
+  const pdfLabel = isPdfBusy ? "Preparing PDF..." : isApproved ? "Download PDF report" : demo ? "Approve & download PDF" : "Review & download PDF";
 
   return (
     <section className="view active" aria-labelledby="analysis-title">
       <SectionHeading eyebrow="Research measurements" title="Analysis Result" note={`Scan ID: ${selectedCase.id}`} />
+      <div className="export-bar" role="group" aria-label="Export this analysis">
+        <div>
+          <strong>Export this result</strong>
+          <span>{canRelease ? (isApproved ? "Approved. The research report is ready." : demo ? "Demo: one click records the approval and downloads the PDF." : "A reviewer must approve before the PDF is released.") : "Reports and DICOM need a measured image. Upload an OCTA scan to enable them."}</span>
+        </div>
+        <button className="primary-button" type="button" disabled={!canRelease || isPdfBusy} onClick={isApproved || demo ? onDownloadPdf : onOpenReport}><FileText size={17} aria-hidden="true" />{pdfLabel}</button>
+        <button className="ghost-button" type="button" disabled={!canRelease || !onAction || activeAction === "export_dicom"} onClick={() => onAction?.("export_dicom")}><Download size={17} aria-hidden="true" />{activeAction === "export_dicom" ? "Preparing DICOM..." : "Export DICOM (.dcm)"}</button>
+      </div>
       <div className="analysis-mode-banner ruleset" role="status">
         <strong>{isSyntheticCase(selectedCase) ? "Synthetic demonstration / research only" : "Research measurements only"}</strong>
         <span>No validated disease classifier is connected. Disease risk and confidence are unavailable.</span>
@@ -34,21 +51,21 @@ export function AnalysisView({ selectedCase, actionState, activeAction, onAction
           </dl>
         </section>
         <section className="panel ai-assessment">
-          <PanelHeader eyebrow="Disease classification" title="Indeterminate" badge="Classifier unavailable" badgeTone="warning" />
+          <PanelHeader eyebrow="Disease classification" title="Indeterminate" badge={simulated ? "Simulated" : "Classifier unavailable"} badgeTone="warning" />
           <div className="assessment-copy">
             <p>{classification.finding}</p>
-            <strong>Disease risk: N/A · Disease confidence: N/A</strong>
+            <strong>{simulated ? `Simulated risk score ${simulated.risk.toFixed(2)} · confidence ${Math.round(simulated.confidence * 100)}% (demo only)` : "Disease risk: N/A · Disease confidence: N/A"}</strong>
             <span>{classification.recommendation}</span>
           </div>
         </section>
         <section className="panel key-metrics">
-          <PanelHeader eyebrow="Image measurements" title="Research Metrics" badge={measured ? "percent_0_100" : "Unavailable"} />
-          <MetricLine label="Vessel density proxy" value={formatPercent(measured ? metrics?.vesselDensity : null)} />
-          <MetricLine label="Central non-vessel fraction (research proxy)" value={formatPercent(measured ? metrics?.fazRiskProxy : null)} />
-          <MetricLine label="Perfusion density proxy" value={formatPercent(measured ? metrics?.perfusionDensityProxy : null)} />
-          <MetricLine label="Image quality" value={formatPercent(metrics?.qualityScore)} />
-          <MetricLine label="Contrast index" value={measured && metrics?.contrast != null ? String(metrics.contrast) : "N/A"} />
-          <MetricLine label="Artifact estimate" value={formatPercent(measured ? metrics?.artifactScore : null)} />
+          <PanelHeader eyebrow="Image measurements" title="Research Metrics" badge={simulated && !measured ? "Simulated" : measured ? "percent_0_100" : "Unavailable"} badgeTone={simulated && !measured ? "warning" : undefined} />
+          <MetricLine label="Vessel density proxy" value={show(metrics?.vesselDensity, simulated?.vesselDensity)} />
+          <MetricLine label="Central non-vessel fraction (research proxy)" value={show(metrics?.fazRiskProxy, simulated?.faz)} />
+          <MetricLine label="Perfusion density proxy" value={show(metrics?.perfusionDensityProxy, simulated?.perfusion)} />
+          <MetricLine label="Image quality" value={metrics?.qualityScore != null ? formatPercent(metrics.qualityScore) : simulated ? `${formatPercent(simulated.quality)} (sim)` : "N/A"} />
+          <MetricLine label="Contrast index" value={measured && metrics?.contrast != null ? String(metrics.contrast) : simulated ? `${simulated.contrast} (sim)` : "N/A"} />
+          <MetricLine label="Artifact estimate" value={show(metrics?.artifactScore, simulated?.artifact)} />
           <p>Proxies are image measurements without disease thresholds or calibrated clinical interpretation.</p>
         </section>
       </div>

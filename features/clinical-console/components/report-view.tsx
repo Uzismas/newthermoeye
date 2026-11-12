@@ -4,6 +4,7 @@ import { riskTone } from "../utils";
 import { analysisProvenance, hasUsableMeasurements, isSyntheticCase } from "../analysis-presentation";
 import { PanelHeader, SectionHeading } from "./shared";
 import { canReleaseResearchReport } from "../case-state";
+import { simulatedMetrics } from "../demo-data";
 
 export function ReportView({
   selectedCase,
@@ -11,7 +12,11 @@ export function ReportView({
   isDownloading,
   onBack,
   onDownload,
+  demo = false,
+  onApproveDownload,
 }: {
+  demo?: boolean;
+  onApproveDownload?: () => void;
   selectedCase: CaseRecord;
   selectedReview: ReviewRecord;
   isDownloading: boolean;
@@ -22,6 +27,10 @@ export function ReportView({
   const isApproved = selectedReview.decision === "Approved for release" && canReleaseResearchReport(selectedCase);
   const metrics = selectedCase.analysisMetrics;
   const measured = hasUsableMeasurements(selectedCase);
+  const demoRelease = demo && !isApproved && canReleaseResearchReport(selectedCase);
+  const pdfEnabled = isApproved || demoRelease;
+  const pdfLabel = isDownloading ? "Preparing PDF..." : demoRelease ? "Approve & download PDF" : "Download PDF";
+  const pdfClick = isApproved ? onDownload : onApproveDownload;
 
   return (
     <section className="view active" aria-labelledby="report-title">
@@ -43,10 +52,10 @@ export function ReportView({
             </span>
           </div>
           <div className="report-top-actions">
-            <button className="primary-button" type="button" onClick={onDownload} disabled={isDownloading || !isApproved}>
-              {isDownloading ? "Preparing PDF..." : "Download PDF"}
+            <button className="primary-button" type="button" onClick={pdfClick} disabled={isDownloading || !pdfEnabled}>
+              {pdfLabel}
             </button>
-            {!isApproved ? (
+            {!pdfEnabled ? (
               <>
                 <span>Download locked until doctor approval.</span>
                 <button className="text-button report-review-link" type="button" onClick={() => onBack("dashboard")}>
@@ -74,7 +83,7 @@ export function ReportView({
               </div>
               <div>
                 <dt>Vessel density / Central non-vessel fraction</dt>
-                <dd>{metrics && measured ? `${formatPercent(metrics.vesselDensity)} / ${formatPercent(metrics.fazRiskProxy)}` : "N/A"}</dd>
+                <dd>{metrics && measured ? `${formatPercent(metrics.vesselDensity)} / ${formatPercent(metrics.fazRiskProxy)}` : demo ? `${formatPercent(simulatedMetrics(selectedCase.id).vesselDensity)} / ${formatPercent(simulatedMetrics(selectedCase.id).faz)} (simulated)` : "N/A"}</dd>
               </div>
               <div>
                 <dt>Engine / unit</dt>
@@ -157,13 +166,13 @@ export function ReportView({
             <div className="check-item pass"><strong>Research provenance attached</strong><span>{metrics?.visionResult?.engine ?? "Synthetic fixture"}</span></div>
             <div className={isApproved ? "check-item pass" : "check-item hold"}>
               <strong>Doctor approval</strong>
-              <span>{isApproved ? "Ready for release" : "Download locked until approval"}</span>
+              <span>{isApproved ? "Ready for release" : demoRelease ? "Demo: approve and download in one click" : "Download locked until approval"}</span>
             </div>
           </div>
 
           <div className="actions-row vertical-actions">
-            <button className="primary-button wide" type="button" onClick={onDownload} disabled={isDownloading || !isApproved}>
-              {isDownloading ? "Preparing PDF..." : "Download PDF"}
+            <button className="primary-button wide" type="button" onClick={pdfClick} disabled={isDownloading || !pdfEnabled}>
+              {pdfLabel}
             </button>
             <button className="ghost-button wide" type="button" onClick={() => onBack("dashboard")}>
               Review and approve case
