@@ -66,7 +66,7 @@ export function AnalysisView({ selectedCase, actionState, activeAction, onAction
             <div><dt>Context</dt><dd>{selectedCase.context}</dd></div>
           </dl>
         </section>
-        {simulated ? <RiskAssessmentCard score={simulated.risk} confidence={simulated.confidence} /> : (
+        {simulated ? <RiskAssessmentCard score={simulated.risk} confidence={simulated.confidence} signals={rows.slice(0, 3).map((r) => ({ label: r.label.replace(" proxy", "").replace(" (research proxy)", ""), value: r.display }))} /> : (
           <section className="panel ai-assessment">
           <PanelHeader eyebrow="Disease classification" title="Indeterminate" badge="Classifier unavailable" badgeTone="warning" />
           <div className="assessment-copy">

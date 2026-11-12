@@ -4861,18 +4861,38 @@ figure.scan-panel { margin: 0; }
 @media print { .report-section:last-of-type { break-inside: avoid; } }
 
 /* Analysis: risk gauge card and metric rows with bars (reference: AI Risk Assessment card). */
-.ra-card { display: flex; flex-direction: column; gap: 6px; }
-.ra-gauge { width: 100%; max-width: 300px; height: auto; margin: 2px auto 0; display: block; }
-.ra-gauge path { fill: none; stroke-width: 24; }
-.ra-score { font-size: 38px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.ra-card { display: flex; flex-direction: column; gap: 12px; }
+.ra-gauge-wrap { display: grid; justify-items: center; gap: 8px; padding: 6px 0 2px; }
+.ra-gauge { width: 100%; max-width: 330px; height: auto; display: block; }
+.ra-gauge path { fill: none; stroke-width: 17; stroke-linecap: round; }
+.ra-score { font-size: 44px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .ra-label { font-size: 12.5px; fill: #5a6a82; font-weight: 600; }
-.ra-finding { margin: 6px 0 0; color: #3f5068; font-size: 0.88rem; line-height: 1.5; max-width: 62ch; }
-.ra-reco { margin: 10px 0 0; font-size: 1.05rem; }
-.ra-conf { display: grid; gap: 6px; margin-top: 10px; }
+.ra-tick { font-size: 12px; fill: #7a8aa0; font-variant-numeric: tabular-nums; }
+.ra-level { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; border-radius: 999px; font-weight: 700; font-size: 0.85rem; }
+.ra-level i { width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+.ra-level.ra-low { color: #0b6b62; background: #d9f3ef; }
+.ra-level.ra-moderate { color: #8a5200; background: #fdeccb; }
+.ra-level.ra-high { color: #9a3a05; background: #fde1cf; }
+.ra-legend { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; margin: 0; padding: 0; font-size: 0.78rem; color: #6a7a90; }
+.ra-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.ra-legend li.on { color: #14263d; font-weight: 700; }
+.ra-legend i { width: 10px; height: 10px; border-radius: 3px; }
+.ra-signals { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; margin: 0; padding: 0; }
+.ra-signals li { display: grid; gap: 2px; padding: 9px 11px; border-radius: 8px; background: #f1f6fb; }
+.ra-signals span { color: #5a6a82; font-size: 0.78rem; }
+.ra-signals strong { font-size: 1rem; font-variant-numeric: tabular-nums; }
+.ra-finding { margin: 0; color: #33445c; font-size: 0.9rem; line-height: 1.55; max-width: 62ch; }
+.ra-reco { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: #eaf5fc; color: #0b4d78; }
+.ra-reco svg { flex-shrink: 0; margin-top: 2px; }
+.ra-reco h3 { margin: 0 0 2px; font-size: 0.95rem; color: #0a3f63; }
+.ra-reco p { margin: 0; font-size: 0.88rem; line-height: 1.5; color: #254a68; }
+.ra-conf { display: grid; gap: 6px; }
+.ra-conf > div:first-child { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.85rem; color: #4a5a72; }
+.ra-conf strong { font-size: 1.05rem; color: #14263d; font-variant-numeric: tabular-nums; }
 .ra-bar { height: 8px; border-radius: 999px; background: #e3ebf4; overflow: hidden; }
-.ra-bar i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #0369a1, #5b4bff); }
-.ra-conf span { color: #3f5068; font-size: 0.85rem; }
-.ra-sim-note { margin: 6px 0 0; padding: 6px 10px; border: 1px dashed #d97706; border-radius: 6px; background: #fff7e6; color: #7a4300; font-size: 0.8rem; }
+.ra-bar i { display: block; height: 100%; border-radius: 999px; background: #0b5d8f; }
+.ra-sim-note { display: flex; align-items: center; gap: 7px; margin: 0; color: #7a4300; font-size: 0.8rem; }
+.ra-sim-note svg { flex-shrink: 0; }
 .rm-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
 .rm-list li { display: grid; gap: 6px; }
 .rm-list li > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
