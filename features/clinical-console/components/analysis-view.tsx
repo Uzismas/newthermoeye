@@ -4,6 +4,7 @@ import type { CaseAction, CaseActionState, CaseRecord } from "../types";
 import { Download, FileText } from "lucide-react";
 import { canReleaseResearchReport } from "../case-state";
 import { simulatedMetrics } from "../demo-data";
+import { MetricRows, RiskAssessmentCard, type MetricRow } from "./analysis-risk";
 import { PanelHeader, SectionHeading } from "./shared";
 
 export function AnalysisView({ selectedCase, actionState, activeAction, onAction, demo = false, isApproved = false, isPdfBusy = false, onDownloadPdf, onOpenReport }: {
@@ -23,6 +24,21 @@ export function AnalysisView({ selectedCase, actionState, activeAction, onAction
   const show = (real: number | null | undefined, sim: number | undefined) => (measured && real != null ? formatPercent(real) : simulated && sim != null ? `${formatPercent(sim)} (sim)` : formatPercent(null));
   const canRelease = canReleaseResearchReport(selectedCase);
   const pdfLabel = isPdfBusy ? "Preparing PDF..." : isApproved ? "Download PDF report" : demo ? "Approve & download PDF" : "Review & download PDF";
+  // One number per metric: the real measurement when present, else the simulated one in demo mode.
+  const num = (real: number | null | undefined, sim: number | undefined) => (measured && real != null ? real : simulated && sim != null ? sim : null);
+  const isSim = (real: number | null | undefined) => !(measured && real != null);
+  const fmt = (real: number | null | undefined, n: number | null) => (n == null ? "N/A" : `${formatPercent(n)}${simulated && isSim(real) ? " (sim)" : ""}`);
+  const qualityN = metrics?.qualityScore != null ? metrics.qualityScore : simulated?.quality ?? null;
+  const contrastN = measured && metrics?.contrast != null ? metrics.contrast : simulated?.contrast ?? null;
+  const artifactN = num(metrics?.artifactScore, simulated?.artifact);
+  const rows: MetricRow[] = [
+    { label: "Vessel density proxy", value: num(metrics?.vesselDensity, simulated?.vesselDensity), display: fmt(metrics?.vesselDensity, num(metrics?.vesselDensity, simulated?.vesselDensity)) },
+    { label: "Central non-vessel fraction (research proxy)", value: num(metrics?.fazRiskProxy, simulated?.faz), display: fmt(metrics?.fazRiskProxy, num(metrics?.fazRiskProxy, simulated?.faz)) },
+    { label: "Perfusion density proxy", value: num(metrics?.perfusionDensityProxy, simulated?.perfusion), display: fmt(metrics?.perfusionDensityProxy, num(metrics?.perfusionDensityProxy, simulated?.perfusion)) },
+    { label: "Image quality", value: qualityN, display: qualityN == null ? "N/A" : `${formatPercent(qualityN)}${metrics?.qualityScore == null && simulated ? " (sim)" : ""}`, watch: qualityN != null && qualityN < 60 },
+    { label: "Contrast index", value: contrastN, display: contrastN == null ? "N/A" : `${contrastN}${!(measured && metrics?.contrast != null) && simulated ? " (sim)" : ""}` },
+    { label: "Artifact estimate", value: artifactN, display: fmt(metrics?.artifactScore, artifactN), watch: artifactN != null && artifactN > 10 },
+  ];
 
   return (
     <section className="view active" aria-labelledby="analysis-title">
@@ -50,24 +66,17 @@ export function AnalysisView({ selectedCase, actionState, activeAction, onAction
             <div><dt>Context</dt><dd>{selectedCase.context}</dd></div>
           </dl>
         </section>
-        <section className="panel ai-assessment">
-          <PanelHeader eyebrow="Disease classification" title="Indeterminate" badge={simulated ? "Simulated" : "Classifier unavailable"} badgeTone="warning" />
+        {simulated ? <RiskAssessmentCard score={simulated.risk} confidence={simulated.confidence} /> : (
+          <section className="panel ai-assessment">
+          <PanelHeader eyebrow="Disease classification" title="Indeterminate" badge="Classifier unavailable" badgeTone="warning" />
           <div className="assessment-copy">
             <p>{classification.finding}</p>
-            <strong>{simulated ? `Simulated risk score ${simulated.risk.toFixed(2)} · confidence ${Math.round(simulated.confidence * 100)}% (demo only)` : "Disease risk: N/A · Disease confidence: N/A"}</strong>
+            <strong>Disease risk: N/A · Disease confidence: N/A</strong>
             <span>{classification.recommendation}</span>
           </div>
-        </section>
-        <section className="panel key-metrics">
-          <PanelHeader eyebrow="Image measurements" title="Research Metrics" badge={simulated && !measured ? "Simulated" : measured ? "percent_0_100" : "Unavailable"} badgeTone={simulated && !measured ? "warning" : undefined} />
-          <MetricLine label="Vessel density proxy" value={show(metrics?.vesselDensity, simulated?.vesselDensity)} />
-          <MetricLine label="Central non-vessel fraction (research proxy)" value={show(metrics?.fazRiskProxy, simulated?.faz)} />
-          <MetricLine label="Perfusion density proxy" value={show(metrics?.perfusionDensityProxy, simulated?.perfusion)} />
-          <MetricLine label="Image quality" value={metrics?.qualityScore != null ? formatPercent(metrics.qualityScore) : simulated ? `${formatPercent(simulated.quality)} (sim)` : "N/A"} />
-          <MetricLine label="Contrast index" value={measured && metrics?.contrast != null ? String(metrics.contrast) : simulated ? `${simulated.contrast} (sim)` : "N/A"} />
-          <MetricLine label="Artifact estimate" value={show(metrics?.artifactScore, simulated?.artifact)} />
-          <p>Proxies are image measurements without disease thresholds or calibrated clinical interpretation.</p>
-        </section>
+          </section>
+        )}
+        <MetricRows rows={rows} simulated={Boolean(simulated && !measured)} badge={simulated && !measured ? "Simulated" : measured ? "percent_0_100" : "Unavailable"} />
       </div>
       <section className="panel clinical-classification-panel">
         <PanelHeader eyebrow="Acquisition review" title={getClinicalResultLabel(classification.kind)} badge={result?.analysisStatus ?? "Unavailable"} />

@@ -4859,3 +4859,26 @@ figure.scan-panel { margin: 0; }
   .report-scan-frame figcaption { color: #333; }
 }
 @media print { .report-section:last-of-type { break-inside: avoid; } }
+
+/* Analysis: risk gauge card and metric rows with bars (reference: AI Risk Assessment card). */
+.ra-card { display: flex; flex-direction: column; gap: 6px; }
+.ra-gauge { width: 100%; max-width: 300px; height: auto; margin: 2px auto 0; display: block; }
+.ra-gauge path { fill: none; stroke-width: 24; }
+.ra-score { font-size: 38px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.ra-label { font-size: 12.5px; fill: #5a6a82; font-weight: 600; }
+.ra-finding { margin: 6px 0 0; color: #3f5068; font-size: 0.88rem; line-height: 1.5; max-width: 62ch; }
+.ra-reco { margin: 10px 0 0; font-size: 1.05rem; }
+.ra-conf { display: grid; gap: 6px; margin-top: 10px; }
+.ra-bar { height: 8px; border-radius: 999px; background: #e3ebf4; overflow: hidden; }
+.ra-bar i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #0369a1, #5b4bff); }
+.ra-conf span { color: #3f5068; font-size: 0.85rem; }
+.ra-sim-note { margin: 6px 0 0; padding: 6px 10px; border: 1px dashed #d97706; border-radius: 6px; background: #fff7e6; color: #7a4300; font-size: 0.8rem; }
+.rm-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.rm-list li { display: grid; gap: 6px; }
+.rm-list li > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.rm-list span { color: #3f5068; font-size: 0.85rem; }
+.rm-list strong { font-size: 1.05rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rm-list i { display: block; height: 7px; border-radius: 999px; background: #e6eef6; overflow: hidden; }
+.rm-list b { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #38bdf8, #0b5d8f); }
+.rm-list b.watch { background: linear-gradient(90deg, #fbbf24, #d97706); }
+.rm-note { margin: 14px 0 0; color: var(--muted); font-size: 0.8rem; }
