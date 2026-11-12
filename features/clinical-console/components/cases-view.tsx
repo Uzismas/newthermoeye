@@ -13,16 +13,36 @@ export function CasesView({
   uploadLabel,
   onCreateDemoCase,
   onFileSelected,
+  onBatchDone,
 }: {
   errorMessage?: string;
   isQueueing?: boolean;
   uploadLabel: string;
-  onCreateDemoCase: (caseRecord: CaseRecord, sourceFile: File) => void | Promise<void>;
+  onCreateDemoCase: (caseRecord: CaseRecord, sourceFile: File, options?: { stay?: boolean }) => void | Promise<void>;
   onFileSelected: (label: string) => void;
+  onBatchDone: (summary: string) => void;
 }) {
   const [localError, setLocalError] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const analyzingRef = useRef(false);
+
+  // Several images at once: analyse and save them one by one so a bad file never blocks the rest.
+  async function runBatch(files: File[], base: Omit<DemoCaseInput, "caseCode">) {
+    let measured = 0, blocked = 0;
+    const failed: string[] = [];
+    for (const file of files) {
+      try {
+        const stem = file.name.replace(/\.[^.]+$/, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 36).toUpperCase() || "SCAN";
+        const { caseRecord, sourceFile } = await createBaselineDemoCase(file, { ...base, caseCode: `TE-${stem}-${Math.random().toString(36).slice(2, 6).toUpperCase()}` });
+        await onCreateDemoCase(caseRecord, sourceFile, { stay: true });
+        if (caseRecord.analysisMetrics?.visionResult?.analysisStatus === "measured") measured += 1; else blocked += 1;
+      } catch (error) {
+        failed.push(`${file.name}: ${error instanceof Error ? error.message : "could not be processed"}`);
+      }
+    }
+    if (failed.length) setLocalError(`${failed.length} rejected. ${failed.slice(0, 3).join(" · ")}`);
+    if (measured + blocked > 0) onBatchDone(`${files.length} images processed: ${measured} measured, ${blocked} blocked by the quality gate${failed.length ? `, ${failed.length} rejected` : ""}.`);
+  }
 
   return (
     <section className="view active" aria-labelledby="cases-title">
@@ -40,11 +60,13 @@ export function CasesView({
             <input
               id="scan-file"
               type="file"
+              multiple
               accept="image/jpeg,image/png,image/webp,image/tiff,.jpg,.jpeg,.png,.webp,.tif,.tiff"
               onChange={(event) => {
-                const fileName = event.target.files?.[0]?.name;
+                const picked = event.target.files;
                 setLocalError("");
-                if (fileName) onFileSelected(`${fileName} selected`);
+                if (picked && picked.length > 1) onFileSelected(`${picked.length} images selected`);
+                else if (picked?.[0]) onFileSelected(`${picked[0].name} selected`);
               }}
             />
             <span className="drop-mark" aria-hidden="true" />
@@ -57,9 +79,9 @@ export function CasesView({
               <span>TIFF</span>
               <span className="upload-format-limit">Max 8 MB</span>
             </span>
-            <span className="file-picker-button">Choose scan image</span>
+            <span className="file-picker-button">Choose scan image(s)</span>
             <span className={uploadLabel.endsWith(" selected") ? "upload-state ready" : "upload-state"}>
-              {uploadLabel.endsWith(" selected") ? "File ready for screening" : "No file selected yet"}
+              {uploadLabel.endsWith(" selected") ? "Ready for screening" : "No file selected yet"}
             </span>
           </label>
 
@@ -121,7 +143,8 @@ export function CasesView({
             onClick={() => {
               if (analyzingRef.current) return;
               const fileInput = document.querySelector<HTMLInputElement>("#scan-file");
-              const file = fileInput?.files?.[0];
+              const files = Array.from(fileInput?.files ?? []);
+              const file = files[0];
               const form = fileInput?.closest(".upload-panel");
               const getField = (name: string) => form?.querySelector<HTMLInputElement | HTMLSelectElement>(`[name="${name}"]`)?.value ?? "";
 
@@ -130,9 +153,19 @@ export function CasesView({
                 return;
               }
 
+              if (files.length > 20) {
+                setLocalError("Choose up to 20 images at a time.");
+                return;
+              }
+
               setLocalError("");
               analyzingRef.current = true;
               setIsAnalyzing(true);
+              if (files.length > 1) {
+                void runBatch(files, { age: Number(getField("age")), sex: getField("sex") === "Male" ? "M" : "F", scanType: getField("scanType") || "OCTA macula" })
+                  .finally(() => { analyzingRef.current = false; setIsAnalyzing(false); });
+                return;
+              }
               void createBaselineDemoCase(file, {
                 caseCode: getField("caseCode"),
                 age: Number(getField("age")),
@@ -144,7 +177,7 @@ export function CasesView({
             }}
             disabled={isQueueing || isAnalyzing}
           >
-            {isQueueing ? "Queueing..." : isAnalyzing ? "Analyzing..." : "Queue secure screening"}
+            {isQueueing ? "Queueing..." : isAnalyzing ? "Analyzing..." : uploadLabel.endsWith(" images selected") ? `Queue ${uploadLabel.split(" ")[0]} scans` : "Queue secure screening"}
           </button>
         </section>
 

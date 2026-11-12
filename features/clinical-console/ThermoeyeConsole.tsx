@@ -14,7 +14,8 @@ import { InsightsView } from "./components/insights-view";
 import { LoginGate } from "./components/login-gate";
 import { PerformanceView } from "./components/performance-view";
 import { ReportView } from "./components/report-view";
-import { formatRiskScore, normalizeCaseRecord } from "./clinical-analysis";
+import { formatPercent, normalizeCaseRecord } from "./clinical-analysis";
+import { caseStage } from "./tasks";
 import { defaultCaseReview, mergeServerCases, withTransientPreview } from "./case-state";
 import { cases, initialAuditEvents } from "./mock-data";
 import type { AuditEvent, CaseAction, CaseActionState, CaseRecord, ReviewRecord, SessionUser, ViewId } from "./types";
@@ -313,7 +314,7 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
     }
   }
 
-  async function createUploadedDemoCase(caseRecord: CaseRecord, sourceFile: File) {
+  async function createUploadedDemoCase(caseRecord: CaseRecord, sourceFile: File, options?: { stay?: boolean }) {
     if (queueInFlight.current) throw new Error("A case save is already in progress.");
     queueInFlight.current = true;
     setIsQueueing(true);
@@ -337,7 +338,7 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
       setUploadLabel(result.label);
       setAuditEvents(result.auditEvents);
       setActionNotice(result.storage?.durable ? "Approved demo result saved in private local storage." : "Research result saved in temporary server memory.");
-      navigate("analysis");
+      if (!options?.stay) navigate("analysis");
     } catch (error) {
       setActionError(getErrorMessage(error));
       throw error;
@@ -444,6 +445,7 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
             uploadLabel={uploadLabel}
             onCreateDemoCase={createUploadedDemoCase}
             onFileSelected={setUploadLabel}
+            onBatchDone={(summary) => { setActionNotice(summary); navigate("patients"); }}
           />
         ) : null}
 
@@ -510,9 +512,13 @@ function PatientsView({ cases, onCaseSelect }: { cases: CaseRecord[]; onCaseSele
               <h2>{caseRecord.id.replace("TE", "PT")}</h2>
               <p>{caseRecord.age} years · {caseRecord.sex === "F" ? "Female" : "Male"} · {caseRecord.scanType} {caseRecord.eye}</p>
             </div>
-            <span className={`risk-chip ${caseRecord.riskLevel}`}>
-              {formatRiskScore(caseRecord) === "N/A" ? "N/A" : `${formatRiskScore(caseRecord)} risk`}
-            </span>
+            {(() => {
+              const stage = caseStage(caseRecord);
+              const density = caseRecord.analysisMetrics?.vesselDensity;
+              return stage === "measured" && density != null
+                ? <span className="status-pill">Vessel density {formatPercent(density)}</span>
+                : <span className="status-pill pending">{stage === "blocked" ? "Blocked by quality gate" : "Not analysed yet"}</span>;
+            })()}
             <button className="open-analysis" type="button" onClick={() => onCaseSelect(caseRecord.id)}>
               Open analysis
               <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
