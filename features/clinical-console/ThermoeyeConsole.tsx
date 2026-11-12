@@ -497,6 +497,7 @@ export function ThermoeyeConsole({ initialView = "dashboard" }: { initialView?: 
             onDownload={downloadReportMock}
             demo={demo}
             onApproveDownload={approveAndDownload}
+            onReview={() => { navigate("dashboard"); window.setTimeout(() => document.querySelector(".review-form")?.scrollIntoView({ behavior: "smooth", block: "center" }), 350); }}
           />
         ) : null}
       </main>

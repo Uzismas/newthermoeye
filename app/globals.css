@@ -4828,3 +4828,34 @@ figure.scan-panel { margin: 0; }
 .export-bar strong { color: #075985; }
 .export-bar span { color: #3f5068; font-size: 0.85rem; }
 .export-bar button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+
+/* Print / Save as PDF: only the report document, on white, with its images. Works without any backend. */
+.print-only { display: none; }
+@media print {
+  @page { margin: 14mm; }
+  html, body { background: #fff !important; }
+  .side-nav, .topbar, .demo-strip, .workspace-alert, .workspace-notice, .report-actions, .report-top-actions, .section-heading { display: none !important; }
+  .app-shell, .report-grid { display: block !important; }
+  .workspace { padding: 0 !important; }
+  .panel.report-document { border: 0 !important; box-shadow: none !important; padding: 0 !important; background: #fff !important; }
+  .report-document, .report-document * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .report-summary dl > div, .report-visuals figure, .report-section > dl > div { break-inside: avoid; }
+  .report-section h3 { break-after: avoid; }
+  .report-section { padding: 10px 0 !important; }
+  .report-section > dl { grid-template-columns: repeat(3, 1fr) !important; gap: 6px 10px !important; }
+  .report-section > dl > div { padding: 6px 9px !important; }
+  .report-visuals { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10mm; }
+  .report-visuals img { max-width: 100%; }
+  .print-only { display: block; margin: 0 0 8px; padding: 6px 10px; border: 1px dashed #d97706; color: #7a4300; font-size: 10pt; }
+  a[href]::after { content: none; }
+}
+
+/* Report images: the frame was height:100% of an auto-height figure, so it spilled over its caption (screen and print). */
+.report-scan-frame .uploaded-scan-frame { height: auto; aspect-ratio: 1; }
+.report-scan-frame .uploaded-scan-frame img { object-fit: contain; }
+.report-scan-frame { min-width: 0; }
+@media print {
+  .report-visuals { gap: 8mm !important; max-width: 150mm; }
+  .report-scan-frame figcaption { color: #333; }
+}
+@media print { .report-section:last-of-type { break-inside: avoid; } }

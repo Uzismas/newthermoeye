@@ -14,7 +14,9 @@ export function ReportView({
   onDownload,
   demo = false,
   onApproveDownload,
+  onReview,
 }: {
+  onReview?: () => void;
   demo?: boolean;
   onApproveDownload?: () => void;
   selectedCase: CaseRecord;
@@ -51,14 +53,16 @@ export function ReportView({
               {classification.kind === "quality_blocked" ? "Blocked" : getClinicalResultLabel(classification.kind)}
             </span>
           </div>
+          {demo ? <p className="print-only">Demo mode was on when this page was printed. Values marked (simulated) are made up for layout preview and are not measurements.</p> : null}
           <div className="report-top-actions">
             <button className="primary-button" type="button" onClick={pdfClick} disabled={isDownloading || !pdfEnabled}>
               {pdfLabel}
             </button>
+            <button className="ghost-button" type="button" onClick={() => window.print()}>Print / Save as PDF</button>
             {!pdfEnabled ? (
               <>
                 <span>Download locked until doctor approval.</span>
-                <button className="text-button report-review-link" type="button" onClick={() => onBack("dashboard")}>
+                <button className="text-button report-review-link" type="button" onClick={() => (onReview ? onReview() : onBack("dashboard"))}>
                   Review and approve case
                 </button>
               </>
@@ -174,7 +178,10 @@ export function ReportView({
             <button className="primary-button wide" type="button" onClick={pdfClick} disabled={isDownloading || !pdfEnabled}>
               {pdfLabel}
             </button>
-            <button className="ghost-button wide" type="button" onClick={() => onBack("dashboard")}>
+            <button className="ghost-button wide" type="button" onClick={() => window.print()}>
+              Print / Save as PDF
+            </button>
+            <button className="ghost-button wide" type="button" onClick={() => (onReview ? onReview() : onBack("dashboard"))}>
               Review and approve case
             </button>
           </div>

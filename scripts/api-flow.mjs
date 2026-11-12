@@ -86,7 +86,11 @@ try {
   assert.ok(pdf.startsWith("%PDF-"));
   assert.ok(pdf.includes("16%"), "PDF includes unchanged measured percentage");
   assert.equal((await post(`/api/cases/${first.id}/review`, { ...approval, note: "บันทึกการวิจัยภาษาไทย" })).status, 200);
-  assert.equal((await post(`/api/cases/${first.id}/report/download`)).status, 422, "Unicode notes must not become corrupted PDF text");
+  const thaiPdfResponse = await post(`/api/cases/${first.id}/report/download`);
+  assert.equal(thaiPdfResponse.status, 200, "a non-Latin note must not block the report");
+  const thaiPdf = Buffer.from(await thaiPdfResponse.arrayBuffer()).toString("latin1");
+  assert.ok(thaiPdf.includes("non-Latin text omitted"), "omission is stated in the PDF");
+  assert.ok(!/[\u0080-\uffff]/.test(thaiPdf.slice(thaiPdf.indexOf("Reviewer note"), thaiPdf.indexOf("Reviewer note") + 200)), "Unicode notes must not become corrupted PDF text");
   assert.equal((await json(`/api/cases/${first.id}/review`)).review.note, "บันทึกการวิจัยภาษาไทย", "original Unicode note retained");
   const dicom = await post(`/api/cases/${first.id}/dicom`);
   assert.equal(dicom.status, 200);
