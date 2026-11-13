@@ -4902,3 +4902,23 @@ figure.scan-panel { margin: 0; }
 .rm-list b { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #38bdf8, #0b5d8f); }
 .rm-list b.watch { background: linear-gradient(90deg, #fbbf24, #d97706); }
 .rm-note { margin: 14px 0 0; color: var(--muted); font-size: 0.8rem; }
+
+/* Analysis: honest empty state / demo preview for the mask, and a provenance list that never overflows. */
+.mask-empty { height: 100%; display: grid; place-content: center; justify-items: center; gap: 8px; padding: 20px; text-align: center; color: #dbe7f4; }
+.mask-empty svg { color: #7cc4e8; }
+.mask-empty strong { font-size: 1rem; color: #fff; }
+.mask-empty span { font-size: 0.85rem; max-width: 34ch; line-height: 1.45; }
+.mask-empty small { font-size: 0.78rem; color: #a9bfd6; max-width: 36ch; line-height: 1.4; }
+.demo-mask { position: relative; width: 100%; height: 100%; }
+.demo-mask canvas { width: 100%; height: 100%; display: block; image-rendering: auto; }
+.demo-mask-tag { position: absolute; left: 10px; bottom: 10px; padding: 4px 10px; border-radius: 999px; background: rgba(255, 247, 230, 0.95); color: #7a4300; font-size: 0.75rem; font-weight: 700; }
+.prov-summary { margin: 0 0 12px; padding: 10px 12px; border-radius: 8px; background: #fff7e6; color: #7a4300; font-size: 0.86rem; }
+.prov-list { display: grid; gap: 10px; margin: 0; }
+.prov-list > div { min-width: 0; }
+.prov-list dt { color: var(--muted); font-size: 0.8rem; }
+.prov-list dd { margin: 2px 0 0; font-weight: 600; overflow-wrap: anywhere; word-break: break-word; font-variant-numeric: tabular-nums; }
+.prov-more { margin-top: 12px; }
+.prov-more summary { cursor: pointer; color: #075985; font-weight: 600; font-size: 0.85rem; min-height: 32px; display: flex; align-items: center; }
+.prov-more dd { color: var(--muted); font-weight: 500; }
+.compact-panel { min-width: 0; }
+.retina-scan .mask-empty svg { width: 34px; height: 34px; }

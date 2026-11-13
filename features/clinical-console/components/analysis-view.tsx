@@ -4,6 +4,7 @@ import type { CaseAction, CaseActionState, CaseRecord } from "../types";
 import { Download, FileText } from "lucide-react";
 import { canReleaseResearchReport } from "../case-state";
 import { simulatedMetrics } from "../demo-data";
+import { DemoVesselPreview, MaskEmpty } from "./analysis-media";
 import { MetricRows, RiskAssessmentCard, type MetricRow } from "./analysis-risk";
 import { PanelHeader, SectionHeading } from "./shared";
 
@@ -87,14 +88,28 @@ export function AnalysisView({ selectedCase, actionState, activeAction, onAction
         <PanelHeader eyebrow="Current case" title="Image and Segmentation" badge={isSyntheticCase(selectedCase) ? "Synthetic image" : "Uploaded image"} />
         <div className="analysis-grid">
           <ScanPanel title="Source image" src={selectedCase.uploadedImageUrl} alt={`Source scan for ${selectedCase.id}`} />
-          <ScanPanel title="Vessel segmentation mask" src={mask} alt={`Returned vessel segmentation mask for ${selectedCase.id}`} />
+          <ScanPanel title="Vessel segmentation mask" src={mask} alt={`Returned vessel segmentation mask for ${selectedCase.id}`}
+            empty={demo && selectedCase.uploadedImageUrl ? <DemoVesselPreview src={selectedCase.uploadedImageUrl} />
+              : <MaskEmpty notConnected={result?.analysisStatus === "unavailable"}
+                  title={result?.analysisStatus === "unavailable" ? "AI service not connected" : result?.analysisStatus?.endsWith("blocked") ? "Image was not analysed" : "No vessel map yet"}
+                  reason={result?.failureReason ?? "This case has no AI result attached."} />} />
         </div>
-        <p>{mask ? "The vessel mask was returned by the recorded segmentation engine." : "No segmentation mask is available for this case."} Disease heatmaps and density overlays are unavailable.</p>
+        <p>{mask ? "The vessel mask was returned by the AI segmentation model." : demo && selectedCase.uploadedImageUrl ? "Demo preview: a simple brightness filter stands in because the AI did not run for this image. It is not the AI result." : "The AI did not produce a vessel mask for this case."}</p>
       </section>
       <div className="analysis-footer-grid">
         <section className="panel compact-panel">
           <PanelHeader eyebrow="Traceability" title="Analysis Provenance" badge="Recorded metadata" />
-          <dl>{analysisProvenance(selectedCase).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+          {result?.analysisStatus !== "measured" ? <p className="prov-summary">The AI did not run on this image{result?.failureReason ? `: ${result.failureReason}` : "."}</p> : null}
+          {(() => {
+            const rows = analysisProvenance(selectedCase);
+            const empty = (v: string) => v === "N/A" || v === "Not evaluated" || v === "not_evaluated";
+            const shown = rows.filter(([, v]) => !empty(v));
+            const hidden = rows.filter(([, v]) => empty(v));
+            return <>
+              <dl className="prov-list">{shown.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+              {hidden.length ? <details className="prov-more"><summary>{hidden.length} fields not recorded for this image</summary><dl className="prov-list">{hidden.map(([label]) => <div key={label}><dt>{label}</dt><dd>Not recorded</dd></div>)}</dl></details> : null}
+            </>;
+          })()}
         </section>
         <section className="panel action-stack">
           <PanelHeader eyebrow="Actions" title="Case Actions" badge="Research workflow" />
@@ -116,12 +131,12 @@ function MetricLine({ label, value }: { label: string; value: string }) {
   return <div className="metric-line"><span>{label}</span><strong>{value}</strong></div>;
 }
 
-function ScanPanel({ title, src, alt }: { title: string; src?: string; alt: string }) {
+function ScanPanel({ title, src, alt, empty }: { title: string; src?: string; alt: string; empty?: React.ReactNode }) {
   return <figure className="scan-panel"><div className="scan-title"><h3>{title}</h3></div><div className="retina-scan uploaded-scan-frame">
     {src ? (
       // The source may be a local object URL or a returned data URL.
       // eslint-disable-next-line @next/next/no-img-element
       <img src={src} alt={alt} />
-    ) : <p>N/A — no image available</p>}
+    ) : empty ?? <MaskEmpty title="No image" reason="No source image is stored for this case." />}
   </div></figure>;
 }

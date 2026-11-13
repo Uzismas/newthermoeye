@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     if (NON_OCT_FILENAME.test(file.name)) return error("Explicit filename signal indicates a non-OCT photograph; OCT/OCTA retinal scan required.", 422);
 
     const endpoint = (process.env.THERMOEYE_LOCAL_INFERENCE_URL?.trim() || "http://127.0.0.1:8000").replace(/\/$/, "");
-    let analysis = unavailableAnalysis("Local inference service could not be reached.");
+    let analysis = unavailableAnalysis("AI service could not be reached, so no measurement was made. Connect the AI backend or run the local demo.");
     let localValidated = false;
     try {
       const upload = new FormData();
