@@ -12,7 +12,7 @@ import unittest
 from unittest.mock import AsyncMock, patch
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageOps
 from fastapi import HTTPException, UploadFile
 from starlette.datastructures import Headers
 
@@ -393,3 +393,26 @@ class LegacyAnalysisSafetyTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ContentGateTests(unittest.TestCase):
+    """Non-scans must be refused before segmentation; vessel-like images must pass."""
+
+    def test_clear_non_scans_are_blocked(self):
+        rng = np.random.default_rng(0)
+        cases = {
+            "noise": Image.fromarray(rng.integers(0, 256, (128, 128), dtype=np.uint8)),
+            "gradient": Image.fromarray(np.tile(np.linspace(0, 255, 128, dtype=np.uint8), (128, 1))),
+            "checkerboard": Image.fromarray(((np.indices((128, 128)).sum(0) // 16) % 2 * 255).astype(np.uint8)),
+            "inverted": ImageOps.invert(textured_gray()),
+        }
+        for name, image in cases.items():
+            with self.subTest(name=name), patch.object(pipeline, "_trained_vessel_mask") as trained:
+                result = pipeline.analyze_octa(encoded(image), "scan.png")
+                self.assertIn(result["analysis_status"], ("modality_blocked", "quality_blocked"))
+                self.assertIsNone(result["measurements"])
+                trained.assert_not_called()
+
+    def test_vessel_like_image_passes_content_gate(self):
+        g = np.asarray(textured_gray(), dtype=np.float64) / 255.0
+        self.assertEqual(pipeline._content_gate(g)["status"], "passed")

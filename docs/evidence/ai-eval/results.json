@@ -1,0 +1,256 @@
+{
+  "held_out": [
+    {
+      "image": "rose_o_test_01",
+      "http": 200,
+      "status": "measured",
+      "engine": "onnx_vessel_unet",
+      "api_vd": 15.88,
+      "dice": 0.7901,
+      "iou": 0.653,
+      "sensitivity": 0.8355,
+      "specificity": 0.9536,
+      "precision": 0.7493,
+      "vd_ai": 15.8825,
+      "vd_truth": 14.2432,
+      "web_equals_backend": true,
+      "api_vd_matches_mask": true
+    },
+    {
+      "image": "rose_o_test_02",
+      "http": 200,
+      "status": "measured",
+      "engine": "onnx_vessel_unet",
+      "api_vd": 16.88,
+      "dice": 0.7121,
+      "iou": 0.5529,
+      "sensitivity": 0.7553,
+      "specificity": 0.9351,
+      "precision": 0.6736,
+      "vd_ai": 16.8802,
+      "vd_truth": 15.0537,
+      "web_equals_backend": true,
+      "api_vd_matches_mask": true
+    },
+    {
+      "image": "rose_o_test_03",
+      "http": 200,
+      "status": "measured",
+      "engine": "onnx_vessel_unet",
+      "api_vd": 23.36,
+      "dice": 0.7111,
+      "iou": 0.5518,
+      "sensitivity": 0.8376,
+      "specificity": 0.8921,
+      "precision": 0.6179,
+      "vd_ai": 23.3639,
+      "vd_truth": 17.2351,
+      "web_equals_backend": true,
+      "api_vd_matches_mask": true
+    },
+    {
+      "image": "rose_o_test_04",
+      "http": 200,
+      "status": "measured",
+      "engine": "onnx_vessel_unet",
+      "api_vd": 26.65,
+      "dice": 0.7132,
+      "iou": 0.5542,
+      "sensitivity": 0.8602,
+      "specificity": 0.8716,
+      "precision": 0.6091,
+      "vd_ai": 26.648,
+      "vd_truth": 18.8679,
+      "web_equals_backend": true,
+      "api_vd_matches_mask": true
+    },
+    {
+      "image": "rose_o_test_05",
+      "http": 200,
+      "status": "measured",
+      "engine": "onnx_vessel_unet",
+      "api_vd": 17.87,
+      "dice": 0.7103,
+      "iou": 0.5508,
+      "sensitivity": 0.8303,
+      "specificity": 0.9218,
+      "precision": 0.6206,
+      "vd_ai": 17.8681,
+      "vd_truth": 13.3548,
+      "web_equals_backend": true,
+      "api_vd_matches_mask": true
+    },
+    {
+      "image": "rose_o_test_06",
+      "http": 200,
+      "status": "measured",
+      "engine": "onnx_vessel_unet",
+      "api_vd": 24.54,
+      "dice": 0.6422,
+      "iou": 0.473,
+      "sensitivity": 0.656,
+      "specificity": 0.8809,
+      "precision": 0.629,
+      "vd_ai": 24.5434,
+      "vd_truth": 23.5316,
+      "web_equals_backend": true,
+      "api_vd_matches_mask": true
+    },
+    {
+      "image": "rose_o_test_07",
+      "http": 200,
+      "status": "measured",
+      "engine": "onnx_vessel_unet",
+      "api_vd": 23.13,
+      "dice": 0.6712,
+      "iou": 0.5052,
+      "sensitivity": 0.696,
+      "specificity": 0.8963,
+      "precision": 0.6482,
+      "vd_ai": 23.1324,
+      "vd_truth": 21.5439,
+      "web_equals_backend": true,
+      "api_vd_matches_mask": true
+    },
+    {
+      "image": "rose_o_test_08",
+      "http": 200,
+      "status": "measured",
+      "engine": "onnx_vessel_unet",
+      "api_vd": 25.09,
+      "dice": 0.6849,
+      "iou": 0.5208,
+      "sensitivity": 0.7479,
+      "specificity": 0.8828,
+      "precision": 0.6317,
+      "vd_ai": 25.0887,
+      "vd_truth": 21.1901,
+      "web_equals_backend": true,
+      "api_vd_matches_mask": true
+    },
+    {
+      "image": "rose_o_test_09",
+      "http": 200,
+      "status": "measured",
+      "engine": "onnx_vessel_unet",
+      "api_vd": 23.01,
+      "dice": 0.6766,
+      "iou": 0.5112,
+      "sensitivity": 0.7049,
+      "specificity": 0.8979,
+      "precision": 0.6505,
+      "vd_ai": 23.0068,
+      "vd_truth": 21.2301,
+      "web_equals_backend": true,
+      "api_vd_matches_mask": true
+    }
+  ],
+  "robustness": [
+    {
+      "transform": "original",
+      "measured": "3/3",
+      "mean_dice": 0.7256
+    },
+    {
+      "transform": "flip horizontal",
+      "measured": "3/3",
+      "mean_dice": 0.7154
+    },
+    {
+      "transform": "rotate 90",
+      "measured": "3/3",
+      "mean_dice": 0.7192
+    },
+    {
+      "transform": "JPEG quality 60",
+      "measured": "3/3",
+      "mean_dice": 0.7239
+    },
+    {
+      "transform": "blur radius 1.5",
+      "measured": "3/3",
+      "mean_dice": 0.5988
+    },
+    {
+      "transform": "darker 40%",
+      "measured": "3/3",
+      "mean_dice": 0.6615
+    },
+    {
+      "transform": "gaussian noise sd 20",
+      "measured": "3/3",
+      "mean_dice": 0.7125
+    },
+    {
+      "transform": "downscale to 152 px",
+      "measured": "3/3",
+      "mean_dice": 0.6503
+    }
+  ],
+  "negative_controls": [
+    {
+      "input": "random noise",
+      "http": 200,
+      "status": "modality_blocked",
+      "vd": null,
+      "reason": "Image does not look like an en-face OCTA scan: pixel noise without connected vessel struct"
+    },
+    {
+      "input": "blank black",
+      "http": 200,
+      "status": "quality_blocked",
+      "vd": null,
+      "reason": "Low contrast, excessive artifact, or insufficient signal."
+    },
+    {
+      "input": "horizontal gradient",
+      "http": 200,
+      "status": "modality_blocked",
+      "vd": null,
+      "reason": "Image does not look like an en-face OCTA scan: no fine vessel detail (smooth gradient or f"
+    },
+    {
+      "input": "checkerboard",
+      "http": 200,
+      "status": "modality_blocked",
+      "vd": null,
+      "reason": "Image does not look like an en-face OCTA scan: mostly pure black and white pixels (graphic"
+    },
+    {
+      "input": "text on white",
+      "http": 200,
+      "status": "quality_blocked",
+      "vd": null,
+      "reason": "Low contrast, excessive artifact, or insufficient signal."
+    },
+    {
+      "input": "photo (non-OCTA)",
+      "http": 200,
+      "status": "quality_blocked",
+      "vd": null,
+      "reason": "Low contrast, excessive artifact, or insufficient signal."
+    },
+    {
+      "input": "OCTA colour-inverted",
+      "http": 200,
+      "status": "modality_blocked",
+      "vd": null,
+      "reason": "Image does not look like an en-face OCTA scan: vessels are not bright on a dark background"
+    }
+  ],
+  "summary": {
+    "measured": "9/9",
+    "mean_dice": 0.7013,
+    "min_dice": 0.6422,
+    "max_dice": 0.7901,
+    "mean_iou": 0.5414,
+    "mean_sensitivity": 0.7693,
+    "mean_specificity": 0.9036,
+    "mean_precision": 0.6478,
+    "mean_vd_bias_points": 3.35,
+    "vd_correlation": 0.804,
+    "web_equals_backend_all": true,
+    "api_vd_matches_mask_all": true,
+    "negatives_wrongly_measured": []
+  }
+}

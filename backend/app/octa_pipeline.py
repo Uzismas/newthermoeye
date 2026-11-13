@@ -109,6 +109,35 @@ def _modality_gate(color_fraction: float, filename: str | None) -> dict[str, Any
     }
 
 
+def _content_gate(gray: np.ndarray) -> dict[str, Any]:
+    """Reject inputs that cannot be an en-face OCTA scan, before the model sees them.
+
+    Thresholds come from the 39 ROSE-O images plus blurred / darkened / noisy / JPEG / downscaled copies
+    (lag1 0.49-0.96, detail 0.22-1.88, skew 0.89-1.90, extremes <= 0.19) with a wide margin on each side.
+    Heuristic only: it cannot prove an image is OCTA, it only catches clear non-scans.
+    """
+    g = gray.astype(np.float64)
+    std = float(g.std()) + 1e-9
+    x = g - g.mean()
+    lag1 = float((x[:, :-1] * x[:, 1:]).mean() / (std * std))
+    detail = float(np.abs(4 * g[1:-1, 1:-1] - g[:-2, 1:-1] - g[2:, 1:-1] - g[1:-1, :-2] - g[1:-1, 2:]).mean() / std)
+    skew = float(((x / std) ** 3).mean())
+    extremes = float(((g < 0.03) | (g > 0.97)).mean())
+    checks = [
+        (lag1 < 0.25, "pixel noise without connected vessel structure"),
+        (detail < 0.10, "no fine vessel detail (smooth gradient or flat image)"),
+        (extremes > 0.60, "mostly pure black and white pixels (graphic, not a scan)"),
+        (skew < 0.20, "vessels are not bright on a dark background (inverted or not an OCTA scan)"),
+    ]
+    reasons = [text for failed, text in checks if failed]
+    return {
+        "status": "blocked" if reasons else "passed",
+        "reason": ("Image does not look like an en-face OCTA scan: " + "; ".join(reasons) + ".") if reasons else None,
+        "neighbour_correlation": round(lag1, 3), "detail": round(detail, 3), "skewness": round(skew, 3), "extreme_fraction": round(extremes, 3),
+        "validated_modality_classifier": False,
+    }
+
+
 def _quality(gray: np.ndarray) -> dict[str, Any]:
     # Acquisition heuristics, not a clinically validated quality model.
     brightness, contrast = float(gray.mean() * 100), float(gray.std() * 100)
@@ -290,11 +319,17 @@ def analyze_octa(data: bytes, filename: str | None = None, *, mime_type: str | N
         "limitations": [
             "Vessel segmentation measurements only; no disease classification or clinical validation.",
             "Central non-vessel fraction is a research proxy, not FAZ area or disease risk; perfusion is unavailable.",
-            "Modality preflight uses explicit filename terms, not a validated image classifier; generic photographs may pass.",
+            "Modality preflight uses filename terms and simple image statistics, not a validated image classifier; some non-OCTA images may still pass.",
         ],
     }
     if modality_gate["status"] == "blocked":
         result.update(analysis_status="modality_blocked", failure_reason=modality_gate["reason"])
+        return result
+    content = _content_gate(gray)
+    result["modality_gate"]["content_checks"] = content
+    if content["status"] == "blocked" and not quality["blocked"]:
+        result["modality_gate"].update(status="blocked", reason=content["reason"])
+        result.update(analysis_status="modality_blocked", failure_reason=content["reason"])
         return result
     if quality["blocked"]:
         result.update(analysis_status="quality_blocked", failure_reason=quality["failure_reason"])

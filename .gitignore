@@ -37,3 +37,6 @@ internet-reference-images/research-figures/
 
 # Real ROSE-O test images: local only (dataset redistribution not confirmed).
 test-upload-images/real-octa/
+
+# Evaluation sheets show ROSE-O images (redistribution not confirmed): keep local.
+docs/evidence/ai-eval/examples.png
