@@ -55,7 +55,8 @@ export async function POST(req: NextRequest) {
     try {
       const upload = new FormData();
       upload.append("image", new Blob([bytes], { type: mime }), file.name);
-      const response = await fetch(`${endpoint}/octa/analyze`, { method: "POST", body: upload, cache: "no-store", signal: AbortSignal.timeout(15000) });
+      const serviceKey = process.env.THERMOEYE_BACKEND_KEY?.trim();
+      const response = await fetch(`${endpoint}/octa/analyze`, { method: "POST", body: upload, cache: "no-store", headers: serviceKey ? { "X-Thermoeye-Key": serviceKey } : undefined, signal: AbortSignal.timeout(25000) });
       if ([400, 413, 415, 422].includes(response.status)) return error("Local decoder rejected this image. Check format, dimensions, and image integrity.", response.status);
       if (response.ok) {
         const payload = await response.json();

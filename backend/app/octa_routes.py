@@ -1,17 +1,26 @@
 """FastAPI routes for local OCTA image measurement."""
 
+import hmac
 import json
 import logging
+import os
 import re
 from uuid import uuid4
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile, status
 from starlette.concurrency import run_in_threadpool
 
 from app.octa_pipeline import MAX_BYTES, OCTAInputError, analyze_octa
 
 
-router = APIRouter(prefix="/octa", tags=["OCTA local inference"])
+def require_backend_key(x_thermoeye_key: str | None = Header(default=None)) -> None:
+    """Shared secret between the web app and this service. Only enforced when THERMOEYE_BACKEND_KEY is set (hosted use)."""
+    expected = os.environ.get("THERMOEYE_BACKEND_KEY", "")
+    if expected and not hmac.compare_digest(x_thermoeye_key or "", expected):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing or invalid service key.")
+
+
+router = APIRouter(prefix="/octa", tags=["OCTA local inference"], dependencies=[Depends(require_backend_key)])
 MIME_FORMATS = {
     "image/jpeg": "JPEG", "image/png": "PNG", "image/webp": "WEBP",
     "image/tiff": "TIFF", "image/tif": "TIFF", "image/x-tiff": "TIFF",
