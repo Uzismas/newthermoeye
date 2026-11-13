@@ -40,3 +40,7 @@ test-upload-images/real-octa/
 
 # Evaluation sheets show ROSE-O images (redistribution not confirmed): keep local.
 docs/evidence/ai-eval/examples.png
+
+# User-supplied non-OCTA test photos: local only.
+test-upload-images/not-octa/*
+!test-upload-images/not-octa/README.md

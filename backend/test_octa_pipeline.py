@@ -416,3 +416,21 @@ class ContentGateTests(unittest.TestCase):
     def test_vessel_like_image_passes_content_gate(self):
         g = np.asarray(textured_gray(), dtype=np.float64) / 255.0
         self.assertEqual(pipeline._content_gate(g)["status"], "passed")
+
+
+class PhotoAndDrawingGateTests(unittest.TestCase):
+    def test_cartoon_like_drawing_is_blocked(self):
+        image = Image.new("RGB", (256, 256), (240, 220, 180))
+        draw = ImageDraw.Draw(image)
+        draw.ellipse((40, 40, 210, 210), fill=(250, 200, 160), outline=(0, 0, 0), width=4)
+        draw.ellipse((80, 90, 115, 125), fill="white", outline="black", width=3)
+        draw.ellipse((140, 90, 175, 125), fill="white", outline="black", width=3)
+        draw.arc((90, 140, 165, 185), 0, 180, fill="black", width=5)
+        with patch.object(pipeline, "_trained_vessel_mask") as trained:
+            result = pipeline.analyze_octa(encoded(image), "scan.png")
+        self.assertIn(result["analysis_status"], ("modality_blocked", "quality_blocked"))
+        trained.assert_not_called()
+
+    def test_flat_fraction_reported(self):
+        g = np.asarray(textured_gray(), dtype=np.float64) / 255.0
+        self.assertIn("flat_fraction", pipeline._content_gate(g))

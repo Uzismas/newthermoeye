@@ -109,7 +109,7 @@ def _modality_gate(color_fraction: float, filename: str | None) -> dict[str, Any
     }
 
 
-def _content_gate(gray: np.ndarray) -> dict[str, Any]:
+def _content_gate(gray: np.ndarray, color_fraction: float = 0.0) -> dict[str, Any]:
     """Reject inputs that cannot be an en-face OCTA scan, before the model sees them.
 
     Thresholds come from the 39 ROSE-O images plus blurred / darkened / noisy / JPEG / downscaled copies
@@ -123,17 +123,23 @@ def _content_gate(gray: np.ndarray) -> dict[str, Any]:
     detail = float(np.abs(4 * g[1:-1, 1:-1] - g[:-2, 1:-1] - g[2:, 1:-1] - g[1:-1, :-2] - g[1:-1, 2:]).mean() / std)
     skew = float(((x / std) ** 3).mean())
     extremes = float(((g < 0.03) | (g > 0.97)).mean())
+    # OCTA texture fills the frame; photos, drawings and screenshots have large flat regions (background, skin, panels).
+    h, w = (g.shape[0] // 16) * 16, (g.shape[1] // 16) * 16
+    tiles = g[:h, :w].reshape(h // 16, 16, w // 16, 16).swapaxes(1, 2).reshape(-1, 256)
+    flat = float((tiles.std(1) < 0.035).mean()) if tiles.size else 1.0
     checks = [
         (lag1 < 0.25, "pixel noise without connected vessel structure"),
         (detail < 0.10, "no fine vessel detail (smooth gradient or flat image)"),
         (extremes > 0.60, "mostly pure black and white pixels (graphic, not a scan)"),
         (skew < 0.20, "vessels are not bright on a dark background (inverted or not an OCTA scan)"),
+        (flat > 0.35, "large flat areas like a photo, drawing or screenshot"),
+        (color_fraction > 0.30 and flat > 0.15, "a colour photograph or illustration"),
     ]
     reasons = [text for failed, text in checks if failed]
     return {
         "status": "blocked" if reasons else "passed",
         "reason": ("Image does not look like an en-face OCTA scan: " + "; ".join(reasons) + ".") if reasons else None,
-        "neighbour_correlation": round(lag1, 3), "detail": round(detail, 3), "skewness": round(skew, 3), "extreme_fraction": round(extremes, 3),
+        "neighbour_correlation": round(lag1, 3), "detail": round(detail, 3), "skewness": round(skew, 3), "extreme_fraction": round(extremes, 3), "flat_fraction": round(flat, 3),
         "validated_modality_classifier": False,
     }
 
@@ -325,7 +331,7 @@ def analyze_octa(data: bytes, filename: str | None = None, *, mime_type: str | N
     if modality_gate["status"] == "blocked":
         result.update(analysis_status="modality_blocked", failure_reason=modality_gate["reason"])
         return result
-    content = _content_gate(gray)
+    content = _content_gate(gray, color_fraction)
     result["modality_gate"]["content_checks"] = content
     if content["status"] == "blocked" and not quality["blocked"]:
         result["modality_gate"].update(status="blocked", reason=content["reason"])

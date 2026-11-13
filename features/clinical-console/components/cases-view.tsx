@@ -221,6 +221,9 @@ async function analyzeImage(file: File) {
   const res = await fetch("/api/analyze", { method: "POST", body: form, cache: "no-store" });
   const body = await res.json().catch(() => null) as { error?: string; analysis?: VisionResult; analysisReceipt?: string } | null;
   if (!res.ok || !body?.analysis) throw new Error(body?.error ?? "Analysis failed. No fallback result was created.");
+  if (body.analysis.analysisStatus === "modality_blocked") {
+    throw new Error(`This is not an OCTA image. Please upload a real en-face OCTA scan. (${body.analysis.modalityGateReason ?? body.analysis.failureReason ?? "Image check failed"})`);
+  }
   return { metrics: metricsFromAnalysis(normalizeAnalysis(body.analysis)), analysisReceipt: body.analysisReceipt };
 }
 
