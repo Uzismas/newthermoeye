@@ -204,7 +204,8 @@ type DemoCaseInput = {
 
 async function createBaselineDemoCase(file: File, input: DemoCaseInput): Promise<{ caseRecord: CaseRecord; sourceFile: File }> {
   if (!Number.isInteger(input.age) || input.age < 0 || input.age > 120) throw new Error("Age must be between 0 and 120.");
-  if (input.caseCode && !/^[A-Z0-9-]{4,64}$/i.test(input.caseCode.trim())) throw new Error("Case code must contain 4–64 letters, digits, or hyphens.");
+  // Spaces become hyphens when the case ID is built (clinical-analysis.ts), so accept them here.
+  if (input.caseCode && !/^[A-Z0-9-]{4,64}$/i.test(input.caseCode.trim().replace(/\s+/g, "-"))) throw new Error("Case code must contain 4–64 letters, digits, spaces, or hyphens.");
   const { metrics, analysisReceipt } = await analyzeImage(file);
   // Decoder-generated preview also supports TIFF without a browser TIFF codec.
   const imageUrl = metrics.visionResult?.previewDataUrl ?? (file.type.includes("tif") ? undefined : URL.createObjectURL(file));
