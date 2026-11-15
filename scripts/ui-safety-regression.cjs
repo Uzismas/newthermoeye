@@ -63,6 +63,11 @@ for (const html of [render(InsightsView, {}), render(GovernanceView, { auditEven
   assert.match(html, /N\/A/);
   assert.doesNotMatch(html, /28,541|0\.82|0\.47|0\.85|3,214|11\.3%/);
 }
+// Data Insights: aggregates come from the 9 real test scans and are labelled as literature-based estimates.
+const insights = render(InsightsView, {});
+assert.match(insights, /1 \/ 6 \/ 2/);
+assert.match(insights, /5\.\d%<\/strong>/);
+assert.match(insights, /not a validated classifier/);
 // Model Performance shows only measured segmentation/FAZ results, never a disease accuracy or simulated numbers.
 const perf = render(PerformanceView, {});
 assert.match(perf, /Pixel AUC<\/span><strong>0\.908/);

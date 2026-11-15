@@ -3,6 +3,8 @@
  * Sources: scripts/evaluate_repeat.py (45 runs through /api/analyze, docs/evidence/ai-eval/repeat_5x.json)
  * and a pixel-probability pass of the same ONNX model for AUC/ROC. Update these numbers if the model changes.
  */
+import { estimateAlzheimerRisk } from "./alzheimer-risk";
+
 export const MODEL_EVAL = {
   modelSha: "195ff40370049e3be850b88ed8bed68f05abd006565afd1fbe01de6982777c87",
   trainImages: 30,
@@ -28,3 +30,23 @@ export const MODEL_EVAL = {
     ["09", 85.7, 0.677, 70.5, 89.8, 0.888, 0.297, 0.329, "moderate", "moderate"],
   ] as const,
 };
+
+/** Data Insights summary of the 9 test scans at the upload form's default age (68): real FAZ, literature-based risk. */
+export const SUMMARY_AGE = 68;
+export function testScanSummary() {
+  const scans = MODEL_EVAL.perImage.map(([id, , , , , , faz, , band]) => {
+    const z = Math.max(-3, Math.min(3, (faz - 0.275) / 0.1));
+    return { id, faz, band, ...estimateAlzheimerRisk(SUMMARY_AGE, z)! };
+  });
+  const count = (b: string) => scans.filter((s) => s.band === b).length;
+  const lr = scans.map((s) => s.likelihoodRatio);
+  return {
+    scans,
+    bands: { low: count("low"), moderate: count("moderate"), high: count("high") },
+    meanRisk: scans.reduce((a, s) => a + s.risk, 0) / scans.length,
+    baseline: scans[0].baseline,
+    ageGroup: scans[0].ageGroup,
+    lrMin: Math.min(...lr), lrMax: Math.max(...lr),
+    meanFaz: scans.reduce((a, s) => a + s.faz, 0) / scans.length,
+  };
+}

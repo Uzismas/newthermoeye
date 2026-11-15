@@ -1,5 +1,6 @@
 import { formatPercent, getCaseClassification } from "../clinical-analysis";
 import { analysisProvenance, hasUsableMeasurements } from "../analysis-presentation";
+import { SUMMARY_AGE, testScanSummary } from "../model-evaluation";
 import type { CaseRecord } from "../types";
 import { createResearchPdf, parseJpegDataUrl } from "./research-pdf";
 
@@ -8,6 +9,8 @@ export function buildInsightsPdf({ caseRecord, imageDataUrl }: { caseRecord: Cas
   const metrics = caseRecord.analysisMetrics;
   const measured = hasUsableMeasurements(caseRecord);
   const reportNumber = `TE-INS-${caseRecord.id.replace(/[^A-Z0-9-]/gi, "")}`;
+  const t = testScanSummary();
+  const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
   const lines = [
     `Report number: ${reportNumber}`,
     `Generated: ${new Date().toISOString()}`,
@@ -26,9 +29,12 @@ export function buildInsightsPdf({ caseRecord, imageDataUrl }: { caseRecord: Cas
     `Central non-vessel fraction (research proxy): ${formatPercent(measured ? metrics?.fazRiskProxy : null)}`,
     `Perfusion density proxy: ${formatPercent(measured ? metrics?.perfusionDensityProxy : null)}`,
     "",
-    "Aggregate availability",
-    "Population counts, disease risk distribution, and disease feature importance: N/A",
-    "No validated disease classifier or connected aggregate source is available.",
+    `Real test scans (${t.scans.length} ROSE-O test images, age ${SUMMARY_AGE} assumed; literature-based, not validated)`,
+    `Alzheimer FAZ index bands: Low ${t.bands.low} / Moderate ${t.bands.moderate} / High ${t.bands.high}`,
+    `Average estimated Alzheimer risk: ${pct(t.meanRisk)} (age ${t.ageGroup} population average ${pct(t.baseline)})`,
+    `Mean FAZ area: ${t.meanFaz.toFixed(3)} mm2 (published control average 0.275 mm2)`,
+    ...t.scans.map((s) => `test_${s.id}: FAZ ${s.faz.toFixed(3)} mm2, estimated risk ${pct(s.risk)}`),
+    "Hospital comparison: N/A (single public dataset)",
     "",
     "Research interpretation",
     classification.finding,
