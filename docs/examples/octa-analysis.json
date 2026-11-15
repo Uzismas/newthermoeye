@@ -41,15 +41,19 @@
       "qualityStatus": "passed",
       "metricUnit": "percent_0_100",
       "sourceMetricUnit": "percent_0_100",
-      "requestId": "2cef862c-6e7b-48a8-8b25-a23907cea4c0",
+      "requestId": "36fdd267-4fad-4f64-a08a-525c320f5d2c",
       "fileHash": "3e592d69ad6d8c04bb0ec3ad131f238f77897b576f7f8a3763b3f636a16a3595",
-      "timestamp": "2026-11-09T14:31:20.028Z",
+      "timestamp": "2026-11-15T08:25:47.858Z",
       "mimeType": "image/png",
       "decodedFormat": "PNG",
       "imageWidth": 128,
       "imageHeight": 128,
       "failureReason": null,
-      "segmentationEngine": "onnx_vessel_unet"
+      "segmentationEngine": "onnx_vessel_unet",
+      "fazAreaMm2": null,
+      "alzheimerFazIndex": null,
+      "alzheimerFazZ": null,
+      "fazOutlinePath": null
     }
   }
 }

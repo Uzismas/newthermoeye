@@ -40,10 +40,10 @@ export function Sidebar({
     ],
     performance: [
       { label: "Overview", id: "overview" },
-      { label: "Performance Metrics", id: "metrics" },
-      { label: "Calibration", id: "calibration" },
+      { label: "Per-image Results", id: "metrics" },
+      { label: "FAZ Agreement", id: "calibration" },
       { label: "Error Analysis", id: "error-analysis" },
-      { label: "Model Drift", id: "drift" },
+      { label: "Repeatability", id: "drift" },
       { label: "Version History", id: "version-history" },
     ],
   };

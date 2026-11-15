@@ -5,7 +5,8 @@ import { Download, FileText } from "lucide-react";
 import { canReleaseResearchReport } from "../case-state";
 import { simulatedMetrics } from "../demo-data";
 import { DemoVesselPreview, MaskEmpty } from "./analysis-media";
-import { MetricRows, RiskAssessmentCard, type MetricRow } from "./analysis-risk";
+import { AlzheimerRiskPercentCard, MetricRows, RiskAssessmentCard, type MetricRow } from "./analysis-risk";
+import { estimateAlzheimerRisk } from "../alzheimer-risk";
 import { PanelHeader, SectionHeading } from "./shared";
 
 export function AnalysisView({ selectedCase, actionState, activeAction, onAction, demo = false, isApproved = false, isPdfBusy = false, onDownloadPdf, onOpenReport }: {
@@ -32,7 +33,10 @@ export function AnalysisView({ selectedCase, actionState, activeAction, onAction
   const qualityN = metrics?.qualityScore != null ? metrics.qualityScore : simulated?.quality ?? null;
   const contrastN = measured && metrics?.contrast != null ? metrics.contrast : simulated?.contrast ?? null;
   const artifactN = num(metrics?.artifactScore, simulated?.artifact);
+  const faz = measured ? result?.fazAreaMm2 ?? null : null;
+  const fazIndex = measured ? result?.alzheimerFazIndex ?? null : null;
   const rows: MetricRow[] = [
+    ...(faz != null ? [{ label: "FAZ area (foveal avascular zone)", value: Math.min(100, (faz / 0.6) * 100), display: `${faz.toFixed(3)} mm²`, watch: faz > 0.375 }] : []),
     { label: "Vessel density proxy", value: num(metrics?.vesselDensity, simulated?.vesselDensity), display: fmt(metrics?.vesselDensity, num(metrics?.vesselDensity, simulated?.vesselDensity)) },
     { label: "Central non-vessel fraction (research proxy)", value: num(metrics?.fazRiskProxy, simulated?.faz), display: fmt(metrics?.fazRiskProxy, num(metrics?.fazRiskProxy, simulated?.faz)) },
     { label: "Perfusion density proxy", value: num(metrics?.perfusionDensityProxy, simulated?.perfusion), display: fmt(metrics?.perfusionDensityProxy, num(metrics?.perfusionDensityProxy, simulated?.perfusion)) },
@@ -54,7 +58,7 @@ export function AnalysisView({ selectedCase, actionState, activeAction, onAction
       </div>
       <div className="analysis-mode-banner ruleset" role="status">
         <strong>{isSyntheticCase(selectedCase) ? "Synthetic demonstration / research only" : "Research measurements only"}</strong>
-        <span>No validated disease classifier is connected. Disease risk and confidence are unavailable.</span>
+        <span>{fazIndex != null ? "The Alzheimer index is computed from the measured FAZ with published group averages. It is not a validated classifier or a diagnosis." : "No validated disease classifier is connected. Disease risk and confidence are unavailable."}</span>
       </div>
       <div className="analysis-hero-grid">
         <section className="panel patient-overview">
@@ -67,7 +71,13 @@ export function AnalysisView({ selectedCase, actionState, activeAction, onAction
             <div><dt>Context</dt><dd>{selectedCase.context}</dd></div>
           </dl>
         </section>
-        {simulated ? <RiskAssessmentCard score={simulated.risk} confidence={simulated.confidence} signals={rows.slice(0, 3).map((r) => ({ label: r.label.replace(" proxy", "").replace(" (research proxy)", ""), value: r.display }))} /> : (
+        {fazIndex != null && faz != null ? (
+          <RiskAssessmentCard mode="literature" score={fazIndex} signals={[
+            { label: "FAZ area", value: `${faz.toFixed(3)} mm²` },
+            { label: "Control reference", value: "0.275 ± 0.10 mm²" },
+            { label: "Difference from controls", value: result?.alzheimerFazZ != null ? `${result.alzheimerFazZ > 0 ? "+" : ""}${result.alzheimerFazZ.toFixed(2)} SD` : "N/A" },
+          ]} />
+        ) : simulated ? <RiskAssessmentCard score={simulated.risk} confidence={simulated.confidence} signals={rows.slice(0, 3).map((r) => ({ label: r.label.replace(" proxy", "").replace(" (research proxy)", ""), value: r.display }))} /> : (
           <section className="panel ai-assessment">
           <PanelHeader eyebrow="Disease classification" title="Indeterminate" badge="Classifier unavailable" badgeTone="warning" />
           <div className="assessment-copy">
@@ -79,6 +89,9 @@ export function AnalysisView({ selectedCase, actionState, activeAction, onAction
         )}
         <MetricRows rows={rows} simulated={Boolean(simulated && !measured)} badge={simulated && !measured ? "Simulated" : measured ? "percent_0_100" : "Unavailable"} />
       </div>
+      {faz != null && result?.alzheimerFazZ != null ? (
+        <AlzheimerRiskPercentCard estimate={estimateAlzheimerRisk(selectedCase.age, result.alzheimerFazZ)} age={selectedCase.age} fazAreaMm2={faz} fazZ={result.alzheimerFazZ} />
+      ) : null}
       <section className="panel clinical-classification-panel">
         <PanelHeader eyebrow="Acquisition review" title={getClinicalResultLabel(classification.kind)} badge={result?.analysisStatus ?? "Unavailable"} />
         <div className="classification-evidence">{classification.evidence.map((item) => <span key={item}>{item}</span>)}</div>
@@ -93,6 +106,7 @@ export function AnalysisView({ selectedCase, actionState, activeAction, onAction
               : <MaskEmpty notConnected={result?.analysisStatus === "unavailable"}
                   title={result?.analysisStatus === "unavailable" ? "AI service not connected" : result?.analysisStatus?.endsWith("blocked") ? "Image was not analysed" : "No vessel map yet"}
                   reason={result?.failureReason ?? "This case has no AI result attached."} />} />
+          {faz != null && result?.fazOutlinePath && selectedCase.uploadedImageUrl ? <FazOverlayPanel src={selectedCase.uploadedImageUrl} outline={result.fazOutlinePath} areaMm2={faz} caseId={selectedCase.id} /> : null}
         </div>
         <p>{mask ? "The vessel mask was returned by the AI segmentation model." : demo && selectedCase.uploadedImageUrl ? "Demo preview: a simple brightness filter stands in because the AI did not run for this image. It is not the AI result." : "The AI did not produce a vessel mask for this case."}</p>
       </section>
@@ -129,6 +143,36 @@ export function AnalysisView({ selectedCase, actionState, activeAction, onAction
 
 function MetricLine({ label, value }: { label: string; value: string }) {
   return <div className="metric-line"><span>{label}</span><strong>{value}</strong></div>;
+}
+
+/** Source scan with the AI FAZ boundary (red), the circle of equal area (blue) and its two axes through the FAZ centre. */
+function FazOverlayPanel({ src, outline, areaMm2, caseId }: { src: string; outline: string; areaMm2: number; caseId: string }) {
+  const pts = outline.slice(1, -2).split(" L").map((p) => p.split(" ").map(Number) as [number, number]);
+  let a = 0, cx = 0, cy = 0;
+  pts.forEach(([x0, y0], i) => { const [x1, y1] = pts[(i + 1) % pts.length]; const c = x0 * y1 - x1 * y0; a += c; cx += (x0 + x1) * c; cy += (y0 + y1) * c; });
+  cx /= 3 * a; cy /= 3 * a; // polygon centroid (shoelace)
+  const mx = pts.reduce((s, p) => s + p[0], 0) / pts.length, my = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+  const [sxx, syy, sxy] = pts.reduce(([u, v, w], [x, y]) => [u + (x - mx) ** 2, v + (y - my) ** 2, w + (x - mx) * (y - my)], [0, 0, 0]);
+  const t = Math.atan2(2 * sxy, sxx - syy) / 2; // long axis of the outline
+  const diameterMm = 2 * Math.sqrt(areaMm2 / Math.PI);
+  const r = (diameterMm / 2 / 3) * 1000; // 3 mm scan width = 1000 units
+  const axis = (ang: number) => <line x1={cx - r * Math.cos(ang)} y1={cy - r * Math.sin(ang)} x2={cx + r * Math.cos(ang)} y2={cy + r * Math.sin(ang)} />;
+  // Zoom on the FAZ like published FAZ figures: a square window about 3.2 FAZ radii wide, kept inside the scan.
+  const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+  const w = Math.min(1000, Math.max(320, Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), r * 2) * 1.6);
+  const vx = Math.min(1000 - w, Math.max(0, cx - w / 2)), vy = Math.min(1000 - w, Math.max(0, cy - w / 2));
+  const labelBelow = cy - r - w * 0.1 < vy;
+  return <figure className="scan-panel"><div className="scan-title"><h3>FAZ (foveal avascular zone)</h3></div><div className="retina-scan uploaded-scan-frame">
+    {/* shortcut: FAZ is measured on a square grid, so a non-square upload is shown stretched to a square here. */}
+    <svg className="faz-overlay" viewBox={`${vx} ${vy} ${w} ${w}`} role="img" aria-label={`FAZ outline over the source scan for ${caseId}: area ${areaMm2.toFixed(3)} mm², equal-area circle diameter ${diameterMm.toFixed(2)} mm`}>
+      <image href={src} width="1000" height="1000" preserveAspectRatio="none" />
+      <path d={outline} className="faz-outline" />
+      <circle cx={cx} cy={cy} r={r} className="faz-circle" />
+      <g className="faz-axes">{axis(t)}{axis(t + Math.PI / 2)}</g>
+      <circle cx={cx} cy={cy} r={w * 0.012} className="faz-centre" />
+      <text x={cx} y={labelBelow ? cy + r + w * 0.09 : cy - r - w * 0.04} textAnchor="middle" fontSize={w * 0.06} className="faz-label">Center of FAZ</text>
+    </svg>
+  </div><figcaption className="faz-legend"><span><i className="red" />AI FAZ boundary · {areaMm2.toFixed(3)} mm²</span><span><i className="blue" />Equal-area circle · Ø {diameterMm.toFixed(2)} mm</span></figcaption></figure>;
 }
 
 function ScanPanel({ title, src, alt, empty }: { title: string; src?: string; alt: string; empty?: React.ReactNode }) {

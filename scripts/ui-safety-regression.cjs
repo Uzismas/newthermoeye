@@ -59,10 +59,16 @@ for (const status of ["quality_blocked", "modality_blocked", "unavailable"]) {
 const dashboard = render(DashboardView, { cases: [measured], reviews: {}, selectedCase: measured, selectedReview: review, reviewer: "Test", onCaseSelect() {}, onNavigate() {}, onReviewSubmit() {}, onPreviewReport() {} });
 assert.doesNotMatch(dashboard, /risk-meter|1,248|High Risk|Confidence 88|92%/);
 assert.match(dashboard, /Measured cases<\/span><strong>1<\/strong>/);
-for (const html of [render(InsightsView, {}), render(PerformanceView, {}), render(GovernanceView, { auditEvents: [] })]) {
+for (const html of [render(InsightsView, {}), render(GovernanceView, { auditEvents: [] })]) {
   assert.match(html, /N\/A/);
   assert.doesNotMatch(html, /28,541|0\.82|0\.47|0\.85|3,214|11\.3%/);
 }
+// Model Performance shows only measured segmentation/FAZ results, never a disease accuracy or simulated numbers.
+const perf = render(PerformanceView, {});
+assert.match(perf, /Pixel AUC<\/span><strong>0\.908/);
+assert.match(perf, /Real data/);
+assert.match(perf, /not Alzheimer diagnosis accuracy/);
+assert.doesNotMatch(perf, /Disease AUC|Simulated|28,541|3,214/);
 for (const fixture of cases) {
   assert.equal(fixture.riskScore, null);
   assert.equal(fixture.confidence, null);

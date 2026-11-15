@@ -95,32 +95,6 @@ export const demoOps = (() => {
   return { total, measured, blocked: BLOCKED, notEvaluated: NOT_EVALUATED, approved, waitingReview, rescans: RESCANS, eyes, meanDensity: demoCases.reduce((a, c) => a + c.vesselDensity, 0) / total };
 })();
 
-export function calibrationBins() {
-  return Array.from({ length: 10 }, (_, i) => {
-    const inBin = demoCases.filter((c) => c.score >= i / 10 && c.score < (i + 1) / 10 + (i === 9 ? 0.01 : 0));
-    const pos = inBin.filter((c) => c.group !== "Control").length;
-    return { predicted: (i + 0.5) / 10, observed: inBin.length ? pos / inBin.length : null, n: inBin.length };
-  });
-}
-
-export const errorCases = {
-  missed: demoCases.filter((c) => c.group !== "Control" && c.score < 0.5).sort((a, b) => a.score - b.score).slice(0, 5),
-  falseAlarms: demoCases.filter((c) => c.group === "Control" && c.score >= 0.5).sort((a, b) => b.score - a.score).slice(0, 5),
-};
-
-export const driftWeeks = Array.from({ length: 12 }, (_, i) => ({
-  week: `W${i + 1}`,
-  meanScore: Math.round((0.41 + gauss() * 0.012 + (i > 8 ? 0.02 : 0)) * 1000) / 1000,
-  auc: Math.round((0.94 + gauss() * 0.01 - (i > 8 ? 0.012 : 0)) * 1000) / 1000,
-}));
-
-export const modelVersions = [
-  { version: "v0.4.0 (demo)", date: "2026-11-10", auc: 0.94, note: "Wider training set, class-balanced loss", current: true },
-  { version: "v0.3.2 (demo)", date: "2026-10-21", auc: 0.92, note: "Augmentation added, threshold re-tuned", current: false },
-  { version: "v0.3.0 (demo)", date: "2026-10-02", auc: 0.9, note: "First multi-site training run", current: false },
-  { version: "v0.2.0 (demo)", date: "2026-09-14", auc: 0.85, note: "Baseline U-Net features", current: false },
-];
-
 export const demoGovernance = {
   split: [["Train", 210], ["Validation", 45], ["Test (locked)", 45]] as const,
   sources: [

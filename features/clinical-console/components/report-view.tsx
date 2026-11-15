@@ -89,6 +89,12 @@ export function ReportView({
                 <dt>Vessel density / Central non-vessel fraction</dt>
                 <dd>{metrics && measured ? `${formatPercent(metrics.vesselDensity)} / ${formatPercent(metrics.fazRiskProxy)}` : demo ? `${formatPercent(simulatedMetrics(selectedCase.id).vesselDensity)} / ${formatPercent(simulatedMetrics(selectedCase.id).faz)} (simulated)` : "N/A"}</dd>
               </div>
+              {measured && metrics?.visionResult?.alzheimerFazIndex != null && metrics.visionResult.fazAreaMm2 != null ? (
+                <div>
+                  <dt>FAZ area / Alzheimer FAZ index (literature-based)</dt>
+                  <dd>{metrics.visionResult.fazAreaMm2.toFixed(3)} mm² / {metrics.visionResult.alzheimerFazIndex.toFixed(2)} — not a validated classifier or diagnosis</dd>
+                </div>
+              ) : null}
               <div>
                 <dt>Engine / unit</dt>
                 <dd>{metrics?.visionResult?.engine ?? "N/A"} / {metrics?.visionResult?.metricUnit ?? "percent_0_100"}</dd>

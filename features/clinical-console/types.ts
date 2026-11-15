@@ -79,6 +79,11 @@ export type VisionResult = {
   qualityScore: number | null;
   differentials: { kind: DiseaseKind; label: string; score: number; evidence: string[] }[];
   segmentationMaskDataUrl?: string;
+  /** FAZ area in mm2 (3x3 mm scan assumed) and the literature-based Alzheimer FAZ index (0-1). Not a validated classifier. */
+  fazAreaMm2?: number | null;
+  alzheimerFazIndex?: number | null;
+  alzheimerFazZ?: number | null;
+  fazOutlinePath?: string | null;
   segmentationEngine?: "onnx_vessel_unet" | "heuristic_research_baseline";
   trainedModelConnected?: boolean;
   engine?: "onnx_vessel_unet" | "heuristic_research_baseline" | "ruleset" | "none" | "external_provider";

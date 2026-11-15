@@ -39,7 +39,7 @@ try {
   assert.equal(base.vesselDensity, raw.body.measurements.vessel_density, "normalization must preserve 0–100 vessel values");
   assert.equal(base.fazRisk, raw.body.measurements.faz_risk_proxy, "normalization must preserve central non-vessel proxy");
   assert.equal(base.qualityScore, raw.body.quality.quality_score);
-  assert.equal(base.perfusion, null);
+  assert.equal(base.perfusion, raw.body.measurements.perfusion_density, "perfusion is passed through (null when no FAZ is found)");
   assert.equal(base.fileHash, createHash("sha256").update(await readFile(path.join(fixtureDir, "grayscale.png"))).digest("hex"));
   assert.equal(base.fileHash, raw.body.provenance.input_sha256);
   assert.equal(raw.body.filename, undefined, "raw response does not expose filenames");

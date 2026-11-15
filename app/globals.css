@@ -4735,7 +4735,8 @@ h1, h2, h3 { text-wrap: balance; }
 
 /* Analysis view: figures carried the browser's default 40px margin and spilled out of their cards. */
 figure.scan-panel { margin: 0; }
-.octa-analysis .analysis-grid { grid-template-columns: repeat(auto-fit, minmax(240px, 420px)); justify-content: center; gap: 16px; }
+.octa-analysis .analysis-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.octa-analysis .analysis-grid > .scan-panel { width: 100%; max-width: 420px; justify-self: center; }
 .uploaded-scan-frame > p { margin: 0; padding: 16px; }
 /* When the hero grid drops to two columns the metrics card sat alone beside an empty cell. */
 @media (max-width: 1280px) and (min-width: 701px) {
@@ -4922,3 +4923,42 @@ figure.scan-panel { margin: 0; }
 .prov-more dd { color: var(--muted); font-weight: 500; }
 .compact-panel { min-width: 0; }
 .retina-scan .mask-empty svg { width: 34px; height: 34px; }
+/* Estimated Alzheimer risk (age baseline x FAZ), full-width card under the analysis hero grid. */
+.ad-risk-card { display: grid; gap: 14px; margin-bottom: 14px; }
+.ad-risk-body { display: grid; grid-template-columns: minmax(200px, 0.8fr) minmax(260px, 1.2fr) minmax(240px, 1fr); gap: 22px; align-items: center; }
+.ad-risk-main { display: grid; gap: 6px; justify-items: start; }
+.ad-risk-value { font-size: 52px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.ad-risk-main > span { color: #33445c; font-size: 0.92rem; }
+.ad-risk-main em { font-style: normal; }
+.ad-risk-bars { display: grid; gap: 12px; }
+.ad-risk-bars > div { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; }
+.ad-risk-bars span { color: #5a6a82; font-size: 0.82rem; }
+.ad-risk-bars i { grid-column: 1; height: 10px; border-radius: 999px; background: #e6edf5; overflow: hidden; }
+.ad-risk-bars b { display: block; height: 100%; border-radius: 999px; background: #8aa0b8; }
+.ad-risk-bars strong { grid-column: 2; grid-row: 1 / span 2; font-variant-numeric: tabular-nums; }
+.ad-risk-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ad-risk-steps li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 11px; border-radius: 8px; background: #f1f6fb; font-size: 0.85rem; }
+.ad-risk-steps li:last-child { background: #e3eefa; font-weight: 700; }
+.ad-risk-steps strong { font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 1100px) { .ad-risk-body { grid-template-columns: 1fr; } }
+/* FAZ overlay panel: AI boundary (red), equal-area circle and axes (blue), as in published FAZ figures. */
+.faz-overlay { display: block; width: 100%; height: 100%; }
+.faz-outline, .faz-circle, .faz-axes line, .faz-centre { vector-effect: non-scaling-stroke; }
+.faz-outline { fill: none; stroke: #ff4a1c; stroke-width: 2.5px; stroke-linejoin: round; }
+.faz-circle, .faz-axes line { fill: none; stroke: #1d3fd6; stroke-width: 3px; }
+.faz-centre { fill: #fff; stroke: #1d3fd6; stroke-width: 2px; }
+.faz-label { fill: #fff; font-weight: 700; paint-order: stroke; stroke: #0b1220; stroke-width: 4px; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.faz-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 10px 2px 0; font-size: 0.82rem; color: #33445c; }
+.faz-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.faz-legend i { width: 18px; height: 4px; border-radius: 2px; }
+.faz-legend i.red { background: #ff4a1c; }
+.faz-legend i.blue { background: #1d3fd6; }
+/* Age comparison table inside the Alzheimer risk card. */
+.ad-age-table { display: grid; gap: 8px; }
+.ad-age-table h3 { margin: 0; font-size: 0.92rem; color: #1b2b44; }
+.ad-age-table table { width: 100%; border-collapse: collapse; font-size: 0.86rem; font-variant-numeric: tabular-nums; }
+.ad-age-table th, .ad-age-table td { padding: 7px 10px; text-align: left; border-bottom: 1px solid #e3eaf3; }
+.ad-age-table thead th { color: #5a6a82; font-weight: 600; font-size: 0.78rem; }
+.ad-age-table tbody th { font-weight: 600; color: #1b2b44; }
+.ad-age-table tr.mine { background: #eef5fd; }
+.ad-age-table p { margin: 0; color: #5a6a82; font-size: 0.78rem; }

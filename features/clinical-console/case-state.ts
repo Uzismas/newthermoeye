@@ -1,4 +1,5 @@
 import { normalizeCaseRecord } from "./clinical-analysis";
+import { isFazOutlinePath } from "./analysis-contract";
 import type { CaseRecord, ReviewRecord } from "./types";
 
 const object = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -31,6 +32,11 @@ export function validateUploadedCase(value: unknown): { ok: true; caseRecord: Ca
   for (const key of ["vesselDensity", "fazRisk", "perfusion", "qualityScore"]) {
     if (!nullablePercent(result[key])) return { ok: false, message: `Analysis result ${key} must be null or a finite percentage.` };
   }
+  const nullableRange = (n: unknown, lo: number, hi: number) => n === undefined || n === null || (typeof n === "number" && Number.isFinite(n) && n >= lo && n <= hi);
+  if (!nullableRange(result.fazAreaMm2, 0, 10) || !nullableRange(result.alzheimerFazIndex, 0, 1) || !nullableRange(result.alzheimerFazZ, -3, 3)) {
+    return { ok: false, message: "FAZ area or Alzheimer FAZ index is out of range." };
+  }
+  if (result.fazOutlinePath != null && !isFazOutlinePath(result.fazOutlinePath)) return { ok: false, message: "FAZ outline is invalid." };
   if (result.primaryDisease !== "indeterminate" || result.riskLevel !== "indeterminate" || result.riskScore !== null || result.confidence !== null || !Array.isArray(result.differentials) || result.differentials.length > 0) {
     return { ok: false, message: "Unsupported disease predictions cannot be saved." };
   }

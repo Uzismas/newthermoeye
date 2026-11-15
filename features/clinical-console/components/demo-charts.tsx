@@ -105,31 +105,19 @@ export function RocChart({ points, auc, op }: { points: { fpr: number; tpr: numb
   );
 }
 
-export function CalibrationChart({ bins }: { bins: { predicted: number; observed: number | null; n: number }[] }) {
-  const px = (v: number) => AX.l + v * AX.s, py = (v: number) => AX.t + (1 - v) * AX.s;
-  const pts = bins.filter((b) => b.observed != null);
-  const maxN = Math.max(...bins.map((b) => b.n), 1);
-  return (
-    <SquareFrame id="cal" xTitle="Predicted score" yTitle="Observed MCI/AD fraction" label="Calibration curve">
-      <path d={pts.map((b, i) => `${i ? "L" : "M"}${px(b.predicted).toFixed(1)},${py(b.observed as number).toFixed(1)}`).join(" ")} fill="none" stroke={chartColor.deep} strokeWidth="2.2" />
-      {pts.map((b) => <circle key={b.predicted} cx={px(b.predicted)} cy={py(b.observed as number)} r={3 + (b.n / maxN) * 5} fill={chartColor.sky} stroke={chartColor.deep} strokeWidth="1.5" fillOpacity="0.85" />)}
-    </SquareFrame>
-  );
-}
-
-export function ConfusionMatrix({ tp, fn, fp, tn }: { tp: number; fn: number; fp: number; tn: number }) {
+export function ConfusionMatrix({ tp, fn, fp, tn, labels = ["MCI / AD", "Control"] }: { tp: number; fn: number; fp: number; tn: number; labels?: readonly [string, string] }) {
   const rowPos = tp + fn, rowNeg = fp + tn;
   const cell = (n: number, rowTotal: number, good: boolean) => {
     const share = n / rowTotal;
     const style = (good ? { background: `rgba(11, 93, 143, ${0.12 + share * 0.78})`, color: share > 0.45 ? "#fff" : "#0b3c5d" } : { background: `rgba(217, 119, 6, ${0.1 + share * 0.5})`, color: "#6b3a00" }) as CSSProperties;
-    return <div className="cm-cell" style={style}><strong>{n}</strong><span>{Math.round(share * 100)}% of row</span></div>;
+    return <div className="cm-cell" style={style}><strong>{n.toLocaleString("en-US")}</strong><span>{Math.round(share * 100)}% of row</span></div>;
   };
   return (
     <div className="cm" role="img" aria-label={`Confusion matrix: ${tp} true positive, ${fn} missed, ${fp} false alarms, ${tn} true negative`}>
       <span className="cm-axis cm-top">Predicted</span>
-      <span /><b>MCI / AD</b><b>Control</b>
-      <b className="cm-side">Actual<br />MCI / AD</b>{cell(tp, rowPos, true)}{cell(fn, rowPos, false)}
-      <b className="cm-side">Actual<br />Control</b>{cell(fp, rowNeg, false)}{cell(tn, rowNeg, true)}
+      <span /><b>{labels[0]}</b><b>{labels[1]}</b>
+      <b className="cm-side">Actual<br />{labels[0]}</b>{cell(tp, rowPos, true)}{cell(fn, rowPos, false)}
+      <b className="cm-side">Actual<br />{labels[1]}</b>{cell(fp, rowNeg, false)}{cell(tn, rowNeg, true)}
     </div>
   );
 }

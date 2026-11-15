@@ -3,7 +3,12 @@
   "scope": "Vessel segmentation only; not AD/MCI classification or diagnosis",
   "image_size": 256,
   "runtime_artifact": "octa_vessel_unet.onnx",
-  "runtime_input_shape": [1, 1, 256, 256],
+  "runtime_input_shape": [
+    1,
+    1,
+    256,
+    256
+  ],
   "runtime_input_dtype": "float32",
   "runtime_normalization": "Pillow L, bilinear resize to 256x256, divide by 255; unsigned 16-bit inputs first use fixed /65535 scaling then quantize to 8-bit",
   "preprocessing_version": "octa-luma-u16-v2",
@@ -17,7 +22,9 @@
   "measurement_definitions": {
     "vessel_density": "Vessel pixels / all pixels in the nearest-neighbour resized source-dimension mask * 100",
     "faz_risk_proxy": "Non-vessel fraction in the central 30% rectangle * 100; not anatomical FAZ area or disease risk",
-    "perfusion_density": "Unavailable (null); no calibrated perfusion measurement is implemented"
+    "perfusion_density": "Percent of the 304x304 grid brighter than the FAZ noise floor (FAZ mean + 3 SD); null when no FAZ is found. On the 9 ROSE-O test images it covers 94% of expert-drawn vessels and under 2% of the FAZ. Not comparable with device-reported vessel density.",
+    "faz_area_mm2": "Foveal avascular zone: dark region grown from the darkest central point after a 5x5 box blur (threshold 0.40 x image median) on a 304x304 grid, assuming a 3x3 mm scan. Tuned on 30 ROSE-O train images; 9 held-out test images vs expert FAZ labels: Dice 0.87, mean area error 0.037 mm2, r 0.92.",
+    "alzheimer_faz_index": "Literature-based likelihood ratio (equal prior) of Alzheimer vs control FAZ distributions: control 0.275 +/- 0.10 mm2 (O'Bryhim et al. 2018), Alzheimer shift SMD 0.54 (Frontiers in Aging Neuroscience 2022). Not a trained or validated classifier; no accuracy measured."
   },
   "runtime_output": "sigmoid(logits) thresholded at 0.5; nearest-neighbour resize to source dimensions",
   "device": "cpu",

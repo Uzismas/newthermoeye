@@ -434,3 +434,60 @@ class PhotoAndDrawingGateTests(unittest.TestCase):
     def test_flat_fraction_reported(self):
         g = np.asarray(textured_gray(), dtype=np.float64) / 255.0
         self.assertIn("flat_fraction", pipeline._content_gate(g))
+
+
+class FazAndAlzheimerIndexTests(unittest.TestCase):
+    def capillary_field_with_faz(self, radius_px: int) -> np.ndarray:
+        rng = np.random.default_rng(0)
+        g = np.clip(0.45 + 0.25 * rng.standard_normal((304, 304)), 0, 1)  # dense bright capillary texture
+        yy, xx = np.ogrid[:304, :304]
+        g[(yy - 152) ** 2 + (xx - 152) ** 2 <= radius_px ** 2] = 0.02  # dark avascular zone
+        return g
+
+    def test_faz_outline_traces_the_boundary(self):
+        square = np.zeros((10, 10), bool); square[2:5, 3:7] = True
+        self.assertEqual(pipeline._faz_outline(square), "M350 250 L450 250 L550 250 L650 250 L650 350 L650 450 L550 450 L450 450 L350 450 L350 350 Z")
+        self.assertIsNone(pipeline._faz_outline(np.zeros((10, 10), bool)))
+        disc = pipeline._faz_mask(self.capillary_field_with_faz(30))
+        xs = [int(v) for v in pipeline._faz_outline(disc)[1:-2].replace("L", "").split()[0::2]]
+        self.assertAlmostEqual((min(xs) + max(xs)) / 2, 500, delta=15)  # outline centred on the disc
+        self.assertAlmostEqual((max(xs) - min(xs)) / 1000 * 304, 60, delta=6)  # width = diameter
+
+    def test_faz_area_matches_a_known_disc(self):
+        for radius in (18, 30):  # about 0.10 and 0.27 mm2 on a 3x3 mm scan
+            expected = np.pi * radius ** 2 * (3 / 304) ** 2
+            area = pipeline._faz_mask(self.capillary_field_with_faz(radius)).sum() * (3 / 304) ** 2
+            self.assertAlmostEqual(area, expected, delta=expected * 0.25)
+
+    def test_no_dark_centre_means_no_faz(self):
+        self.assertEqual(pipeline._faz_mask(np.full((304, 304), 0.6)).sum(), 0)
+
+    def test_index_rises_with_faz_and_stays_bounded(self):
+        scores = [pipeline._alzheimer_faz_index(a)["score"] for a in (0.05, 0.2, 0.275, 0.35, 0.5, 2.0)]
+        self.assertEqual(scores, sorted(scores))
+        self.assertTrue(all(0.1 < s < 0.9 for s in scores))
+        self.assertEqual(pipeline._alzheimer_faz_index(0.14)["band"], "low")
+        self.assertEqual(pipeline._alzheimer_faz_index(0.45)["band"], "high")
+
+    def test_measured_result_carries_faz_and_index_but_classifier_stays_indeterminate(self):
+        image = Image.fromarray((self.capillary_field_with_faz(30) * 255).astype(np.uint8))
+        with patch.object(pipeline, "_trained_vessel_mask", return_value=(np.zeros((304, 304), bool), "x" * 64)), \
+             patch.object(pipeline, "_content_gate", return_value={"status": "passed", "reason": None}):
+            result = pipeline.analyze_octa(encoded(image), "scan.png")
+        self.assertEqual(result["analysis_status"], "measured")
+        m = result["measurements"]
+        self.assertGreater(m["faz_area_mm2"], 0.2)
+        self.assertIsNotNone(m["alzheimer_faz_index"])
+        self.assertIsNone(result["classification"]["risk_score"])
+
+
+class PerfusionDensityTests(unittest.TestCase):
+    def test_counts_signal_above_the_faz_noise_floor(self):
+        g = np.full((304, 304), 0.05)
+        faz = np.zeros((304, 304), bool); faz[140:164, 140:164] = True
+        g[faz] = np.random.default_rng(1).uniform(0.0, 0.1, faz.sum())
+        g[:, :76] = 0.8  # a quarter of the scan carries clear flow signal
+        self.assertAlmostEqual(pipeline._perfusion_density(g, faz), 25.0, delta=0.5)
+
+    def test_no_faz_means_no_perfusion(self):
+        self.assertIsNone(pipeline._perfusion_density(np.full((304, 304), 0.5), np.zeros((304, 304), bool)))

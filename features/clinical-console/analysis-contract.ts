@@ -56,13 +56,24 @@ export function normalizeAnalysis(value: unknown): VisionResult {
     requestId: str(v.requestId), fileHash: str(v.fileHash), timestamp: str(v.timestamp),
     mimeType: str(v.mimeType), decodedFormat: str(v.decodedFormat), imageWidth: dimension(v.imageWidth), imageHeight: dimension(v.imageHeight), failureReason,
   };
-  if (segmented) result.segmentationEngine = engine as VisionResult["segmentationEngine"];
+  if (segmented) {
+    result.segmentationEngine = engine as VisionResult["segmentationEngine"];
+    const inRange = (n: unknown, lo: number, hi: number) => typeof n === "number" && Number.isFinite(n) && n >= lo && n <= hi ? n : null;
+    result.fazAreaMm2 = inRange(v.fazAreaMm2, 0, 10);
+    // The index is only meaningful next to the FAZ it was computed from.
+    result.alzheimerFazIndex = result.fazAreaMm2 === null ? null : inRange(v.alzheimerFazIndex, 0, 1);
+    result.alzheimerFazZ = result.alzheimerFazIndex === null ? null : inRange(v.alzheimerFazZ, -3, 3);
+    result.fazOutlinePath = result.fazAreaMm2 !== null && isFazOutlinePath(v.fazOutlinePath) ? v.fazOutlinePath : null;
+  }
   for (const key of ["segmentationMaskDataUrl", "previewDataUrl"] as const) {
     const url = v[key];
     if ((key === "previewDataUrl" || segmented) && typeof url === "string" && /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(url) && url.length < 2_000_000) result[key] = url;
   }
   return result;
 }
+
+/** FAZ boundary drawn over the scan: "M x y L x y ... Z" in a 0-1000 square, digits only so it is safe as an SVG path. */
+export const isFazOutlinePath = (v: unknown): v is string => typeof v === "string" && v.length < 40_000 && /^M\d{1,4} \d{1,4}( L\d{1,4} \d{1,4})+ Z$/.test(v);
 
 export function normalizeLocalResult(value: unknown): VisionResult {
   const p = record(value), input = record(p.input), quality = record(p.quality), gate = record(p.modality_gate);
@@ -71,6 +82,7 @@ export function normalizeLocalResult(value: unknown): VisionResult {
     analysisStatus: p.analysis_status === "available" ? "measured" : p.analysis_status,
     engine: p.engine, metricUnit: p.metric_unit,
     vesselDensity: m.vessel_density, fazRisk: m.faz_risk_proxy, perfusion: m.perfusion_density,
+    fazAreaMm2: m.faz_area_mm2, alzheimerFazIndex: m.alzheimer_faz_index, alzheimerFazZ: m.alzheimer_faz_z, fazOutlinePath: m.faz_outline_path,
     qualityScore: quality.quality_score, brightness: quality.brightness, contrast: quality.contrast,
     sharpness: quality.sharpness, artifactScore: quality.artifact_score,
     trainedModelConnected: p.trained_model_connected ?? s.trained_model_connected,
