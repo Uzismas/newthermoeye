@@ -80,7 +80,10 @@ assert.deepEqual(normalizeAnalysis(normalizeLocalResult({ ...fazPayload, measure
 // Alzheimer risk estimate: age baseline x FAZ likelihood ratio.
 const neutral = estimateAlzheimerRisk(70, 0.27);
 assert.ok(Math.abs(neutral.likelihoodRatio - 1) < 1e-9 && Math.abs(neutral.risk - 0.05) < 1e-9, "z = SMD/2 gives LR 1, risk = age baseline");
-assert.equal(estimateAlzheimerRisk(64, 1), null, "under 65 has no published baseline");
+assert.equal(estimateAlzheimerRisk(59, 1), null, "under 60 has no published baseline");
+assert.equal(estimateAlzheimerRisk(64, 1).ageGroup, "60–64");
+assert.equal(estimateAlzheimerRisk(64, 1).baseline, 0.0023);
+assert.equal(estimateAlzheimerRisk(65, 1).ageGroup, "65–74", "65 starts the next group");
 assert.equal(estimateAlzheimerRisk(70, null), null, "no FAZ, no estimate");
 assert.equal(estimateAlzheimerRisk(90, 1).baseline, 0.333);
 assert.equal(estimateAlzheimerRisk(80, 1).baseline, 0.131);

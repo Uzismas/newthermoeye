@@ -4953,15 +4953,33 @@ figure.scan-panel { margin: 0; }
 .faz-legend i { width: 18px; height: 4px; border-radius: 2px; }
 .faz-legend i.red { background: #ff4a1c; }
 .faz-legend i.blue { background: #1d3fd6; }
-/* Age comparison table inside the Alzheimer risk card. */
-.ad-age-table { display: grid; gap: 8px; }
-.ad-age-table h3 { margin: 0; font-size: 0.92rem; color: #1b2b44; }
-.ad-age-table table { width: 100%; border-collapse: collapse; font-size: 0.86rem; font-variant-numeric: tabular-nums; }
-.ad-age-table th, .ad-age-table td { padding: 7px 10px; text-align: left; border-bottom: 1px solid #e3eaf3; }
-.ad-age-table thead th { color: #5a6a82; font-weight: 600; font-size: 0.78rem; }
-.ad-age-table tbody th { font-weight: 600; color: #1b2b44; }
-.ad-age-table tr.mine { background: #eef5fd; }
-.ad-age-table p { margin: 0; color: #5a6a82; font-size: 0.78rem; }
+/* Age-group comparison inside the Alzheimer risk card: the patient's group is a highlighted card. */
+.ad-age { display: grid; gap: 12px; }
+.ad-age-callout { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 12px; background: linear-gradient(90deg, #e8f4fd, #f4f9fe); border: 1px solid #bfdcf3; }
+.ad-age-callout p { margin: 0; color: #1b2b44; font-size: 0.95rem; line-height: 1.5; }
+.ad-age-callout.none { background: #f6f8fb; border-color: #dde6f0; }
+.ad-age-pin { flex: none; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 1.1rem; color: #fff; background: linear-gradient(135deg, #0369a1, #0ea5e9); box-shadow: 0 4px 12px rgba(3, 105, 161, 0.3); }
+.ad-age-callout.none .ad-age-pin { background: #94a3b8; box-shadow: none; }
+.ad-age-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ad-age-grid li { display: grid; align-content: start; gap: 4px; padding: 14px 16px; border-radius: 12px; background: #f7fafd; border: 1px solid #dde6f0; }
+.ad-age-grid li.mine { background: #fff; border: 2px solid #0284c7; box-shadow: 0 10px 24px rgba(2, 132, 199, 0.16); transform: translateY(-2px); }
+.ad-age-grid li.mine { position: relative; animation: ad-age-glow 2.4s ease-in-out infinite; }
+.ad-age-grid li.mine::before { content: ""; position: absolute; inset: -6px; border-radius: 16px; background: radial-gradient(closest-side, rgba(14, 165, 233, 0.28), transparent); z-index: -1; filter: blur(6px); }
+@keyframes ad-age-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.35), 0 10px 24px rgba(2, 132, 199, 0.16); } 50% { box-shadow: 0 0 0 6px rgba(14, 165, 233, 0.12), 0 12px 30px rgba(2, 132, 199, 0.28); } }
+@media (prefers-reduced-motion: reduce) { .ad-age-grid li.mine { animation: none; } }
+.ad-age-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.ad-age-head span { font-weight: 700; color: #1b2b44; font-size: 0.92rem; }
+.ad-age-head em { font-style: normal; font-size: 0.72rem; font-weight: 700; color: #fff; background: #0284c7; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.ad-age-value { font-size: 2rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; margin-top: 4px; }
+.ad-age-grid li.mine .ad-age-value { font-size: 2.6rem; }
+.ad-age-grid small { color: #5a6a82; font-size: 0.78rem; }
+.ad-age-grid dl { margin: 8px 0 0; display: grid; gap: 4px; padding-top: 8px; border-top: 1px solid #e3eaf3; }
+.ad-age-grid dl div { display: flex; justify-content: space-between; gap: 8px; font-size: 0.82rem; }
+.ad-age-grid dt { color: #5a6a82; }
+.ad-age-grid dd { margin: 0; font-weight: 600; color: #1b2b44; font-variant-numeric: tabular-nums; }
+.ad-age-note { margin: 0; color: #5a6a82; font-size: 0.78rem; }
+@media (max-width: 1100px) { .ad-age-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .ad-age-grid { grid-template-columns: 1fr; } }
 /* Analysis loading overlay: dark glass card over the console while the AI works. */
 .al-backdrop { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 20px; background: radial-gradient(circle at 50% 40%, rgba(13, 32, 64, 0.55), rgba(4, 12, 24, 0.78)); backdrop-filter: blur(6px); animation: al-fade 0.25s ease-out; }
 .al-card { width: min(440px, 100%); display: grid; justify-items: center; gap: 10px; padding: 30px 28px 24px; border-radius: 18px; color: #e6f3fb; text-align: center;
@@ -5001,3 +5019,5 @@ figure.scan-panel { margin: 0; }
   .al-vessel { animation: none; stroke-dashoffset: 0; }
   .al-beam { display: none; }
 }
+.ad-age-grid:has(li.mine) li:not(.mine) { opacity: 0.68; }
+.ad-age-grid:has(li.mine) li:not(.mine):hover { opacity: 1; }

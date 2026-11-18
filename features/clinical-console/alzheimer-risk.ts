@@ -8,7 +8,11 @@ const AGE_BASELINE: readonly (readonly [minAge: number, prevalence: number, labe
   [85, 0.333, "85+"],
   [75, 0.131, "75–84"],
   [65, 0.05, "65–74"],
+  // Derived: young-onset dementia at 60–64 in high-income countries 663.9/100,000 (Hendriks et al., JAMA Neurol 2021)
+  // × Alzheimer share of young-onset dementia 41.1/119.0 ≈ 0.23%.
+  [60, 0.0023, "60–64"],
 ];
+export const RISK_AGE_GROUPS = AGE_BASELINE.map(([minAge, prevalence, label]) => ({ minAge, prevalence, label })).reverse();
 // Same constants as the backend FAZ index (backend/app/octa_pipeline.py): Alzheimer FAZ shift of 0.54 SD.
 const FAZ_AD_SMD = 0.54;
 
@@ -19,7 +23,7 @@ export type AlzheimerRiskEstimate = {
   risk: number; // 0–1, baseline updated by the FAZ
 };
 
-/** null when age is outside the published baseline (under 65) or the FAZ was not measured. */
+/** null when age is outside the published baselines (under 60) or the FAZ was not measured. */
 export function estimateAlzheimerRisk(age: number, fazZ: number | null | undefined): AlzheimerRiskEstimate | null {
   if (fazZ == null || !Number.isFinite(fazZ) || !Number.isFinite(age)) return null;
   const row = AGE_BASELINE.find(([min]) => age >= min);

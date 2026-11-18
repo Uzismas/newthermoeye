@@ -1,7 +1,7 @@
 import { PanelHeader } from "./shared";
 
 import { ClipboardList, Info } from "lucide-react";
-import { estimateAlzheimerRisk, type AlzheimerRiskEstimate } from "../alzheimer-risk";
+import { estimateAlzheimerRisk, RISK_AGE_GROUPS, type AlzheimerRiskEstimate } from "../alzheimer-risk";
 
 const band = (s: number) => (s < 0.35 ? "low" : s < 0.65 ? "moderate" : "high");
 const bandColor = { low: "#0d9488", moderate: "#f59e0b", high: "#ea580c" } as const;
@@ -74,24 +74,42 @@ export function RiskAssessmentCard({ score, confidence, signals, mode = "simulat
   );
 }
 
-const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
+const pct = (v: number) => `${(v * 100).toFixed(v < 0.01 ? 2 : 1)}%`;
 
-/** Same estimate for every age group: average person, a person with a normal FAZ (0.275 mm², z = 0), and this scan's FAZ. */
+/** One card per age group with this scan's FAZ; the patient's group is highlighted so it reads without the table. */
 function AgeComparison({ age, fazZ }: { age: number; fazZ: number }) {
-  const rows = [70, 80, 90].map((a) => ({ avg: estimateAlzheimerRisk(a, 0.27)!, normal: estimateAlzheimerRisk(a, 0)!, scan: estimateAlzheimerRisk(a, fazZ)! }));
   const mine = estimateAlzheimerRisk(age, fazZ)?.ageGroup;
+  const groups = RISK_AGE_GROUPS.map((g) => ({
+    ...g,
+    normal: estimateAlzheimerRisk(g.minAge, 0)!.risk, // FAZ = 0.275 mm² (z = 0)
+    scan: estimateAlzheimerRisk(g.minAge, fazZ)!.risk,
+  }));
   return (
-    <div className="ad-age-table">
-      <h3>Compared with people of the same age</h3>
-      <table>
-        <thead><tr><th scope="col">Age</th><th scope="col">Average person</th><th scope="col">Normal FAZ (0.275 mm²)</th><th scope="col">This scan&apos;s FAZ</th></tr></thead>
-        <tbody>{rows.map(({ avg, normal, scan }) => (
-          <tr key={avg.ageGroup} className={avg.ageGroup === mine ? "mine" : undefined}>
-            <th scope="row">{avg.ageGroup}{avg.ageGroup === mine ? " (this patient)" : ""}</th><td>{pct(avg.risk)}</td><td>{pct(normal.risk)}</td><td><strong>{pct(scan.risk)}</strong></td>
-          </tr>
-        ))}</tbody>
-      </table>
-      <p>Average person: everyone of that age (Alzheimer&apos;s Association 2024). Normal FAZ: someone whose FAZ equals the published control average. Under 65 the risk is below 5% and no published baseline is used.</p>
+    <div className="ad-age">
+      <div className={`ad-age-callout${mine ? "" : " none"}`} role="note">
+        <span className="ad-age-pin" aria-hidden="true">{age}</span>
+        <p>{mine
+          ? <>Patient age <strong>{age}</strong> falls in the <strong>{mine}</strong> group. The highlighted card is this patient.</>
+          : <>Age <strong>{age}</strong> is under 60. No published baseline exists, so no group is highlighted; the cards show older age groups for comparison.</>}</p>
+      </div>
+      <ul className="ad-age-grid" aria-label="Estimated Alzheimer risk by age group with this scan's FAZ">
+        {groups.map((g) => {
+          const isMine = g.label === mine;
+          const tone = g.scan > g.prevalence * 1.1 ? "high" : g.scan < g.prevalence * 0.9 ? "low" : "moderate";
+          return (
+            <li key={g.label} className={isMine ? "mine" : undefined} aria-current={isMine ? "true" : undefined}>
+              <div className="ad-age-head"><span>Age {g.label}</span>{isMine ? <em>This patient</em> : null}</div>
+              <strong className="ad-age-value" style={{ color: bandColor[tone] }}>{pct(g.scan)}</strong>
+              <small>with this scan&apos;s FAZ</small>
+              <dl>
+                <div><dt>Average person</dt><dd>{pct(g.prevalence)}</dd></div>
+                <div><dt>Normal FAZ</dt><dd>{pct(g.normal)}</dd></div>
+              </dl>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="ad-age-note">Average person: everyone of that age. Normal FAZ: someone whose FAZ equals the published control average (0.275 mm²). Colour shows this scan against the average: orange higher, teal lower.</p>
     </div>
   );
 }
@@ -103,7 +121,7 @@ export function AlzheimerRiskPercentCard({ estimate, age, fazAreaMm2, fazZ }: { 
     return (
       <section className="panel ad-risk-card" aria-label="Estimated Alzheimer risk">
         {header}
-        <p className="ra-finding">Age {age} is under 65. Published age baselines start at 65, so a risk percentage is not computed for this case.</p>
+        <p className="ra-finding">Age {age} is under 60. Published age baselines start at 60, so a risk percentage is not computed for this case.</p>
         <AgeComparison age={age} fazZ={fazZ} />
       </section>
     );
@@ -132,7 +150,7 @@ export function AlzheimerRiskPercentCard({ estimate, age, fazAreaMm2, fazZ }: { 
         </ol>
       </div>
       <AgeComparison age={age} fazZ={fazZ} />
-      <p className="ra-sim-note"><Info size={15} aria-hidden="true" />Age baseline: Alzheimer&apos;s Association 2024 (US prevalence 5.0% at 65–74, 13.1% at 75–84, 33.3% at 85+). FAZ effect: Alzheimer shift 0.54 SD against controls 0.275 ± 0.10 mm². Vessel density is not added because it has no published reference in this model&apos;s units and overlaps with FAZ. Not validated on patients with known diagnoses; not a diagnosis.</p>
+      <p className="ra-sim-note"><Info size={15} aria-hidden="true" />Age baseline: Alzheimer&apos;s Association 2024 (US prevalence 5.0% at 65–74, 13.1% at 75–84, 33.3% at 85+); 60–64 ≈ 0.23%, derived from young-onset dementia prevalence (Hendriks et al., JAMA Neurology 2021) × the Alzheimer share. FAZ effect: Alzheimer shift 0.54 SD against controls 0.275 ± 0.10 mm². Vessel density is not added because it has no published reference in this model&apos;s units and overlaps with FAZ. Not validated on patients with known diagnoses; not a diagnosis.</p>
     </section>
   );
 }
