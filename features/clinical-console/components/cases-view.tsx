@@ -5,6 +5,7 @@ import { createCaseFromClinicalInput, metricsFromAnalysis } from "../clinical-an
 import { normalizeAnalysis } from "../analysis-contract";
 import { detectImageMime, mimeMatches, MAX_IMAGE_BYTES, NON_OCT_FILENAME } from "../image-input";
 import type { CaseRecord, VisionResult } from "../types";
+import { AnalysisLoading } from "./analysis-loading";
 import { PanelHeader, SectionHeading } from "./shared";
 
 export function CasesView({
@@ -25,12 +26,14 @@ export function CasesView({
   const [localError, setLocalError] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const analyzingRef = useRef(false);
+  const [progress, setProgress] = useState({ current: 1, total: 1 });
 
   // Several images at once: analyse and save them one by one so a bad file never blocks the rest.
   async function runBatch(files: File[], base: Omit<DemoCaseInput, "caseCode">) {
     let measured = 0, blocked = 0;
     const failed: string[] = [];
-    for (const file of files) {
+    for (const [index, file] of files.entries()) {
+      setProgress({ current: index + 1, total: files.length });
       try {
         const stem = file.name.replace(/\.[^.]+$/, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 36).toUpperCase() || "SCAN";
         const { caseRecord, sourceFile } = await createBaselineDemoCase(file, { ...base, caseCode: `TE-${stem}-${Math.random().toString(36).slice(2, 6).toUpperCase()}` });
@@ -46,6 +49,7 @@ export function CasesView({
 
   return (
     <section className="view active" aria-labelledby="cases-title">
+      {isAnalyzing ? <AnalysisLoading key={progress.current} current={progress.current} total={progress.total} /> : null}
       <SectionHeading
         eyebrow="Ingestion"
         title="Case intake and upload"
@@ -159,6 +163,7 @@ export function CasesView({
               }
 
               setLocalError("");
+              setProgress({ current: 1, total: files.length });
               analyzingRef.current = true;
               setIsAnalyzing(true);
               if (files.length > 1) {

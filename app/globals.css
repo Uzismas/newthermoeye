@@ -4962,3 +4962,42 @@ figure.scan-panel { margin: 0; }
 .ad-age-table tbody th { font-weight: 600; color: #1b2b44; }
 .ad-age-table tr.mine { background: #eef5fd; }
 .ad-age-table p { margin: 0; color: #5a6a82; font-size: 0.78rem; }
+/* Analysis loading overlay: dark glass card over the console while the AI works. */
+.al-backdrop { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 20px; background: radial-gradient(circle at 50% 40%, rgba(13, 32, 64, 0.55), rgba(4, 12, 24, 0.78)); backdrop-filter: blur(6px); animation: al-fade 0.25s ease-out; }
+.al-card { width: min(440px, 100%); display: grid; justify-items: center; gap: 10px; padding: 30px 28px 24px; border-radius: 18px; color: #e6f3fb; text-align: center;
+  background: linear-gradient(160deg, rgba(13, 32, 64, 0.94), rgba(7, 22, 40, 0.96)); border: 1px solid rgba(125, 211, 252, 0.22); box-shadow: 0 24px 60px rgba(2, 12, 28, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06); }
+.al-visual { width: 168px; height: 168px; }
+.al-retina { width: 100%; height: 100%; overflow: visible; }
+.al-disc { fill: #04101f; }
+.al-rim { fill: none; stroke: rgba(56, 189, 248, 0.55); stroke-width: 1.5; }
+.al-vessel { fill: none; stroke: #e0f2fe; stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 220; stroke-dashoffset: 220; opacity: 0.85; animation: al-draw 3.2s ease-in-out infinite; }
+.al-beam { animation: al-scan 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+.al-faz { fill: #020812; stroke: rgba(14, 165, 233, 0.6); stroke-width: 1.5; }
+.al-faz-ring { fill: none; stroke: #22d3ee; stroke-width: 2; transform-origin: 100px 100px; animation: al-pulse 1.8s ease-out infinite; }
+.al-eyebrow { margin: 6px 0 0; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: #67e8f9; font-weight: 700; }
+.al-card h2 { margin: 0; font-size: 1.32rem; color: #fff; }
+.al-batch { width: 100%; display: grid; gap: 6px; font-size: 0.84rem; color: #bae6fd; }
+.al-batch i { height: 6px; border-radius: 999px; background: rgba(148, 197, 233, 0.18); overflow: hidden; }
+.al-batch b { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #0ea5e9, #22d3ee); transition: width 0.4s ease; }
+.al-stages { list-style: none; margin: 8px 0 2px; padding: 0; width: 100%; display: grid; gap: 8px; text-align: left; }
+.al-stages li { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 10px; background: rgba(148, 197, 233, 0.06); color: rgba(226, 240, 250, 0.5); transition: background 0.3s, color 0.3s; }
+.al-stages li div { display: grid; gap: 1px; }
+.al-stages strong { font-size: 0.9rem; font-weight: 600; }
+.al-stages small { font-size: 0.74rem; opacity: 0.8; }
+.al-stages li.active { background: rgba(14, 165, 233, 0.16); color: #fff; box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.35); }
+.al-stages li.done { color: #a7f3d0; }
+.al-dot { flex: none; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 0.72rem; font-weight: 700; border: 2px solid currentColor; }
+.al-stages li.active .al-dot { border-color: #38bdf8; border-top-color: transparent; animation: al-spin 0.9s linear infinite; }
+.al-stages li.done .al-dot { background: #10b981; border-color: #10b981; color: #04101f; }
+.al-status { margin: 4px 0 0; font-size: 0.82rem; line-height: 1.5; color: #bae6fd; max-width: 34ch; }
+.al-timer { margin: 0; font-size: 0.76rem; color: rgba(186, 230, 253, 0.6); font-variant-numeric: tabular-nums; }
+@keyframes al-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes al-draw { 0% { stroke-dashoffset: 220; } 45%, 70% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -220; } }
+@keyframes al-scan { from { transform: translateY(0); } to { transform: translateY(260px); } }
+@keyframes al-pulse { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(2.1); opacity: 0; } }
+@keyframes al-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .al-backdrop, .al-beam, .al-faz-ring, .al-stages li.active .al-dot { animation: none; }
+  .al-vessel { animation: none; stroke-dashoffset: 0; }
+  .al-beam { display: none; }
+}
