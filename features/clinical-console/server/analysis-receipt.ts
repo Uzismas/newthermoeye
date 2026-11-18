@@ -23,6 +23,11 @@ export function getAnalysisSigningSecret() {
     return generated;
   }
 
+  // Serverless hosts (Vercel) run analyze and save on different instances, so a per-process random key
+  // breaks receipts. Derive a stable key from the server-only backend key when one is configured.
+  const backendKey = process.env.THERMOEYE_BACKEND_KEY?.trim();
+  if (backendKey) return createHmac("sha256", backendKey).update("thermoeye-analysis-receipt-v1").digest("hex");
+
   return shared.thermoeyeReceiptSecret ??= randomBytes(32).toString("hex");
 }
 const secret = getAnalysisSigningSecret;
