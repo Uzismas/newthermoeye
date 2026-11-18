@@ -1,0 +1,19 @@
+name: Keep Render AI awake
+
+# The free Render backend sleeps after 15 idle minutes and needs ~1 minute to wake.
+# Pinging /health every 10 minutes keeps it awake (24 h x 30 days = 720 h, inside the 750 free hours a month).
+# GitHub may delay scheduled runs at busy times, so still open /health once before a live demo.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping /health (waits up to 90 s for a cold start)
+        run: curl -fsS --max-time 90 --retry 2 --retry-delay 5 https://eyezheimer-ai.onrender.com/health

@@ -8,6 +8,8 @@ import { signAnalysis } from "@/features/clinical-console/server/analysis-receip
 import { rememberTransientAsset } from "@/features/clinical-console/server/persistence";
 
 export const runtime = "nodejs";
+// A sleeping free Render backend needs about a minute to wake; 60 s is the safe maximum on every Vercel plan.
+export const maxDuration = 60;
 const PROMPT = 'This is a research-only image transport check. No validated disease classifier is available. Do not diagnose, infer risk, estimate confidence, or invent vessel/FAZ/perfusion measurements. Return only {"received":true}.';
 
 async function externalReceipt(bytes: ArrayBuffer, mime: string): Promise<VisionResult> {
@@ -56,7 +58,7 @@ export async function POST(req: NextRequest) {
       const upload = new FormData();
       upload.append("image", new Blob([bytes], { type: mime }), file.name);
       const serviceKey = process.env.THERMOEYE_BACKEND_KEY?.trim();
-      const response = await fetch(`${endpoint}/octa/analyze`, { method: "POST", body: upload, cache: "no-store", headers: serviceKey ? { "X-Thermoeye-Key": serviceKey } : undefined, signal: AbortSignal.timeout(25000) });
+      const response = await fetch(`${endpoint}/octa/analyze`, { method: "POST", body: upload, cache: "no-store", headers: serviceKey ? { "X-Thermoeye-Key": serviceKey } : undefined, signal: AbortSignal.timeout(55000) });
       if ([400, 413, 415, 422].includes(response.status)) return error("Local decoder rejected this image. Check format, dimensions, and image integrity.", response.status);
       if (response.ok) {
         const payload = await response.json();
